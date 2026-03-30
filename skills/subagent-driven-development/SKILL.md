@@ -149,8 +149,9 @@ Implementer subagents report one of four statuses. Handle each appropriately:
 - `./spec-reviewer-prompt.md` - Run Codex CLI spec compliance review (Evaluator)
 - `./code-quality-reviewer-prompt.md` - Run Codex CLI code quality review (Evaluator)
 - `./playwright-evaluator-prompt.md` - Dispatch Playwright browser evaluator (Evaluator, web projects only)
+- `./flutter-evaluator-prompt.md` - Dispatch Flutter device evaluator (Evaluator, Flutter projects only)
 
-**Generator = Claude** (writes code) | **Evaluator = Codex/GPT** (reviews code) + **Playwright** (tests UI)
+**Generator = Claude** (writes code) | **Evaluator = Codex/GPT** (reviews code) + **Playwright** (web UI) + **Flutter Evaluator** (mobile UI)
 
 ## Web Project Detection
 
@@ -169,6 +170,25 @@ A project is a "web project" if ANY of these are true:
 5. The evaluator tests at mobile, tablet, and desktop viewports
 
 **Per-task Playwright trigger:** Does this specific task produce something a user can see or interact with in the browser? If yes → Playwright. If no → skip to mark complete.
+
+## Flutter Project Detection
+
+A project is a "Flutter project" if:
+- Has `pubspec.yaml` with `flutter` SDK dependency
+- Has `.dart` files in `lib/` directory being modified
+- Has `android/` and/or `ios/` directories
+- Plan mentions "Flutter", "mobile app", "widget"
+
+**When detected as Flutter project:**
+1. Ensure emulator (Android) and/or simulator (iOS) is running
+2. Flutter evaluation applies **per-task only when the task has user-visible UI changes**
+3. Tasks that are data layer, repository, or business logic only skip Flutter eval
+4. Final Flutter evaluation covers the **entire app** on all available platforms
+5. The evaluator tests rotation, dark mode, and platform-specific behavior
+
+**Per-task Flutter trigger:** Does this specific task produce something a user can see or interact with on the device? If yes → Flutter Evaluator. If no → skip.
+
+**Web vs Flutter:** If the project is Flutter Web, use Playwright. If native Android/iOS, use Flutter Evaluator. If both, use both.
 
 ## Example Workflow (Non-Web Project)
 
@@ -350,6 +370,7 @@ OpenAI 계정에서 크레딧을 충전해주세요: https://platform.openai.com
 **Evaluator tools:**
 - **Codex CLI** (`codex review`) - Code review via GPT (different model = no self-evaluation bias)
 - **superpowers:playwright-evaluator** - Browser-based UI evaluation agent (web projects only)
+- **superpowers:flutter-evaluator** - Emulator/simulator-based evaluation agent (Flutter projects only)
 
 **Prerequisites:**
 - OpenAI API credits must be available for Codex CLI
