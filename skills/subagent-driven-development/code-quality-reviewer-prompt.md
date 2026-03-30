@@ -53,6 +53,12 @@ strengths: [what's well done — file:line references]
 critical_issues: [list, or "none"]
 important_issues: [list, or "none"]
 minor_issues: [list, or "none"]
+
+## Status Determination Rule (MUST follow exactly)
+- APPROVED: ONLY when critical_issues is "none" AND important_issues is "none"
+  (minor_issues may still be present — they do not block approval)
+- NEEDS_FIXES: when critical_issues OR important_issues has any entries
+- BLOCKED_ERROR: when you cannot complete the review for technical reasons
 REVIEW_EOF
 )" 2>&1
 ```
@@ -68,11 +74,12 @@ REVIEW_EOF
 | Credit/billing/rate-limit error | → **CREDIT STOP** (see below) |
 | No parseable status / other error | Retry once. If still unparseable, HARD STOP and report |
 
-**Decision logic (same pattern as spec-reviewer):**
+**Decision logic:**
 ```
-result = run_codex_review()
+exit_code, result = run_codex_review()
 
-if result contains "rate limit" or "quota" or "credit" or "billing" or "insufficient":
+# Credit detection: ONLY match CLI-level errors, NOT review content
+if exit_code != 0 AND result matches /Error.*rate.limit|Error.*quota.*exceeded|Error.*insufficient.*funds|Error.*billing|429.*Too.Many.Requests/:
     STATUS = "BLOCKED_CREDIT"
 elif result contains "status: APPROVED":
     STATUS = "APPROVED"

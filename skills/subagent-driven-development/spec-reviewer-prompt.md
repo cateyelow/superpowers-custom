@@ -38,6 +38,11 @@ missing: [list of missing requirements, or "none"]
 extra: [list of extra/unneeded work, or "none"]
 misunderstandings: [list, or "none"]
 details: [file:line references for each issue]
+
+## Status Determination Rule (MUST follow exactly)
+- APPROVED: ONLY when missing is "none" AND extra is "none" AND misunderstandings is "none"
+- NEEDS_FIXES: when any of missing, extra, or misunderstandings has entries
+- BLOCKED_ERROR: when you cannot complete the review for technical reasons
 REVIEW_EOF
 )" 2>&1
 ```
@@ -55,10 +60,14 @@ REVIEW_EOF
 
 **Decision logic (pseudo-code):**
 ```
-result = run_codex_review()
+exit_code, result = run_codex_review()
 
-if result contains "rate limit" or "quota" or "credit" or "billing" or "insufficient":
+# Step 1: Check for CLI-level billing failure FIRST (exit code + specific error patterns)
+# IMPORTANT: Only match CLI error messages, NOT review content about billing/credits features
+if exit_code != 0 AND result matches /Error.*rate.limit|Error.*quota.*exceeded|Error.*insufficient.*funds|Error.*billing|429.*Too.Many.Requests/:
     STATUS = "BLOCKED_CREDIT"
+
+# Step 2: Parse structured status from review output
 elif result contains "status: APPROVED":
     STATUS = "APPROVED"
 elif result contains "status: NEEDS_FIXES":
@@ -66,6 +75,7 @@ elif result contains "status: NEEDS_FIXES":
 else:
     STATUS = "BLOCKED_ERROR"
 
+# Step 3: Act on status
 if STATUS == "BLOCKED_CREDIT":
     HARD_STOP_CREDIT()
 elif STATUS == "BLOCKED_ERROR":
@@ -75,6 +85,8 @@ elif STATUS == "NEEDS_FIXES":
 elif STATUS == "APPROVED":
     proceed to code quality review
 ```
+
+**IMPORTANT: Credit detection must NOT match review content.** A review saying "insufficient test coverage" or reviewing a billing feature is NOT a credit error. Only match when the CLI itself fails (non-zero exit code + error pattern from the OpenAI API).
 
 ## Credit Exhaustion — HARD STOP
 
