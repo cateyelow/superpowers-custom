@@ -11,7 +11,9 @@ Execute plan by dispatching fresh subagent per task, with multi-stage review aft
 
 **Core principle:** Fresh subagent per task + multi-stage review (spec → quality → browser evaluation) = high quality, fast iteration
 
-**Generator-Evaluator pattern:** Inspired by the Anthropic blog on autonomous development harnesses. The Generator (implementer) builds, the Evaluator (reviewer + Playwright) verifies. Separate agents prevent self-evaluation bias.
+**Generator-Evaluator pattern:** Inspired by the Anthropic blog on autonomous development harnesses. The Generator (Claude implementer) builds, the Evaluator (Codex CLI/GPT for code review + Playwright for browser testing) verifies. Using a **different model family** for evaluation eliminates self-evaluation bias completely.
+
+**Codex CLI credit requirement:** All code reviews (spec + quality) run through Codex CLI. If credits are exhausted, ALL WORK STOPS immediately. No fallback to Claude review. No skipping reviews. User must recharge OpenAI credits before proceeding.
 
 ## When to Use
 
@@ -51,11 +53,13 @@ digraph process {
         "Implementer subagent asks questions?" [shape=diamond];
         "Answer questions, provide context" [shape=box];
         "Implementer subagent implements, tests, commits, self-reviews" [shape=box];
-        "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)" [shape=box];
-        "Spec reviewer subagent confirms code matches spec?" [shape=diamond];
+        "Run Codex CLI spec review (./spec-reviewer-prompt.md)" [shape=box style=filled fillcolor=lightblue];
+        "Codex spec review passes?" [shape=diamond];
+        "Codex credit error?" [shape=diamond style=filled fillcolor=red fontcolor=white];
+        "HARD STOP: tell user to recharge credits" [shape=box style=filled fillcolor=red fontcolor=white];
         "Implementer subagent fixes spec gaps" [shape=box];
-        "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" [shape=box];
-        "Code quality reviewer subagent approves?" [shape=diamond];
+        "Run Codex CLI quality review (./code-quality-reviewer-prompt.md)" [shape=box style=filled fillcolor=lightblue];
+        "Codex quality review approves?" [shape=diamond];
         "Implementer subagent fixes quality issues" [shape=box];
         "Web project?" [shape=diamond style=filled fillcolor=lightyellow];
         "Start app, dispatch Playwright evaluator (./playwright-evaluator-prompt.md)" [shape=box style=filled fillcolor=lightyellow];
@@ -75,15 +79,17 @@ digraph process {
     "Implementer subagent asks questions?" -> "Answer questions, provide context" [label="yes"];
     "Answer questions, provide context" -> "Dispatch implementer subagent (./implementer-prompt.md)";
     "Implementer subagent asks questions?" -> "Implementer subagent implements, tests, commits, self-reviews" [label="no"];
-    "Implementer subagent implements, tests, commits, self-reviews" -> "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)";
-    "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)" -> "Spec reviewer subagent confirms code matches spec?";
-    "Spec reviewer subagent confirms code matches spec?" -> "Implementer subagent fixes spec gaps" [label="no"];
-    "Implementer subagent fixes spec gaps" -> "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)" [label="re-review"];
-    "Spec reviewer subagent confirms code matches spec?" -> "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" [label="yes"];
-    "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" -> "Code quality reviewer subagent approves?";
-    "Code quality reviewer subagent approves?" -> "Implementer subagent fixes quality issues" [label="no"];
-    "Implementer subagent fixes quality issues" -> "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" [label="re-review"];
-    "Code quality reviewer subagent approves?" -> "Web project?" [label="yes"];
+    "Implementer subagent implements, tests, commits, self-reviews" -> "Run Codex CLI spec review (./spec-reviewer-prompt.md)";
+    "Run Codex CLI spec review (./spec-reviewer-prompt.md)" -> "Codex credit error?";
+    "Codex credit error?" -> "HARD STOP: tell user to recharge credits" [label="yes"];
+    "Codex credit error?" -> "Codex spec review passes?" [label="no"];
+    "Codex spec review passes?" -> "Implementer subagent fixes spec gaps" [label="no"];
+    "Implementer subagent fixes spec gaps" -> "Run Codex CLI spec review (./spec-reviewer-prompt.md)" [label="re-review"];
+    "Codex spec review passes?" -> "Run Codex CLI quality review (./code-quality-reviewer-prompt.md)" [label="yes"];
+    "Run Codex CLI quality review (./code-quality-reviewer-prompt.md)" -> "Codex quality review approves?";
+    "Codex quality review approves?" -> "Implementer subagent fixes quality issues" [label="no"];
+    "Implementer subagent fixes quality issues" -> "Run Codex CLI quality review (./code-quality-reviewer-prompt.md)" [label="re-review"];
+    "Codex quality review approves?" -> "Web project?" [label="yes"];
     "Web project?" -> "Start app, dispatch Playwright evaluator (./playwright-evaluator-prompt.md)" [label="yes"];
     "Web project?" -> "Mark task complete in TodoWrite" [label="no"];
     "Start app, dispatch Playwright evaluator (./playwright-evaluator-prompt.md)" -> "Playwright evaluator PASS?";
@@ -100,18 +106,14 @@ digraph process {
 
 ## Model Selection
 
-Use the least powerful model that can handle each role to conserve cost and increase speed.
+**Generator (Claude):** Use the least powerful Claude model that can handle each implementation task.
+- Mechanical tasks (1-2 files, clear spec) → fast/cheap Claude model
+- Integration tasks (multi-file) → standard Claude model
+- Architecture tasks → most capable Claude model
 
-**Mechanical implementation tasks** (isolated functions, clear specs, 1-2 files): use a fast, cheap model. Most implementation tasks are mechanical when the plan is well-specified.
+**Evaluator (Codex CLI):** Always uses the configured Codex model (default: `gpt-5.4` with `xhigh` reasoning). This is configured in `~/.codex/config.toml`, not controlled per-task.
 
-**Integration and judgment tasks** (multi-file coordination, pattern matching, debugging): use a standard model.
-
-**Architecture, design, and review tasks**: use the most capable available model.
-
-**Task complexity signals:**
-- Touches 1-2 files with a complete spec → cheap model
-- Touches multiple files with integration concerns → standard model
-- Requires design judgment or broad codebase understanding → most capable model
+**Playwright Evaluator:** Uses Claude (inherits parent model) — it needs Playwright MCP tools which Codex doesn't have.
 
 ## Handling Implementer Status
 
@@ -133,10 +135,12 @@ Implementer subagents report one of four statuses. Handle each appropriately:
 
 ## Prompt Templates
 
-- `./implementer-prompt.md` - Dispatch implementer subagent
-- `./spec-reviewer-prompt.md` - Dispatch spec compliance reviewer subagent
-- `./code-quality-reviewer-prompt.md` - Dispatch code quality reviewer subagent
-- `./playwright-evaluator-prompt.md` - Dispatch Playwright browser evaluator (web projects only)
+- `./implementer-prompt.md` - Dispatch Claude implementer subagent (Generator)
+- `./spec-reviewer-prompt.md` - Run Codex CLI spec compliance review (Evaluator)
+- `./code-quality-reviewer-prompt.md` - Run Codex CLI code quality review (Evaluator)
+- `./playwright-evaluator-prompt.md` - Dispatch Playwright browser evaluator (Evaluator, web projects only)
+
+**Generator = Claude** (writes code) | **Evaluator = Codex/GPT** (reviews code) + **Playwright** (tests UI)
 
 ## Web Project Detection
 
@@ -164,82 +168,91 @@ You: I'm using Subagent-Driven Development to execute this plan.
 [Create TodoWrite with all tasks]
 
 Task 1: Hook installation script
-[Dispatch implementer → spec review → code quality review → complete]
+
+[Dispatch Claude implementer subagent]
+Implementer: DONE — implemented install-hook command, 5/5 tests passing
+
+[Run Codex CLI spec review]
+$ codex review --base a7981ec "Review spec compliance for Task 1..."
+Codex (GPT): ✅ Spec compliant — all requirements met
+
+[Run Codex CLI quality review]
+$ codex review --base a7981ec "Review code quality for Task 1..."
+Codex (GPT): Strengths: Good test coverage. Issues: None. Ready: Yes.
+
+[Mark Task 1 complete]
 
 Task 2: Recovery modes
-[Dispatch implementer → spec review (fail, fix, pass) → code quality (fail, fix, pass) → complete]
 
-[After all tasks → final code review → finishing-a-development-branch]
+[Dispatch Claude implementer → Codex spec review (fail) → fix → Codex spec (pass) → Codex quality (pass)]
+
+[After all tasks → Codex final review → finishing-a-development-branch]
 ```
 
-## Example Workflow (Web Project — with Playwright Evaluation)
+## Example Workflow (Web Project — with Codex + Playwright)
 
 ```
 You: I'm using Subagent-Driven Development to execute this plan.
 
 [Read plan file once: docs/superpowers/plans/dashboard-plan.md]
-[Extract all 4 tasks with full text and context]
-[Detect: React + Vite project → Playwright evaluation MANDATORY]
+[Detect: React + Vite → Codex reviews MANDATORY + Playwright evaluation MANDATORY]
 [Create TodoWrite with all tasks]
 
 Task 1: User dashboard page
 
-[Dispatch implementer subagent]
+[Dispatch Claude implementer subagent]
 Implementer:
   - Built Dashboard component with user stats cards
   - Added API route /api/stats
-  - 6/6 tests passing
-  - Committed
+  - 6/6 tests passing, committed
 
-[Spec reviewer] ✅ Spec compliant
+[Run Codex CLI spec review]
+$ codex review --base abc123 "Review spec compliance..."
+Codex (GPT): ✅ Spec compliant
 
-[Code quality reviewer] ✅ Approved
+[Run Codex CLI quality review]
+$ codex review --base abc123 "Review code quality..."
+Codex (GPT): Strengths: Clean components. Issues: None. Ready: Yes.
 
-[Web project detected → Start dev server: npm run dev]
+[Web project → Start dev server: npm run dev]
 [Dispatch Playwright evaluator at http://localhost:5173]
 
 Playwright Evaluator:
   Overall Score: 32/50
-  - Design Quality: 6/10 — Cards lack visual hierarchy
-  - Originality: 5/10 — Generic Bootstrap look
-  - Technical Polish: 7/10 — Good spacing, minor alignment issues
-  - Functionality: 7/10 — Stats load correctly
-  - User Experience: 7/10 — Clear layout but boring
-
-  Critical Issues: None
   Important Issues:
     - Stats cards have no loading state (shows "undefined" briefly)
     - No error state when API fails
-  Minor Issues:
-    - Cards could use subtle shadows for depth
-
   Verdict: PASS_WITH_FIXES
 
-[Implementer fixes: adds loading skeleton + error state]
+[Claude implementer fixes: adds loading skeleton + error state]
 [Re-dispatch Playwright evaluator]
 
 Playwright Evaluator:
   Overall Score: 38/50
-  - Functionality: 9/10 — Loading and error states work perfectly
   Verdict: PASS
 
 [Mark Task 1 complete]
 
-Task 2: Data visualization charts
-[Dispatch implementer → spec review → code quality → Playwright evaluation → ...]
-
 ...
 
-[After all tasks]
-[Dispatch final code reviewer]
-[Dispatch final Playwright evaluator for full app flow]
-Final Playwright evaluation:
-  - Tested complete user journey: login → dashboard → charts → settings
-  - All pages responsive at 375px, 768px, 1280px
-  - No console errors across all pages
-  - Overall: 41/50, Verdict: PASS
+## Example: Credit Exhausted — HARD STOP
 
-[Use superpowers:finishing-a-development-branch]
+Task 3: Settings page
+
+[Dispatch Claude implementer → DONE]
+
+[Run Codex CLI spec review]
+$ codex review --base def456 "Review spec compliance..."
+ERROR: Rate limit exceeded. Please check your billing at...
+
+⛔ HARD STOP
+
+You: "Codex CLI 크레딧이 소진되었습니다.
+리뷰를 건너뛸 수 없으므로 작업을 즉시 중단합니다.
+OpenAI 계정에서 크레딧을 충전해주세요: https://platform.openai.com/account/billing
+충전 완료 후 알려주시면 Task 3 리뷰부터 이어서 진행하겠습니다."
+
+[WAIT for user confirmation — do NOT proceed]
 ```
 
 ## Advantages
@@ -314,15 +327,20 @@ Final Playwright evaluation:
 **Required workflow skills:**
 - **superpowers:using-git-worktrees** - REQUIRED: Set up isolated workspace before starting
 - **superpowers:writing-plans** - Creates the plan this skill executes
-- **superpowers:requesting-code-review** - Code review template for reviewer subagents
+- **codex-cli** - REQUIRED: Codex CLI for spec + quality reviews (must have credits)
 - **superpowers:web-app-evaluation** - REQUIRED for web projects: Playwright browser evaluation
 - **superpowers:finishing-a-development-branch** - Complete development after all tasks
 
 **Subagents should use:**
 - **superpowers:test-driven-development** - Subagents follow TDD for each task
 
-**Evaluator agents:**
-- **superpowers:playwright-evaluator** - Browser-based evaluation agent for web projects
+**Evaluator tools:**
+- **Codex CLI** (`codex review`) - Code review via GPT (different model = no self-evaluation bias)
+- **superpowers:playwright-evaluator** - Browser-based UI evaluation agent (web projects only)
+
+**Prerequisites:**
+- OpenAI API credits must be available for Codex CLI
+- If credits run out mid-workflow: HARD STOP, no exceptions
 
 **Alternative workflow:**
 - **superpowers:executing-plans** - Use for parallel session instead of same-session execution
