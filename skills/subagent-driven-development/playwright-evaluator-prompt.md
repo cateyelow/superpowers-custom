@@ -1,68 +1,77 @@
-# Playwright Evaluator Prompt Template
+# Playwright Evaluator Dispatch Template
 
-Use this template when dispatching a Playwright evaluator subagent for web projects.
+**Purpose:** Verify a specific browser flow works. Keep it focused — one flow per dispatch.
 
-**Purpose:** Verify the implemented feature actually works in the browser by interacting with it like a real user.
+**Only dispatch after code quality review passes AND the app is confirmed running.**
 
-**Only dispatch after code quality review passes AND the app is confirmed running (readiness probe passed).**
-
-## Dispatch Format
-
-This is pseudocode showing what to pass to the Agent tool — adapt to the actual Agent tool invocation syntax:
+## Dispatch (functional smoke — mandatory gate)
 
 ```
 Agent tool (superpowers:playwright-evaluator):
-  description: "Playwright evaluate Task N: [task name]"
+  description: "Smoke test: [flow name]"
   prompt: |
-    Evaluate the running web application for Task N: [task name]
+    Evaluate this running web app.
 
-    ## App URL
+    URL:
+    [http://localhost:5173]
 
-    [URL where the app is running, e.g. http://localhost:5173]
+    Scope:
+    [1-2 sentences on what changed]
 
-    ## What Was Built (CLAIM ONLY — DO NOT TRUST)
+    Requirements:
+    - [requirement]
+    - [requirement]
 
-    [From implementer's report. This is what they CLAIM to have built.
-     You must verify everything against the Requirements below.
-     The implementer may be incomplete, inaccurate, or optimistic.]
+    Primary Flow:
+    1. [step]
+    2. [step]
+    3. [expected result]
 
-    ## Requirements (SOURCE OF TRUTH)
+    Targeted Checks:
+    - [highest-risk check]
+    - [second check]
 
-    [FULL TEXT of task requirements — this is what the app SHOULD do.
-     Evaluate against THIS, not against what the implementer claims.]
+    Recheck:
+    - [previous issue to verify, or "none"]
 
-    ## Specific Test Scenarios
+    Responsive Check:
+    - no
 
-    1. [Scenario: Navigate to X, click Y, expect Z]
-    2. [Scenario: Fill form with A, submit, expect B]
-    3. [Edge case: Try empty input, expect validation message]
-    4. [Edge case: Try rapid double-click, expect no duplicate]
-    5. [Edge case: Refresh page, verify data persists]
-    6. [Edge case: Keyboard-only navigation of core flow]
+    Important:
+    - Use the browser only.
+    - Do not read code.
+    - Do not score the app.
+    - Fail on any material issue in this scope.
+```
 
-    ## Previously Found Issues (if re-evaluating)
+## Dispatch (visual/responsive — optional 2nd pass)
 
-    [List of issues from previous evaluation that should now be fixed.
-     Verify EACH previous issue is actually resolved.]
+Only run this if:
+- The task changed layout or styling
+- This is the final full-app evaluation
 
-    Follow your evaluation process — FUNCTIONALITY FIRST:
-    1. Functional Testing — test every scenario against Requirements
-    2. Technical Verification — console errors, network requests, persistence
-    3. UI/UX Quality — visual consistency, responsiveness
-    4. First Impression — informational only, does not drive verdict
+```
+Agent tool (superpowers:playwright-visual-evaluator):
+  description: "Visual check: [flow name]"
+  prompt: |
+    Re-run this flow at 375px, 768px, and 1280px.
 
-    Be skeptical. Take screenshots as evidence. Report what you actually see.
-    Apply hard caps to scores. Verdict is driven by issues, NOT by score sum.
+    URL: [http://localhost:5173]
+
+    Flow:
+    1. [step]
+    2. [step]
+    3. [expected result]
+
+    Check layout, overflow, contrast, mobile usability.
 ```
 
 ## Handling the Verdict
 
-| Verdict | Structured Status | Action |
-|---------|------------------|--------|
-| `PASS` | `critical_issues: 0, important_issues: 0` | Mark task complete, proceed |
-| `PASS_WITH_FIXES` | `critical_issues: 0, important_issues: N` | Implementer fixes → Codex re-reviews fixes → re-evaluate |
-| `FAIL` | `critical_issues: N` | Implementer fixes → Codex re-reviews fixes → re-evaluate |
+| Verdict | Action |
+|---------|--------|
+| `PASS` | Mark task complete (or run visual pass if applicable) |
+| `FAIL` with `blocking` findings | Implementer fixes → Codex re-reviews → re-dispatch smoke test |
+| `FAIL` with `minor` only | Judgment call — fix or note for later |
 
-**Re-evaluation loop continues until PASS.**
-
-**Important:** After implementer fixes browser issues, the fix code MUST go through Codex spec + quality review again before the next Playwright evaluation. Fixes that bypass code review are unreviewed code.
+**Fix code MUST go through Codex review before next evaluation.**
