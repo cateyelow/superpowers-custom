@@ -8,11 +8,12 @@ Verify code quality using **Codex CLI (OpenAI GPT)**, not a Claude subagent. The
 
 ## How to Run
 
-Use `codex review` with a heredoc to avoid shell injection:
+Use `codex exec` with full access to avoid bwrap sandbox errors:
 
 ```bash
-codex review --base {BASE_SHA} "$(cat <<'REVIEW_EOF'
-Review the code quality of these changes.
+cd {PROJECT_DIR} && git diff {BASE_SHA}..HEAD > /tmp/codex_review_diff.txt && \
+codex exec -s danger-full-access "$(cat <<'REVIEW_EOF'
+Review the code quality of the changes. Read the diff at /tmp/codex_review_diff.txt and the actual source files.
 
 ## What Was Implemented
 {WHAT_WAS_IMPLEMENTED — from implementer's report}
@@ -69,14 +70,14 @@ REVIEW_EOF
 
 | Parsed Status | Action |
 |---------------|--------|
-| `status: APPROVED` | Proceed to Playwright evaluation (web project) or mark task complete |
+| `status: APPROVED` | Proceed to Playwright/Flutter evaluation (UI project) or mark task complete |
 | `status: NEEDS_FIXES` | Implementer fixes listed issues → re-run this review |
 | Credit/billing/rate-limit error | → **CREDIT STOP** (see below) |
 | No parseable status / other error | Retry once. If still unparseable, HARD STOP and report |
 
 **Decision logic:**
 ```
-exit_code, result = run_codex_review()
+exit_code, result = run_codex_exec()
 
 # Credit detection: ONLY match CLI-level errors, NOT review content
 if exit_code != 0 AND result matches /Error.*rate.limit|Error.*quota.*exceeded|Error.*insufficient.*(funds|quota)|Error.*billing|429.*Too.Many.Requests|insufficient_quota/:

@@ -26,17 +26,18 @@ Self-review is biased — the model that wrote the code will always think it's g
 
 ## How to Request — via Codex CLI
 
-**1. Get git SHAs:**
+**1. Prepare the diff:**
 ```bash
 BASE_SHA=$(git rev-parse HEAD~1)  # or origin/main
-HEAD_SHA=$(git rev-parse HEAD)
+git diff ${BASE_SHA}..HEAD > /tmp/codex_review_diff.txt
 ```
 
 **2. Run Codex CLI review (NOT a Claude subagent, NOT self-review):**
 
 ```bash
-codex review --base ${BASE_SHA} "$(cat <<'REVIEW_EOF'
-Review these code changes for production readiness.
+codex exec -s danger-full-access "$(cat <<'REVIEW_EOF'
+Review the code changes for production readiness.
+Read the diff at /tmp/codex_review_diff.txt and the actual source files.
 
 ## What Was Implemented
 {DESCRIPTION — what was built and why}
@@ -102,8 +103,8 @@ https://platform.openai.com/account/billing
 
 | Before (DON'T) | After (DO) |
 |-----------------|------------|
-| "Let me do the self-review" | `codex review --base ...` |
-| Dispatch Claude code-reviewer subagent | `codex review --base ...` |
+| "Let me do the self-review" | `codex exec -s danger-full-access "Review..."` |
+| Dispatch Claude code-reviewer subagent | `codex exec -s danger-full-access "Review..."` |
 | "Looks good to me" | Parse `status: APPROVED` from Codex |
 | Claiming completion without external review | Codex review is mandatory gate |
 
@@ -124,7 +125,8 @@ https://platform.openai.com/account/billing
 
 You: Let me request code review via Codex CLI.
 
-$ codex review --base a7981ec "Review these changes..."
+$ git diff HEAD~1..HEAD > /tmp/codex_review_diff.txt
+$ codex exec -s danger-full-access "Review the code changes..."
 
 Codex (GPT):
   status: NEEDS_FIXES
@@ -135,13 +137,11 @@ Codex (GPT):
 
 You: [Fix progress indicators, re-run Codex review]
 
-$ codex review --base a7981ec "Review these changes..."
+$ git diff HEAD~1..HEAD > /tmp/codex_review_diff.txt
+$ codex exec -s danger-full-access "Review the code changes..."
 
 Codex (GPT):
   status: APPROVED
-  strengths: Clean architecture, good progress reporting
-  critical_issues: none
-  important_issues: none
 
 [Proceed to next task or Playwright/Flutter evaluation]
 ```

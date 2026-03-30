@@ -8,11 +8,13 @@ Verify spec compliance using **Codex CLI (OpenAI GPT)**, not a Claude subagent. 
 
 ## How to Run
 
-Use `codex review` with a heredoc to avoid shell injection from special characters in the spec text:
+Use `codex exec` with full access to avoid bwrap sandbox errors:
 
 ```bash
-codex review --base {BASE_SHA} "$(cat <<'REVIEW_EOF'
+cd {PROJECT_DIR} && git diff {BASE_SHA}..HEAD > /tmp/codex_review_diff.txt && \
+codex exec -s danger-full-access "$(cat <<'REVIEW_EOF'
 You are reviewing whether an implementation matches its specification.
+Read the diff at /tmp/codex_review_diff.txt and the actual source files.
 
 ## What Was Requested
 {FULL TEXT of task requirements — paste here}
@@ -21,7 +23,7 @@ You are reviewing whether an implementation matches its specification.
 {From implementer's report — paste here}
 
 ## CRITICAL: Do Not Trust the Report
-The implementer's report may be incomplete, inaccurate, or optimistic. Verify EVERYTHING by reading the actual diff.
+The implementer's report may be incomplete, inaccurate, or optimistic. Verify EVERYTHING by reading the actual diff and source files.
 
 DO NOT take their word. DO read the code changes.
 
@@ -60,7 +62,7 @@ REVIEW_EOF
 
 **Decision logic (pseudo-code):**
 ```
-exit_code, result = run_codex_review()
+exit_code, result = run_codex_exec()
 
 # Step 1: Check for CLI-level billing failure FIRST (exit code + specific error patterns)
 # IMPORTANT: Only match CLI error messages, NOT review content about billing/credits features
