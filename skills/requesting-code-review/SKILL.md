@@ -1,27 +1,30 @@
 ---
 name: requesting-code-review
-description: Use when completing tasks, implementing major features, or before merging to verify work meets requirements
+description: Use when completing tasks, implementing major features, or before merging to verify work meets requirements — ALWAYS uses Codex CLI (GPT) for cross-model review, never self-review
 ---
 
 # Requesting Code Review
 
-Dispatch superpowers:code-reviewer subagent to catch issues before they cascade. The reviewer gets precisely crafted context for evaluation — never your session's history. This keeps the reviewer focused on the work product, not your thought process, and preserves your own context for continued work.
+**ALWAYS use Codex CLI (GPT) for code review. NEVER self-review.**
 
-**Core principle:** Review early, review often.
+Self-review is biased — the model that wrote the code will always think it's good. A different model (GPT via Codex CLI) provides genuine independent evaluation. This is the Generator-Evaluator pattern.
+
+**Core principle:** Review via Codex CLI, not self-review. Always.
 
 ## When to Request Review
 
 **Mandatory:**
-- After each task in subagent-driven development
+- After each task (any workflow)
 - After completing major feature
 - Before merge to main
+- Before claiming work is complete
 
 **Optional but valuable:**
 - When stuck (fresh perspective)
 - Before refactoring (baseline check)
 - After fixing complex bug
 
-## How to Request
+## How to Request — via Codex CLI
 
 **1. Get git SHAs:**
 ```bash
@@ -29,77 +32,129 @@ BASE_SHA=$(git rev-parse HEAD~1)  # or origin/main
 HEAD_SHA=$(git rev-parse HEAD)
 ```
 
-**2. Dispatch code-reviewer subagent:**
+**2. Run Codex CLI review (NOT a Claude subagent, NOT self-review):**
 
-Use Task tool with superpowers:code-reviewer type, fill template at `code-reviewer.md`
+```bash
+codex review --base ${BASE_SHA} "$(cat <<'REVIEW_EOF'
+Review these code changes for production readiness.
 
-**Placeholders:**
-- `{WHAT_WAS_IMPLEMENTED}` - What you just built
-- `{PLAN_OR_REQUIREMENTS}` - What it should do
-- `{BASE_SHA}` - Starting commit
-- `{HEAD_SHA}` - Ending commit
-- `{DESCRIPTION}` - Brief summary
+## What Was Implemented
+{DESCRIPTION — what was built and why}
 
-**3. Act on feedback:**
-- Fix Critical issues immediately
-- Fix Important issues before proceeding
-- Note Minor issues for later
-- Push back if reviewer is wrong (with reasoning)
+## Requirements
+{PLAN_OR_REQUIREMENTS — what it should do}
+
+## Review Checklist
+
+### Code Quality
+- Clean separation of concerns?
+- Proper error handling?
+- Type safety? DRY? Edge cases?
+
+### Architecture
+- Sound design decisions?
+- Scalability? Performance? Security?
+
+### Testing
+- Tests actually test logic (not just mocks)?
+- Edge cases covered?
+- All tests passing?
+
+### Requirements
+- All plan requirements met?
+- No scope creep?
+- No missing features?
+
+## Required Output Format
+
+status: APPROVED | NEEDS_FIXES
+strengths: [what's well done — file:line]
+critical_issues: [list, or "none"]
+important_issues: [list, or "none"]
+minor_issues: [list, or "none"]
+
+Status rules:
+- APPROVED only when critical_issues AND important_issues are both "none"
+- NEEDS_FIXES when any critical or important issue exists
+REVIEW_EOF
+)" 2>&1
+```
+
+**3. Handle credit errors:**
+
+If exit code is non-zero AND output matches `insufficient_quota|rate.limit|billing|429`:
+
+```
+⛔ HARD STOP: Codex CLI 크레딧이 소진되었습니다.
+리뷰를 건너뛸 수 없습니다. 작업을 즉시 중단합니다.
+https://platform.openai.com/account/billing
+```
+
+**4. Act on feedback:**
+
+| Codex Status | Action |
+|-------------|--------|
+| `status: APPROVED` | Proceed (to Playwright/Flutter eval if UI project, or mark complete) |
+| `status: NEEDS_FIXES` | Fix issues → re-run Codex review |
+| Credit error | HARD STOP — user must recharge |
+
+## What This Replaces
+
+| Before (DON'T) | After (DO) |
+|-----------------|------------|
+| "Let me do the self-review" | `codex review --base ...` |
+| Dispatch Claude code-reviewer subagent | `codex review --base ...` |
+| "Looks good to me" | Parse `status: APPROVED` from Codex |
+| Claiming completion without external review | Codex review is mandatory gate |
+
+## Red Flags — STOP if you catch yourself doing these
+
+| Thought | Reality |
+|---------|---------|
+| "Let me quickly review my own code" | NO. Use Codex CLI. Self-review is biased. |
+| "The code looks correct to me" | YOUR opinion doesn't count. Codex reviews. |
+| "I'll just do a quick self-review" | There is no such thing. Codex CLI or nothing. |
+| "Self-review before Codex" | The implementer's self-review checklist is a pre-flight check only. The FORMAL review is ALWAYS Codex CLI. |
+| "Codex is slow, let me skip it" | Speed is not an excuse. Quality requires independent review. |
 
 ## Example
 
 ```
-[Just completed Task 2: Add verification function]
+[Just completed: Add verification function]
 
-You: Let me request code review before proceeding.
+You: Let me request code review via Codex CLI.
 
-BASE_SHA=$(git log --oneline | grep "Task 1" | head -1 | awk '{print $1}')
-HEAD_SHA=$(git rev-parse HEAD)
+$ codex review --base a7981ec "Review these changes..."
 
-[Dispatch superpowers:code-reviewer subagent]
-  WHAT_WAS_IMPLEMENTED: Verification and repair functions for conversation index
-  PLAN_OR_REQUIREMENTS: Task 2 from docs/superpowers/plans/deployment-plan.md
-  BASE_SHA: a7981ec
-  HEAD_SHA: 3df7661
-  DESCRIPTION: Added verifyIndex() and repairIndex() with 4 issue types
+Codex (GPT):
+  status: NEEDS_FIXES
+  strengths: Clean architecture, real tests
+  critical_issues: none
+  important_issues: Missing progress indicators for long operations
+  minor_issues: Magic number (100) for reporting interval
 
-[Subagent returns]:
-  Strengths: Clean architecture, real tests
-  Issues:
-    Important: Missing progress indicators
-    Minor: Magic number (100) for reporting interval
-  Assessment: Ready to proceed
+You: [Fix progress indicators, re-run Codex review]
 
-You: [Fix progress indicators]
-[Continue to Task 3]
+$ codex review --base a7981ec "Review these changes..."
+
+Codex (GPT):
+  status: APPROVED
+  strengths: Clean architecture, good progress reporting
+  critical_issues: none
+  important_issues: none
+
+[Proceed to next task or Playwright/Flutter evaluation]
 ```
 
 ## Integration with Workflows
 
+**Any workflow — code review = Codex CLI. No exceptions.**
+
 **Subagent-Driven Development:**
-- Review after EACH task
-- Catch issues before they compound
-- Fix before moving to next task
+- Codex spec review + Codex quality review per task
 
-**Executing Plans:**
-- Review after each batch (3 tasks)
-- Get feedback, apply, continue
+**Executing Plans / Ad-Hoc Development:**
+- Codex review before merge or when feature complete
 
-**Ad-Hoc Development:**
-- Review before merge
-- Review when stuck
-
-## Red Flags
-
-**Never:**
-- Skip review because "it's simple"
-- Ignore Critical issues
-- Proceed with unfixed Important issues
-- Argue with valid technical feedback
-
-**If reviewer wrong:**
-- Push back with technical reasoning
-- Show code/tests that prove it works
-- Request clarification
-
-See template at: requesting-code-review/code-reviewer.md
+**Web/Flutter Projects:**
+- Codex review THEN Playwright/Flutter evaluator

@@ -115,6 +115,19 @@ When multiple skills could apply, use this order:
 
 The skill itself tells you which.
 
+## Absolute Rules
+
+**Code review = Codex CLI. NEVER self-review.**
+
+When you are about to review your own code ("let me do the self-review", "the code looks good", "let me verify"), STOP. Run `codex review` instead. The model that wrote the code CANNOT objectively review it. This applies to ALL workflows, not just subagent-driven-development.
+
+| You're about to say... | Instead do... |
+|------------------------|---------------|
+| "Let me do the self-review" | `codex review --base HEAD~1` |
+| "Now let me review the changes" | `codex review --base HEAD~1` |
+| "The implementation looks correct" | `codex review --base HEAD~1` |
+| "Let me verify the code quality" | `codex review --base HEAD~1` |
+
 ## User Instructions
 
 Instructions say WHAT, not HOW. "Add X" or "Fix Y" doesn't mean skip workflows.
