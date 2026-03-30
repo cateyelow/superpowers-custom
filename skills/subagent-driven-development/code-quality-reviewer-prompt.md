@@ -79,7 +79,7 @@ REVIEW_EOF
 exit_code, result = run_codex_review()
 
 # Credit detection: ONLY match CLI-level errors, NOT review content
-if exit_code != 0 AND result matches /Error.*rate.limit|Error.*quota.*exceeded|Error.*insufficient.*funds|Error.*billing|429.*Too.Many.Requests/:
+if exit_code != 0 AND result matches /Error.*rate.limit|Error.*quota.*exceeded|Error.*insufficient.*(funds|quota)|Error.*billing|429.*Too.Many.Requests|insufficient_quota/:
     STATUS = "BLOCKED_CREDIT"
 elif result contains "status: APPROVED":
     STATUS = "APPROVED"

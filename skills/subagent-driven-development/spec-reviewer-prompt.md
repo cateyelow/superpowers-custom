@@ -64,7 +64,7 @@ exit_code, result = run_codex_review()
 
 # Step 1: Check for CLI-level billing failure FIRST (exit code + specific error patterns)
 # IMPORTANT: Only match CLI error messages, NOT review content about billing/credits features
-if exit_code != 0 AND result matches /Error.*rate.limit|Error.*quota.*exceeded|Error.*insufficient.*funds|Error.*billing|429.*Too.Many.Requests/:
+if exit_code != 0 AND result matches /Error.*rate.limit|Error.*quota.*exceeded|Error.*insufficient.*(funds|quota)|Error.*billing|429.*Too.Many.Requests|insufficient_quota/:
     STATUS = "BLOCKED_CREDIT"
 
 # Step 2: Parse structured status from review output

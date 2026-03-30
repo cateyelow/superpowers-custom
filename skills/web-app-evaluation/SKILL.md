@@ -122,7 +122,11 @@ After Generator fixes issues:
 4. Include "Previously found issues: [list]" so evaluator can verify fixes
 5. Repeat until PASS
 
-**Terminal condition:** If 3 consecutive FAIL verdicts on the same issues, escalate to the user — the task may need to be re-scoped or the approach may be wrong.
+**Terminal conditions (escalate to user when ANY is hit):**
+- 3 consecutive FAIL verdicts on the same issues
+- 3 consecutive PASS_WITH_FIXES verdicts where the same Important issue persists
+- Total of 5 evaluation rounds on a single task without reaching PASS
+- The task may need to be re-scoped, the requirements clarified, or the approach changed
 
 ## Integration with Subagent-Driven Development
 
