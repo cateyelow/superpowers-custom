@@ -6,26 +6,13 @@ Verify code quality using **Codex CLI (OpenAI GPT)**, not a Claude subagent. The
 
 **Only dispatch after spec compliance review passes (also via Codex).**
 
-## Credit Check — MANDATORY
-
-Same as spec-reviewer-prompt.md. If Codex returns any credit/billing/quota error:
-
-```
-⛔ HARD STOP: Codex CLI 크레딧이 소진되었습니다.
-
-리뷰를 건너뛸 수 없습니다. 작업을 즉시 중단합니다.
-OpenAI 계정에서 크레딧을 충전한 후 다시 진행해주세요.
-https://platform.openai.com/account/billing
-
-충전 완료 후 알려주시면 이어서 진행하겠습니다.
-```
-
-**STOP MEANS STOP.** No fallback. No skipping. No proceeding.
-
 ## How to Run
 
+Use `codex review` with a heredoc to avoid shell injection:
+
 ```bash
-codex review --base {BASE_SHA} "Review the code quality of these changes.
+codex review --base {BASE_SHA} "$(cat <<'REVIEW_EOF'
+Review the code quality of these changes.
 
 ## What Was Implemented
 {WHAT_WAS_IMPLEMENTED — from implementer's report}
@@ -59,31 +46,56 @@ codex review --base {BASE_SHA} "Review the code quality of these changes.
 - New files are focused and not already large?
 - Existing files not significantly bloated by this change?
 
-## Output Format
+## Required Output Format (MUST follow exactly)
 
-### Strengths
-[What's well done — be specific with file:line]
-
-### Issues
-
-#### Critical (Must Fix)
-[Bugs, security issues, data loss risks]
-
-#### Important (Should Fix)
-[Architecture problems, missing error handling, test gaps]
-
-#### Minor (Nice to Have)
-[Code style, optimization, documentation]
-
-### Assessment
-Ready to proceed? [Yes / No / With fixes]" 2>&1
+status: APPROVED | NEEDS_FIXES | BLOCKED_ERROR
+strengths: [what's well done — file:line references]
+critical_issues: [list, or "none"]
+important_issues: [list, or "none"]
+minor_issues: [list, or "none"]
+REVIEW_EOF
+)" 2>&1
 ```
 
-## Handling Results
+## Parsing the Result
 
-| Codex Output | Action |
-|-------------|--------|
-| Ready: Yes | Proceed to Playwright evaluation (web) or mark complete |
-| Ready: With fixes | Implementer fixes Important+ issues → re-run review |
-| Ready: No | Implementer fixes Critical issues → re-run review |
-| Credit/billing error | **HARD STOP** — tell user to recharge |
+**Parse the structured `status:` field to determine next action.**
+
+| Parsed Status | Action |
+|---------------|--------|
+| `status: APPROVED` | Proceed to Playwright evaluation (web project) or mark task complete |
+| `status: NEEDS_FIXES` | Implementer fixes listed issues → re-run this review |
+| Credit/billing/rate-limit error | → **CREDIT STOP** (see below) |
+| No parseable status / other error | Retry once. If still unparseable, HARD STOP and report |
+
+**Decision logic (same pattern as spec-reviewer):**
+```
+result = run_codex_review()
+
+if result contains "rate limit" or "quota" or "credit" or "billing" or "insufficient":
+    STATUS = "BLOCKED_CREDIT"
+elif result contains "status: APPROVED":
+    STATUS = "APPROVED"
+elif result contains "status: NEEDS_FIXES":
+    STATUS = "NEEDS_FIXES"
+else:
+    STATUS = "BLOCKED_ERROR"
+
+# Same branching as spec-reviewer-prompt.md
+```
+
+## Credit Exhaustion — HARD STOP
+
+Same as spec-reviewer-prompt.md:
+
+```
+⛔ HARD STOP: Codex CLI 크레딧이 소진되었습니다.
+
+리뷰를 건너뛸 수 없습니다. 작업을 즉시 중단합니다.
+OpenAI 계정에서 크레딧을 충전한 후 다시 진행해주세요.
+https://platform.openai.com/account/billing
+
+충전 완료 후 알려주시면 이어서 진행하겠습니다.
+```
+
+**Blocking state. ONLY exits on user confirmation. No fallback. No skipping.**

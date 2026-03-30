@@ -61,10 +61,12 @@ digraph process {
         "Run Codex CLI quality review (./code-quality-reviewer-prompt.md)" [shape=box style=filled fillcolor=lightblue];
         "Codex quality review approves?" [shape=diamond];
         "Implementer subagent fixes quality issues" [shape=box];
-        "Web project?" [shape=diamond style=filled fillcolor=lightyellow];
+        "Task has browser-visible UI?" [shape=diamond style=filled fillcolor=lightyellow];
         "Start app, dispatch Playwright evaluator (./playwright-evaluator-prompt.md)" [shape=box style=filled fillcolor=lightyellow];
         "Playwright evaluator PASS?" [shape=diamond style=filled fillcolor=lightyellow];
         "Implementer subagent fixes browser issues" [shape=box style=filled fillcolor=lightyellow];
+        "Re-run Codex reviews on browser fixes" [shape=box style=filled fillcolor=lightblue];
+        "Codex re-reviews pass?" [shape=diamond];
         "Mark task complete in TodoWrite" [shape=box];
     }
 
@@ -72,6 +74,8 @@ digraph process {
     "More tasks remain?" [shape=diamond];
     "Dispatch final code reviewer subagent for entire implementation" [shape=box];
     "Final Playwright evaluation of full app" [shape=box style=filled fillcolor=lightyellow];
+    "Final Playwright PASS?" [shape=diamond style=filled fillcolor=lightyellow];
+    "Fix and re-evaluate" [shape=box style=filled fillcolor=lightyellow];
     "Use superpowers:finishing-a-development-branch" [shape=box style=filled fillcolor=lightgreen];
 
     "Read plan, extract all tasks with full text, note context, create TodoWrite" -> "Dispatch implementer subagent (./implementer-prompt.md)";
@@ -89,18 +93,24 @@ digraph process {
     "Run Codex CLI quality review (./code-quality-reviewer-prompt.md)" -> "Codex quality review approves?";
     "Codex quality review approves?" -> "Implementer subagent fixes quality issues" [label="no"];
     "Implementer subagent fixes quality issues" -> "Run Codex CLI quality review (./code-quality-reviewer-prompt.md)" [label="re-review"];
-    "Codex quality review approves?" -> "Web project?" [label="yes"];
-    "Web project?" -> "Start app, dispatch Playwright evaluator (./playwright-evaluator-prompt.md)" [label="yes"];
-    "Web project?" -> "Mark task complete in TodoWrite" [label="no"];
+    "Codex quality review approves?" -> "Task has browser-visible UI?" [label="yes"];
+    "Task has browser-visible UI?" -> "Start app, dispatch Playwright evaluator (./playwright-evaluator-prompt.md)" [label="yes — task touches UI"];
+    "Task has browser-visible UI?" -> "Mark task complete in TodoWrite" [label="no — backend/data/infra only"];
     "Start app, dispatch Playwright evaluator (./playwright-evaluator-prompt.md)" -> "Playwright evaluator PASS?";
     "Playwright evaluator PASS?" -> "Mark task complete in TodoWrite" [label="PASS"];
     "Playwright evaluator PASS?" -> "Implementer subagent fixes browser issues" [label="FAIL/PASS_WITH_FIXES"];
-    "Implementer subagent fixes browser issues" -> "Start app, dispatch Playwright evaluator (./playwright-evaluator-prompt.md)" [label="re-evaluate"];
+    "Implementer subagent fixes browser issues" -> "Re-run Codex reviews on browser fixes";
+    "Re-run Codex reviews on browser fixes" -> "Codex re-reviews pass?";
+    "Codex re-reviews pass?" -> "Start app, dispatch Playwright evaluator (./playwright-evaluator-prompt.md)" [label="yes — re-evaluate"];
+    "Codex re-reviews pass?" -> "Implementer subagent fixes browser issues" [label="no — fix code issues first"];
     "Mark task complete in TodoWrite" -> "More tasks remain?";
     "More tasks remain?" -> "Dispatch implementer subagent (./implementer-prompt.md)" [label="yes"];
     "More tasks remain?" -> "Dispatch final code reviewer subagent for entire implementation" [label="no"];
     "Dispatch final code reviewer subagent for entire implementation" -> "Final Playwright evaluation of full app";
-    "Final Playwright evaluation of full app" -> "Use superpowers:finishing-a-development-branch";
+    "Final Playwright evaluation of full app" -> "Final Playwright PASS?";
+    "Final Playwright PASS?" -> "Use superpowers:finishing-a-development-branch" [label="PASS"];
+    "Final Playwright PASS?" -> "Fix and re-evaluate" [label="FAIL"];
+    "Fix and re-evaluate" -> "Final Playwright evaluation of full app";
 }
 ```
 
@@ -153,9 +163,12 @@ A project is a "web project" if ANY of these are true:
 
 **When detected as web project:**
 1. Ensure dev server is started before Playwright evaluation
-2. Playwright evaluation is MANDATORY after code quality review passes
-3. Final Playwright evaluation covers the entire app after all tasks complete
-4. The evaluator tests at mobile, tablet, and desktop viewports
+2. Playwright evaluation applies **per-task only when the task has browser-visible UI changes** (components, pages, layouts, styles, user interactions)
+3. Tasks that are backend-only, data layer, or infrastructure (e.g., "Todo Store", "API routes", "database schema") skip Playwright — unit/integration tests are sufficient
+4. Final Playwright evaluation covers the **entire app** after all tasks complete — this one is always mandatory
+5. The evaluator tests at mobile, tablet, and desktop viewports
+
+**Per-task Playwright trigger:** Does this specific task produce something a user can see or interact with in the browser? If yes → Playwright. If no → skip to mark complete.
 
 ## Example Workflow (Non-Web Project)
 
