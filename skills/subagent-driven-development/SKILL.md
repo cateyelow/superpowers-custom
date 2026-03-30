@@ -5,11 +5,13 @@ description: Use when executing implementation plans with independent tasks in t
 
 # Subagent-Driven Development
 
-Execute plan by dispatching fresh subagent per task, with two-stage review after each: spec compliance review first, then code quality review.
+Execute plan by dispatching fresh subagent per task, with multi-stage review after each: spec compliance review first, then code quality review, then **Playwright browser evaluation for web projects**.
 
 **Why subagents:** You delegate tasks to specialized agents with isolated context. By precisely crafting their instructions and context, you ensure they stay focused and succeed at their task. They should never inherit your session's context or history — you construct exactly what they need. This also preserves your own context for coordination work.
 
-**Core principle:** Fresh subagent per task + two-stage review (spec then quality) = high quality, fast iteration
+**Core principle:** Fresh subagent per task + multi-stage review (spec → quality → browser evaluation) = high quality, fast iteration
+
+**Generator-Evaluator pattern:** Inspired by the Anthropic blog on autonomous development harnesses. The Generator (implementer) builds, the Evaluator (reviewer + Playwright) verifies. Separate agents prevent self-evaluation bias.
 
 ## When to Use
 
@@ -55,12 +57,17 @@ digraph process {
         "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" [shape=box];
         "Code quality reviewer subagent approves?" [shape=diamond];
         "Implementer subagent fixes quality issues" [shape=box];
+        "Web project?" [shape=diamond style=filled fillcolor=lightyellow];
+        "Start app, dispatch Playwright evaluator (./playwright-evaluator-prompt.md)" [shape=box style=filled fillcolor=lightyellow];
+        "Playwright evaluator PASS?" [shape=diamond style=filled fillcolor=lightyellow];
+        "Implementer subagent fixes browser issues" [shape=box style=filled fillcolor=lightyellow];
         "Mark task complete in TodoWrite" [shape=box];
     }
 
     "Read plan, extract all tasks with full text, note context, create TodoWrite" [shape=box];
     "More tasks remain?" [shape=diamond];
     "Dispatch final code reviewer subagent for entire implementation" [shape=box];
+    "Final Playwright evaluation of full app" [shape=box style=filled fillcolor=lightyellow];
     "Use superpowers:finishing-a-development-branch" [shape=box style=filled fillcolor=lightgreen];
 
     "Read plan, extract all tasks with full text, note context, create TodoWrite" -> "Dispatch implementer subagent (./implementer-prompt.md)";
@@ -76,11 +83,18 @@ digraph process {
     "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" -> "Code quality reviewer subagent approves?";
     "Code quality reviewer subagent approves?" -> "Implementer subagent fixes quality issues" [label="no"];
     "Implementer subagent fixes quality issues" -> "Dispatch code quality reviewer subagent (./code-quality-reviewer-prompt.md)" [label="re-review"];
-    "Code quality reviewer subagent approves?" -> "Mark task complete in TodoWrite" [label="yes"];
+    "Code quality reviewer subagent approves?" -> "Web project?" [label="yes"];
+    "Web project?" -> "Start app, dispatch Playwright evaluator (./playwright-evaluator-prompt.md)" [label="yes"];
+    "Web project?" -> "Mark task complete in TodoWrite" [label="no"];
+    "Start app, dispatch Playwright evaluator (./playwright-evaluator-prompt.md)" -> "Playwright evaluator PASS?";
+    "Playwright evaluator PASS?" -> "Mark task complete in TodoWrite" [label="PASS"];
+    "Playwright evaluator PASS?" -> "Implementer subagent fixes browser issues" [label="FAIL/PASS_WITH_FIXES"];
+    "Implementer subagent fixes browser issues" -> "Start app, dispatch Playwright evaluator (./playwright-evaluator-prompt.md)" [label="re-evaluate"];
     "Mark task complete in TodoWrite" -> "More tasks remain?";
     "More tasks remain?" -> "Dispatch implementer subagent (./implementer-prompt.md)" [label="yes"];
     "More tasks remain?" -> "Dispatch final code reviewer subagent for entire implementation" [label="no"];
-    "Dispatch final code reviewer subagent for entire implementation" -> "Use superpowers:finishing-a-development-branch";
+    "Dispatch final code reviewer subagent for entire implementation" -> "Final Playwright evaluation of full app";
+    "Final Playwright evaluation of full app" -> "Use superpowers:finishing-a-development-branch";
 }
 ```
 
@@ -122,81 +136,110 @@ Implementer subagents report one of four statuses. Handle each appropriately:
 - `./implementer-prompt.md` - Dispatch implementer subagent
 - `./spec-reviewer-prompt.md` - Dispatch spec compliance reviewer subagent
 - `./code-quality-reviewer-prompt.md` - Dispatch code quality reviewer subagent
+- `./playwright-evaluator-prompt.md` - Dispatch Playwright browser evaluator (web projects only)
 
-## Example Workflow
+## Web Project Detection
+
+A project is a "web project" if ANY of these are true:
+- Has `.jsx`, `.tsx`, `.vue`, `.svelte`, or `.html` files being modified
+- Uses React, Vue, Svelte, Next.js, Nuxt, SvelteKit, or similar frameworks
+- Has a frontend dev server (Vite, Webpack, etc.)
+- Task involves UI components, pages, layouts, or user-facing features
+- Plan mentions "frontend", "UI", "dashboard", "web app", or similar
+
+**When detected as web project:**
+1. Ensure dev server is started before Playwright evaluation
+2. Playwright evaluation is MANDATORY after code quality review passes
+3. Final Playwright evaluation covers the entire app after all tasks complete
+4. The evaluator tests at mobile, tablet, and desktop viewports
+
+## Example Workflow (Non-Web Project)
 
 ```
 You: I'm using Subagent-Driven Development to execute this plan.
 
 [Read plan file once: docs/superpowers/plans/feature-plan.md]
 [Extract all 5 tasks with full text and context]
+[Detect: No web UI files → skip Playwright evaluation]
 [Create TodoWrite with all tasks]
 
 Task 1: Hook installation script
+[Dispatch implementer → spec review → code quality review → complete]
 
-[Get Task 1 text and context (already extracted)]
-[Dispatch implementation subagent with full task text + context]
+Task 2: Recovery modes
+[Dispatch implementer → spec review (fail, fix, pass) → code quality (fail, fix, pass) → complete]
 
-Implementer: "Before I begin - should the hook be installed at user or system level?"
+[After all tasks → final code review → finishing-a-development-branch]
+```
 
-You: "User level (~/.config/superpowers/hooks/)"
+## Example Workflow (Web Project — with Playwright Evaluation)
 
-Implementer: "Got it. Implementing now..."
-[Later] Implementer:
-  - Implemented install-hook command
-  - Added tests, 5/5 passing
-  - Self-review: Found I missed --force flag, added it
+```
+You: I'm using Subagent-Driven Development to execute this plan.
+
+[Read plan file once: docs/superpowers/plans/dashboard-plan.md]
+[Extract all 4 tasks with full text and context]
+[Detect: React + Vite project → Playwright evaluation MANDATORY]
+[Create TodoWrite with all tasks]
+
+Task 1: User dashboard page
+
+[Dispatch implementer subagent]
+Implementer:
+  - Built Dashboard component with user stats cards
+  - Added API route /api/stats
+  - 6/6 tests passing
   - Committed
 
-[Dispatch spec compliance reviewer]
-Spec reviewer: ✅ Spec compliant - all requirements met, nothing extra
+[Spec reviewer] ✅ Spec compliant
 
-[Get git SHAs, dispatch code quality reviewer]
-Code reviewer: Strengths: Good test coverage, clean. Issues: None. Approved.
+[Code quality reviewer] ✅ Approved
+
+[Web project detected → Start dev server: npm run dev]
+[Dispatch Playwright evaluator at http://localhost:5173]
+
+Playwright Evaluator:
+  Overall Score: 32/50
+  - Design Quality: 6/10 — Cards lack visual hierarchy
+  - Originality: 5/10 — Generic Bootstrap look
+  - Technical Polish: 7/10 — Good spacing, minor alignment issues
+  - Functionality: 7/10 — Stats load correctly
+  - User Experience: 7/10 — Clear layout but boring
+
+  Critical Issues: None
+  Important Issues:
+    - Stats cards have no loading state (shows "undefined" briefly)
+    - No error state when API fails
+  Minor Issues:
+    - Cards could use subtle shadows for depth
+
+  Verdict: PASS_WITH_FIXES
+
+[Implementer fixes: adds loading skeleton + error state]
+[Re-dispatch Playwright evaluator]
+
+Playwright Evaluator:
+  Overall Score: 38/50
+  - Functionality: 9/10 — Loading and error states work perfectly
+  Verdict: PASS
 
 [Mark Task 1 complete]
 
-Task 2: Recovery modes
-
-[Get Task 2 text and context (already extracted)]
-[Dispatch implementation subagent with full task text + context]
-
-Implementer: [No questions, proceeds]
-Implementer:
-  - Added verify/repair modes
-  - 8/8 tests passing
-  - Self-review: All good
-  - Committed
-
-[Dispatch spec compliance reviewer]
-Spec reviewer: ❌ Issues:
-  - Missing: Progress reporting (spec says "report every 100 items")
-  - Extra: Added --json flag (not requested)
-
-[Implementer fixes issues]
-Implementer: Removed --json flag, added progress reporting
-
-[Spec reviewer reviews again]
-Spec reviewer: ✅ Spec compliant now
-
-[Dispatch code quality reviewer]
-Code reviewer: Strengths: Solid. Issues (Important): Magic number (100)
-
-[Implementer fixes]
-Implementer: Extracted PROGRESS_INTERVAL constant
-
-[Code reviewer reviews again]
-Code reviewer: ✅ Approved
-
-[Mark Task 2 complete]
+Task 2: Data visualization charts
+[Dispatch implementer → spec review → code quality → Playwright evaluation → ...]
 
 ...
 
 [After all tasks]
-[Dispatch final code-reviewer]
-Final reviewer: All requirements met, ready to merge
+[Dispatch final code reviewer]
+[Dispatch final Playwright evaluator for full app flow]
+Final Playwright evaluation:
+  - Tested complete user journey: login → dashboard → charts → settings
+  - All pages responsive at 375px, 768px, 1280px
+  - No console errors across all pages
+  - Overall: 41/50, Verdict: PASS
 
-Done!
+[Use superpowers:finishing-a-development-branch]
 ```
 
 ## Advantages
@@ -220,22 +263,26 @@ Done!
 
 **Quality gates:**
 - Self-review catches issues before handoff
-- Two-stage review: spec compliance, then code quality
+- Multi-stage review: spec compliance → code quality → Playwright browser evaluation
 - Review loops ensure fixes actually work
 - Spec compliance prevents over/under-building
 - Code quality ensures implementation is well-built
+- Playwright evaluation catches what code review cannot: visual bugs, broken interactions, missing states
 
 **Cost:**
-- More subagent invocations (implementer + 2 reviewers per task)
+- More subagent invocations (implementer + 2-3 reviewers per task)
 - Controller does more prep work (extracting all tasks upfront)
 - Review loops add iterations
+- Playwright evaluation adds browser interaction time
 - But catches issues early (cheaper than debugging later)
+- From Anthropic's data: ~20x cost increase yields fundamental quality difference
 
 ## Red Flags
 
 **Never:**
 - Start implementation on main/master branch without explicit user consent
-- Skip reviews (spec compliance OR code quality)
+- Skip reviews (spec compliance OR code quality OR Playwright for web projects)
+- Skip Playwright evaluation for web projects ("code review is enough" — NO, it is NOT)
 - Proceed with unfixed issues
 - Dispatch multiple implementation subagents in parallel (conflicts)
 - Make subagent read plan file (provide full text instead)
@@ -268,10 +315,14 @@ Done!
 - **superpowers:using-git-worktrees** - REQUIRED: Set up isolated workspace before starting
 - **superpowers:writing-plans** - Creates the plan this skill executes
 - **superpowers:requesting-code-review** - Code review template for reviewer subagents
+- **superpowers:web-app-evaluation** - REQUIRED for web projects: Playwright browser evaluation
 - **superpowers:finishing-a-development-branch** - Complete development after all tasks
 
 **Subagents should use:**
 - **superpowers:test-driven-development** - Subagents follow TDD for each task
+
+**Evaluator agents:**
+- **superpowers:playwright-evaluator** - Browser-based evaluation agent for web projects
 
 **Alternative workflow:**
 - **superpowers:executing-plans** - Use for parallel session instead of same-session execution

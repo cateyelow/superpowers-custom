@@ -100,9 +100,11 @@ When multiple skills could apply, use this order:
 
 1. **Process skills first** (brainstorming, debugging) - these determine HOW to approach the task
 2. **Implementation skills second** (frontend-design, mcp-builder) - these guide execution
+3. **Evaluation skills always** (web-app-evaluation) - web projects ALWAYS get Playwright evaluation
 
 "Let's build X" → brainstorming first, then implementation skills.
 "Fix this bug" → debugging first, then domain-specific skills.
+"Build a web app" → brainstorming → implementation → **web-app-evaluation (mandatory)**.
 
 ## Skill Types
 
