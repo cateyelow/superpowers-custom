@@ -121,7 +121,7 @@ digraph process {
 - Integration tasks (multi-file) → standard Claude model
 - Architecture tasks → most capable Claude model
 
-**Evaluator (Codex CLI):** Always uses the configured Codex model (default: `gpt-5.4` with `xhigh` reasoning). This is configured in `~/.codex/config.toml`, not controlled per-task.
+**Evaluator (Codex CLI):** Always uses the configured Codex model (default: `gpt-5.5` with `xhigh` reasoning). This is configured in `~/.codex/config.toml`, not controlled per-task.
 
 **Playwright Evaluator:** Uses Claude (inherits parent model) — it needs Playwright MCP tools which Codex doesn't have.
 
