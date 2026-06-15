@@ -8,11 +8,11 @@ Verify code quality using **Codex CLI (OpenAI GPT)**, not a Claude subagent. The
 
 ## How to Run
 
-Use `codex exec` with full access to avoid bwrap sandbox errors:
+**Use the host-safe form.** On this host every `codex` run loads heavyweight MCP servers (`playwright` headed-Chrome, `serena`, `context7`) that can wedge codex so it never exits → the harness fires a completion notification only on process termination → you never get woken → infinite idle. `-c mcp_servers='{}'` loads zero MCP servers; `timeout -k 60 1200` guarantees termination (hence a guaranteed notification); `-s danger-full-access` avoids bwrap sandbox errors. Launch with `run_in_background: true` and **do not poll**.
 
 ```bash
 cd {PROJECT_DIR} && git diff {BASE_SHA}..HEAD > /tmp/codex_review_diff.txt && \
-codex exec -s danger-full-access "$(cat <<'REVIEW_EOF'
+timeout -k 60 1200 codex exec -s danger-full-access -c mcp_servers='{}' "$(cat <<'REVIEW_EOF'
 Review the code quality of the changes. Read the diff at /tmp/codex_review_diff.txt and the actual source files.
 
 ## What Was Implemented
@@ -61,8 +61,10 @@ minor_issues: [list, or "none"]
 - NEEDS_FIXES: when critical_issues OR important_issues has any entries
 - BLOCKED_ERROR: when you cannot complete the review for technical reasons
 REVIEW_EOF
-)" 2>&1
+)" < /dev/null > /tmp/codex_quality_review.out 2>&1
 ```
+
+**Launch with `run_in_background: true`, then do NOT poll** (no `BashOutput`, no `Monitor`, no waiting this turn). The completion notification fires only when codex terminates; the `timeout -k 60 1200` wrapper guarantees that within ~20 min even on a hard hang. When it arrives, `Read /tmp/codex_quality_review.out` once and parse `status:`. **Exit 124/137 = codex hung or over-ran the timeout** → report the partial buffer and stop; do not silently relaunch.
 
 ## Parsing the Result
 

@@ -15,6 +15,21 @@ Execute plan by dispatching fresh subagent per task, with multi-stage review aft
 
 **Codex CLI credit requirement:** All code reviews (spec + quality) run through Codex CLI. If credits are exhausted, ALL WORK STOPS immediately. No fallback to Claude review. No skipping reviews. User must recharge OpenAI credits before proceeding.
 
+## ⚠️ Host-safe Codex invocation (READ FIRST)
+
+On this host every `codex` run loads heavyweight MCP servers (`playwright` headed-Chrome, `serena`, `context7`). They can wedge codex so the process **never exits** — and the harness fires a background-completion notification **only when the process terminates**. So a wedged codex = no notification = you announce the review, end your turn, and sit idle forever ("codex가 완료되어도 가만히 있음"). **Never use `codex review` on this host** (it ignores `-c mcp_servers='{}'`, re-hangs, and can't even read the diff under bwrap). Every Codex review in this skill runs through the host-safe command — the prompt templates already use it:
+
+```bash
+timeout -k 60 1200 codex exec -s danger-full-access -c mcp_servers='{}' "$(cat <<'EOF' … EOF)" < /dev/null > /tmp/codex_review.out 2>&1
+```
+
+- `-c mcp_servers='{}'` → zero MCP servers (no browser wedge, no leaked Chrome/serena/context7 procs).
+- `timeout -k 60 1200` → guaranteed termination → guaranteed completion notification (within ~20 min even on a hard hang). The harness's own `timeout:` arg does **not** bound a `run_in_background` task — this inner `timeout` is the real guarantee.
+- Launch with `run_in_background: true` and **do not poll** (no `BashOutput`/`Monitor`/waiting). The notification arrives on its own with the exit code.
+- Treat **exit 124/137 as "codex hung / over-ran"** → report the partial buffer, do not silently relaunch.
+
+See the `codex-cli` skill for the full rationale and verification.
+
 ## When to Use
 
 ```dot
@@ -206,11 +221,11 @@ Task 1: Hook installation script
 Implementer: DONE — implemented install-hook command, 5/5 tests passing
 
 [Run Codex CLI spec review]
-$ codex review --base a7981ec "Review spec compliance for Task 1..."
+$ timeout -k 60 1200 codex exec -s danger-full-access -c mcp_servers='{}' "Review spec compliance for Task 1..." < /dev/null > /tmp/codex_spec_review.out 2>&1   # bg, don't poll
 Codex (GPT): ✅ Spec compliant — all requirements met
 
 [Run Codex CLI quality review]
-$ codex review --base a7981ec "Review code quality for Task 1..."
+$ timeout -k 60 1200 codex exec -s danger-full-access -c mcp_servers='{}' "Review code quality for Task 1..." < /dev/null > /tmp/codex_quality_review.out 2>&1   # bg, don't poll
 Codex (GPT): Strengths: Good test coverage. Issues: None. Ready: Yes.
 
 [Mark Task 1 complete]
@@ -240,11 +255,11 @@ Implementer:
   - 6/6 tests passing, committed
 
 [Run Codex CLI spec review]
-$ codex review --base abc123 "Review spec compliance..."
+$ timeout -k 60 1200 codex exec -s danger-full-access -c mcp_servers='{}' "Review spec compliance..." < /dev/null > /tmp/codex_spec_review.out 2>&1   # bg, don't poll
 Codex (GPT): ✅ Spec compliant
 
 [Run Codex CLI quality review]
-$ codex review --base abc123 "Review code quality..."
+$ timeout -k 60 1200 codex exec -s danger-full-access -c mcp_servers='{}' "Review code quality..." < /dev/null > /tmp/codex_quality_review.out 2>&1   # bg, don't poll
 Codex (GPT): Strengths: Clean components. Issues: None. Ready: Yes.
 
 [Web project → Start dev server: npm run dev]
@@ -275,7 +290,7 @@ Task 3: Settings page
 [Dispatch Claude implementer → DONE]
 
 [Run Codex CLI spec review]
-$ codex review --base def456 "Review spec compliance..."
+$ timeout -k 60 1200 codex exec -s danger-full-access -c mcp_servers='{}' "Review spec compliance..." < /dev/null > /tmp/codex_spec_review.out 2>&1   # bg, don't poll
 ERROR: Rate limit exceeded. Please check your billing at...
 
 ⛔ HARD STOP
@@ -368,7 +383,7 @@ OpenAI 계정에서 크레딧을 충전해주세요: https://platform.openai.com
 - **superpowers:test-driven-development** - Subagents follow TDD for each task
 
 **Evaluator tools:**
-- **Codex CLI** (`codex review`) - Code review via GPT (different model = no self-evaluation bias)
+- **Codex CLI** (host-safe `timeout … codex exec … -c mcp_servers='{}'`, **never `codex review`** — it hangs on this host) - Code review via GPT (different model = no self-evaluation bias). See the ⚠️ callout near the top and `./spec-reviewer-prompt.md` / `./code-quality-reviewer-prompt.md` for the exact command.
 - **superpowers:playwright-evaluator** - Browser-based UI evaluation agent (web projects only)
 - **superpowers:flutter-evaluator** - Emulator/simulator-based evaluation agent (Flutter projects only)
 

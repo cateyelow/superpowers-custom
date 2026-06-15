@@ -119,14 +119,22 @@ The skill itself tells you which.
 
 **Code review = Codex CLI. NEVER self-review.**
 
-When you are about to review your own code ("let me do the self-review", "the code looks good", "let me verify"), STOP. Run `codex review` instead. The model that wrote the code CANNOT objectively review it. This applies to ALL workflows, not just subagent-driven-development.
+When you are about to review your own code ("let me do the self-review", "the code looks good", "let me verify"), STOP. Run Codex CLI instead. The model that wrote the code CANNOT objectively review it. This applies to ALL workflows, not just subagent-driven-development.
+
+**The review command is the host-safe Codex form.** On this host `codex review` HANGS — it loads heavyweight MCP servers (`playwright` headed-Chrome, `serena`, `context7`) that wedge codex so it never exits → the harness fires a completion notification only on process termination → no notification → Claude announces the review and sits idle forever. Use:
+
+```bash
+timeout -k 60 1200 codex exec -s danger-full-access -c mcp_servers='{}' "Review HEAD~1..HEAD — run \`git --no-pager diff HEAD~1..HEAD\` yourself; report only" < /dev/null > /tmp/codex_review.out 2>&1
+```
+
+Run it with `run_in_background: true` and **do not poll** — the `timeout` guarantees the completion notification fires (within ~20 min even on a hard hang). **Never use `codex review` on this host.** See the `codex-cli` skill for full rationale.
 
 | You're about to say... | Instead do... |
 |------------------------|---------------|
-| "Let me do the self-review" | `codex review --base HEAD~1` |
-| "Now let me review the changes" | `codex review --base HEAD~1` |
-| "The implementation looks correct" | `codex review --base HEAD~1` |
-| "Let me verify the code quality" | `codex review --base HEAD~1` |
+| "Let me do the self-review" | Run the host-safe `codex exec` above |
+| "Now let me review the changes" | Run the host-safe `codex exec` above |
+| "The implementation looks correct" | Run the host-safe `codex exec` above |
+| "Let me verify the code quality" | Run the host-safe `codex exec` above |
 
 ## User Instructions
 

@@ -32,10 +32,10 @@ BASE_SHA=$(git rev-parse HEAD~1)  # or origin/main
 git diff ${BASE_SHA}..HEAD > /tmp/codex_review_diff.txt
 ```
 
-**2. Run Codex CLI review (NOT a Claude subagent, NOT self-review):**
+**2. Run Codex CLI review (NOT a Claude subagent, NOT self-review).** Use the host-safe form — `-c mcp_servers='{}'` loads zero MCP servers (otherwise codex can wedge on the `playwright`/Chrome MCP and never exit → no completion notification → infinite idle), and `timeout -k 60 1200` guarantees termination (hence a guaranteed notification). Launch with `run_in_background: true` and **do not poll**:
 
 ```bash
-codex exec -s danger-full-access "$(cat <<'REVIEW_EOF'
+timeout -k 60 1200 codex exec -s danger-full-access -c mcp_servers='{}' "$(cat <<'REVIEW_EOF'
 Review the code changes for production readiness.
 Read the diff at /tmp/codex_review_diff.txt and the actual source files.
 
@@ -78,8 +78,10 @@ Status rules:
 - APPROVED only when critical_issues AND important_issues are both "none"
 - NEEDS_FIXES when any critical or important issue exists
 REVIEW_EOF
-)" 2>&1
+)" < /dev/null > /tmp/codex_review.out 2>&1
 ```
+
+After launching, **do not poll** — when the completion notification arrives, `Read /tmp/codex_review.out` and parse `status:`. **Exit 124/137 = codex hung / over-ran the `timeout`** → report the partial buffer, do not silently relaunch.
 
 **3. Handle credit errors:**
 
@@ -103,8 +105,8 @@ https://platform.openai.com/account/billing
 
 | Before (DON'T) | After (DO) |
 |-----------------|------------|
-| "Let me do the self-review" | `codex exec -s danger-full-access "Review..."` |
-| Dispatch Claude code-reviewer subagent | `codex exec -s danger-full-access "Review..."` |
+| "Let me do the self-review" | `codex exec -s danger-full-access -c mcp_servers='{}' "Review..."` (host-safe; full form in step 2) |
+| Dispatch Claude code-reviewer subagent | `codex exec -s danger-full-access -c mcp_servers='{}' "Review..."` (host-safe; full form in step 2) |
 | "Looks good to me" | Parse `status: APPROVED` from Codex |
 | Claiming completion without external review | Codex review is mandatory gate |
 
@@ -126,7 +128,7 @@ https://platform.openai.com/account/billing
 You: Let me request code review via Codex CLI.
 
 $ git diff HEAD~1..HEAD > /tmp/codex_review_diff.txt
-$ codex exec -s danger-full-access "Review the code changes..."
+$ timeout -k 60 1200 codex exec -s danger-full-access -c mcp_servers='{}' "Review the code changes..." < /dev/null > /tmp/codex_review.out 2>&1   # bg, don't poll
 
 Codex (GPT):
   status: NEEDS_FIXES
@@ -138,7 +140,7 @@ Codex (GPT):
 You: [Fix progress indicators, re-run Codex review]
 
 $ git diff HEAD~1..HEAD > /tmp/codex_review_diff.txt
-$ codex exec -s danger-full-access "Review the code changes..."
+$ timeout -k 60 1200 codex exec -s danger-full-access -c mcp_servers='{}' "Review the code changes..." < /dev/null > /tmp/codex_review.out 2>&1   # bg, don't poll
 
 Codex (GPT):
   status: APPROVED
