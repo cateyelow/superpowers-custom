@@ -20,6 +20,8 @@ Focus on:
 
 Do not do deep feature exploration.
 
+Always call `browser_close` before returning (on PASS or FAIL) — never leave the browser open, or it leaks and piles up across runs.
+
 Return only:
 
 ```

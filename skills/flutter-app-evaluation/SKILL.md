@@ -31,16 +31,29 @@ Before Flutter evaluation can run, the environment needs:
 
 ### Android
 ```bash
-# Verify emulator is running
-adb devices | grep -q "emulator"
+# --- Reap emulators/flutter leaked by prior CRASHED evals (verifies cmdline, so PID reuse is safe) ---
+for t in /tmp/flutter-eval-*.track; do
+  [ -e "$t" ] || continue
+  ep=$(awk -F= '/^emulator_pid=/{print $2}' "$t")
+  [ -n "$ep" ] && grep -qa 'qemu\|emulator' /proc/$ep/cmdline 2>/dev/null && kill "$ep" 2>/dev/null
+  fp=$(awk -F= '/^flutter_pid=/{print $2}' "$t")
+  [ -n "$fp" ] && grep -qa 'flutter\|dart' /proc/$fp/cmdline 2>/dev/null && { pkill -P "$fp" 2>/dev/null; kill "$fp" 2>/dev/null; }
+  rm -f "$t"
+done
 
-# If not running, list and start one
-emulator -list-avds
-emulator -avd <avd_name> -no-window &
-
-# Readiness probe: wait for boot
-adb wait-for-device
-adb shell getprop sys.boot_completed | grep -q "1"
+# --- Start the emulator ONLY if none is running; record what WE start so Teardown is exact ---
+AVD=<avd_name>                                    # pick one from `emulator -list-avds`
+TRACK="/tmp/flutter-eval-${AVD}.track"; : > "$TRACK"
+if adb devices | grep -q "emulator-"; then
+  # User already has one running — note it and DO NOT kill it at teardown
+  echo "emulator_preexisting=$(adb devices | awk '/emulator-/{print $1; exit}')" >> "$TRACK"
+else
+  emulator -avd "$AVD" -no-window -no-snapshot -no-boot-anim -gpu swiftshader_indirect &
+  echo "emulator_pid=$!" >> "$TRACK"
+  adb wait-for-device
+  adb shell getprop sys.boot_completed | grep -q "1"
+  echo "emulator_started=$(adb devices | awk '/emulator-/{print $1; exit}')" >> "$TRACK"
+fi
 ```
 
 ### iOS (macOS only)
@@ -102,16 +115,20 @@ digraph eval_loop {
 ### Step 1: Ensure device is running and app is built
 
 ```bash
-# Android
-adb devices | grep -q "emulator" || (emulator -avd <avd> -no-window & && adb wait-for-device)
-flutter run -d emulator-5554 &
-# Wait for app to launch
-sleep 10 && adb shell ps | grep -q "com.example"
+# Android — device is already up + tracked via Prerequisites above (reuse the same $AVD/$TRACK).
+AVD=<avd_name>; TRACK="/tmp/flutter-eval-${AVD}.track"
+DEVICE=$(adb devices | awk '/emulator-/{print $1; exit}')
+flutter run -d "$DEVICE" &
+echo "flutter_pid=$!" >> "$TRACK"        # record so Teardown stops exactly this process
+# Readiness probe (no blind sleep): wait until the app process is up
+for i in $(seq 1 60); do adb shell ps 2>/dev/null | grep -q "com.example" && break; sleep 1; done
 
-# iOS
-xcrun simctl list devices booted | grep -q "Booted" || xcrun simctl boot "iPhone 15 Pro"
+# iOS — only record ios_booted if WE boot it (so Teardown shuts down only our simulator)
+TRACK="/tmp/flutter-eval-ios.track"; : > "$TRACK"
+xcrun simctl list devices booted | grep -q "Booted" || { xcrun simctl boot "iPhone 15 Pro"; echo "ios_booted=iPhone 15 Pro" >> "$TRACK"; }
 flutter run -d <simulator_id> &
-sleep 10
+echo "flutter_pid=$!" >> "$TRACK"
+for i in $(seq 1 60); do xcrun simctl get_app_status booted com.example.app 2>/dev/null | grep -q Running && break; sleep 1; done
 ```
 
 ### Step 2: Dispatch Flutter Evaluator
@@ -151,6 +168,35 @@ adb shell input keyevent 82  # or send 'r' to flutter run process
 - 3 consecutive PASS_WITH_FIXES where the same Important issue persists
 - Total of 5 evaluation rounds on a single task
 - The task may need to be re-scoped or the approach changed
+
+## Teardown (MANDATORY — run on EVERY exit path)
+
+The evaluation **owns every process it started**. An Android emulator is 2–8 GB RAM + a full CPU core, and neither it nor the `flutter run` / dart process exits on its own. Leaving them alive is the #1 cause of this machine grinding to a halt: each eval round strands another emulator until the box thrashes (4 stranded emulators have done exactly this).
+
+Run this the moment evaluation ends — **on PASS, on FAIL, and when escalating to the user**. It stops only what THIS run started (recorded in `$TRACK`), never an emulator the user already had open:
+
+```bash
+for TRACK in "/tmp/flutter-eval-${AVD}.track" /tmp/flutter-eval-ios.track; do
+  [ -f "$TRACK" ] || continue
+  fp=$(awk -F= '/^flutter_pid=/{print $2}' "$TRACK")
+  if [ -n "$fp" ] && grep -qa 'flutter\|dart' /proc/$fp/cmdline 2>/dev/null; then
+    pkill -P "$fp" 2>/dev/null; kill "$fp" 2>/dev/null          # stop `flutter run` + its dart child (scoped, not a broad pkill)
+  fi
+  es=$(awk -F= '/^emulator_started=/{print $2}' "$TRACK")
+  if [ -n "$es" ]; then
+    adb -s "$es" emu kill 2>/dev/null                            # graceful shutdown (releases the AVD lock)
+    ep=$(awk -F= '/^emulator_pid=/{print $2}' "$TRACK")
+    [ -n "$ep" ] && grep -qa 'qemu\|emulator' /proc/$ep/cmdline 2>/dev/null && kill "$ep" 2>/dev/null  # fallback if wedged
+  fi
+  ib=$(awk -F= '/^ios_booted=/{print $2}' "$TRACK")
+  [ -n "$ib" ] && xcrun simctl shutdown "$ib" 2>/dev/null        # only if WE booted it
+  rm -f "$TRACK"
+done
+# Confirm nothing of ours survived
+adb devices; pgrep -af 'flutter_tools.*run' && echo "WARN: a flutter run is still alive — investigate" || echo "clean: no leaked flutter run"
+```
+
+A track file with `emulator_preexisting=` means that device was the user's — **never kill it**; only stop the `flutter run` you launched on it.
 
 ## Integration with Subagent-Driven Development
 
@@ -209,6 +255,7 @@ Per Task (logic/data only — no UI):
 ## Red Flags
 
 **Never:**
+- Leave the emulator/simulator or `flutter run` process alive after evaluation — ALWAYS run **Teardown** (even on FAIL or escalation). Each stranded emulator is 2–8 GB RAM + a full CPU core and they pile up across rounds until the machine thrashes.
 - Skip Flutter evaluation for tasks with user-visible UI
 - Trust the Generator's claim that "it works"
 - Test on only one platform when both are available

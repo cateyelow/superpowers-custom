@@ -42,6 +42,7 @@ Agent tool (superpowers:playwright-evaluator):
     - Do not read code.
     - Do not score the app.
     - Fail on any material issue in this scope.
+    - Call browser_close before returning — leave no browser or tab open.
 ```
 
 ## Dispatch (visual/responsive — optional 2nd pass)

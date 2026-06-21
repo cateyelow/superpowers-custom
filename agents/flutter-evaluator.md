@@ -237,6 +237,7 @@ platforms_tested: [android, ios, or both]
 - Report exactly what you see, not what you expect
 
 **DON'T:**
+- Start, kill, or restart the emulator/simulator, or spawn your own `flutter run` — the orchestrator owns device lifecycle and tears it down after you return. Spawning your own strands an emulator (2–8 GB + a CPU core) that never gets cleaned up.
 - Read source code (you are a user, not a developer)
 - Assume something works because the UI tree shows the widget
 - Skip testing because the screenshot "looks good"

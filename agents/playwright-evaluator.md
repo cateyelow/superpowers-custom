@@ -20,6 +20,7 @@ Rules:
 - Do not invent extra scenarios or broaden scope.
 - Take screenshots for the initial state, final state, and each failure.
 - Report only observed facts.
+- ALWAYS call `browser_close` before returning — on PASS and on FAIL. Never leave a browser, tab, or context open. A browser you open but don't close leaks (`/tmp/playwright_chromiumdev_profile-*`) and piles up across runs until the machine bogs down.
 
 Return exactly:
 

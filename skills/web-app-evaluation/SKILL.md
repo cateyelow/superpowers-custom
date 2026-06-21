@@ -78,8 +78,18 @@ digraph eval_loop {
 Before dispatching the evaluator, the application MUST be running AND responding. **Do NOT use `sleep` — use a readiness probe:**
 
 ```bash
-# Start the dev server in background
+# Reap dev servers leaked by prior CRASHED evals (verifies cmdline, so PID reuse is safe)
+for t in /tmp/web-eval-*.track; do
+  [ -e "$t" ] || continue
+  sp=$(awk -F= '/^server_pid=/{print $2}' "$t")
+  [ -n "$sp" ] && grep -qa 'node\|npm\|vite\|next' /proc/$sp/cmdline 2>/dev/null && { pkill -P "$sp" 2>/dev/null; kill "$sp" 2>/dev/null; }
+  rm -f "$t"
+done
+
+# Start the dev server in background — record its PID so Teardown stops exactly this server
+TRACK="/tmp/web-eval-$(basename "$PWD").track"; : > "$TRACK"
 npm run dev &
+echo "server_pid=$!" >> "$TRACK"
 
 # Readiness probe: wait until server responds (max 30 seconds)
 for i in $(seq 1 30); do
@@ -127,6 +137,28 @@ After Generator fixes issues:
 - 3 consecutive PASS_WITH_FIXES verdicts where the same Important issue persists
 - Total of 5 evaluation rounds on a single task without reaching PASS
 - The task may need to be re-scoped, the requirements clarified, or the approach changed
+
+## Teardown (MANDATORY — run on EVERY exit path)
+
+The evaluation **owns the dev server it started**, and the Playwright Evaluator **owns the browser it opened**. Neither exits on its own — a leaked `npm run dev` (Node, ~0.5–1 GB) plus a leaked Playwright Chromium (`/tmp/playwright_chromiumdev_profile-*`, ~5–10 processes) accumulate every round and bog the machine down within a handful of cycles.
+
+Two owners, two duties:
+
+1. **The Playwright Evaluator closes its own browser.** The `playwright-evaluator` / `playwright-visual-evaluator` agents and their dispatch template require a `browser_close` before returning — on PASS and FAIL. Confirm the returned report says it closed the browser.
+2. **The orchestrator stops the dev server it started** — on PASS, FAIL, and when escalating:
+
+```bash
+TRACK="/tmp/web-eval-$(basename "$PWD").track"
+if [ -f "$TRACK" ]; then
+  sp=$(awk -F= '/^server_pid=/{print $2}' "$TRACK")
+  if [ -n "$sp" ] && grep -qa 'node\|npm\|vite\|next' /proc/$sp/cmdline 2>/dev/null; then
+    pkill -P "$sp" 2>/dev/null; kill "$sp" 2>/dev/null      # scoped to our server tree, not a broad pkill
+  fi
+  rm -f "$TRACK"
+fi
+```
+
+Do **not** blanket-`pkill` Playwright/Chromium from here — other concurrent evaluations may have a browser open. The browser's owner is the evaluator agent's `browser_close`. Stale `/tmp/playwright_chromiumdev_profile-*` left by a crashed agent can be swept separately once no eval is running.
 
 ## Integration with Subagent-Driven Development
 
@@ -187,6 +219,7 @@ Per Task (backend/data/infra only — no UI):
 ## Red Flags
 
 **Never:**
+- Leave the dev server or the Playwright browser alive after evaluation — ALWAYS run **Teardown** (even on FAIL or escalation). Leaked `npm run dev` servers and Chromium profiles pile up across rounds and bog the machine down.
 - Skip Playwright evaluation for tasks with browser-visible UI
 - Trust the Generator's claim that "it works" without browser verification
 - Give PASS verdict while any Critical issue exists
