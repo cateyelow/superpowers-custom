@@ -222,11 +222,10 @@ Per Task (backend/data/infra only — no UI):
 ## Red Flags
 
 **Never:**
-- Leave the dev server or the Playwright browser alive after evaluation — ALWAYS run **Teardown** (even on FAIL or escalation). Leaked `npm run dev` servers and Chromium profiles pile up across rounds and bog the machine down.
+- Leave the dev server alive or your tabs open after evaluation — ALWAYS run **Teardown** (even on FAIL or escalation). Leaked `npm run dev` servers pile up across rounds; tabs left in the shared Chrome clutter every other session. (The shared CDP browser itself stays alive — see Teardown.)
 - Skip Playwright evaluation for tasks with browser-visible UI
 - Trust the Generator's claim that "it works" without browser verification
-- Give PASS verdict while any Critical issue exists
-- Give PASS verdict while any Important issue exists
+- Give PASS verdict while any blocking finding exists
 - Skip mobile responsive testing
 - Treat browser extension warnings as real errors
 - Assume the app started correctly without readiness probe

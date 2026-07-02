@@ -6,6 +6,8 @@ Verify code quality using **Codex CLI (OpenAI GPT)**, not a Claude subagent. The
 
 **Only dispatch after spec compliance review passes (also via Codex).**
 
+**Two uses, two bases:** per-task review uses `{BASE_SHA}` = the commit before this task started. The FINAL whole-implementation review uses `{BASE_SHA}` = the commit before Task 1 (the plan's starting point), `{WHAT_WAS_IMPLEMENTED}` = the plan's task list summary, and `{DESCRIPTION}` = the plan's goal statement.
+
 ## How to Run
 
 **Use the host-safe form.** On this host every `codex` run loads heavyweight MCP servers (`playwright` headed-Chrome, `serena`, `context7`) that can wedge codex so it never exits → the harness fires a completion notification only on process termination → you never get woken → infinite idle. `-c mcp_servers='{}'` loads zero MCP servers; `timeout -k 60 1200` guarantees termination (hence a guaranteed notification); `-s danger-full-access` avoids bwrap sandbox errors. Launch with `run_in_background: true` and **do not poll**.

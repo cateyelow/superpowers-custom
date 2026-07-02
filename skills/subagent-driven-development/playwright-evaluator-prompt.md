@@ -71,8 +71,8 @@ Agent tool (superpowers:playwright-visual-evaluator):
 
 | Verdict | Action |
 |---------|--------|
-| `PASS` | Mark task complete (or run visual pass if applicable) |
-| `FAIL` with `blocking` findings | Implementer fixes → Codex re-reviews → re-dispatch smoke test |
-| `FAIL` with `minor` only | Judgment call — fix or note for later |
+| `PASS` (no findings) | Mark task complete (or run visual pass if applicable) |
+| `PASS` with `minor` findings | Fix worthwhile minors or note for later, then mark complete |
+| `FAIL` (any `blocking` finding) | Implementer fixes → Codex re-reviews → re-dispatch smoke test |
 
 **Fix code MUST go through Codex review before next evaluation.**

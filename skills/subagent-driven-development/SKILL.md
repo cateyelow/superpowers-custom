@@ -88,6 +88,8 @@ digraph process {
     "Read plan, extract all tasks with full text, note context, create TodoWrite" [shape=box];
     "More tasks remain?" [shape=diamond];
     "Run final Codex CLI quality review over the entire implementation diff (./code-quality-reviewer-prompt.md)" [shape=box];
+    "Final Codex review approves?" [shape=diamond];
+    "Implementer subagent fixes final-review issues" [shape=box];
     "Final Playwright evaluation of full app" [shape=box style=filled fillcolor=lightyellow];
     "Final Playwright PASS?" [shape=diamond style=filled fillcolor=lightyellow];
     "Fix and re-evaluate" [shape=box style=filled fillcolor=lightyellow];
@@ -121,7 +123,10 @@ digraph process {
     "Mark task complete in TodoWrite" -> "More tasks remain?";
     "More tasks remain?" -> "Dispatch implementer subagent (./implementer-prompt.md)" [label="yes"];
     "More tasks remain?" -> "Run final Codex CLI quality review over the entire implementation diff (./code-quality-reviewer-prompt.md)" [label="no"];
-    "Run final Codex CLI quality review over the entire implementation diff (./code-quality-reviewer-prompt.md)" -> "Final Playwright evaluation of full app";
+    "Run final Codex CLI quality review over the entire implementation diff (./code-quality-reviewer-prompt.md)" -> "Final Codex review approves?";
+    "Final Codex review approves?" -> "Final Playwright evaluation of full app" [label="yes"];
+    "Final Codex review approves?" -> "Implementer subagent fixes final-review issues" [label="no"];
+    "Implementer subagent fixes final-review issues" -> "Run final Codex CLI quality review over the entire implementation diff (./code-quality-reviewer-prompt.md)" [label="re-review"];
     "Final Playwright evaluation of full app" -> "Final Playwright PASS?";
     "Final Playwright PASS?" -> "Use superpowers:finishing-a-development-branch" [label="PASS"];
     "Final Playwright PASS?" -> "Fix and re-evaluate" [label="FAIL"];
