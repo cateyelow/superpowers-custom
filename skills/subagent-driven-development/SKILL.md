@@ -87,7 +87,7 @@ digraph process {
 
     "Read plan, extract all tasks with full text, note context, create TodoWrite" [shape=box];
     "More tasks remain?" [shape=diamond];
-    "Dispatch final code reviewer subagent for entire implementation" [shape=box];
+    "Run final Codex CLI quality review over the entire implementation diff (./code-quality-reviewer-prompt.md)" [shape=box];
     "Final Playwright evaluation of full app" [shape=box style=filled fillcolor=lightyellow];
     "Final Playwright PASS?" [shape=diamond style=filled fillcolor=lightyellow];
     "Fix and re-evaluate" [shape=box style=filled fillcolor=lightyellow];
@@ -113,15 +113,15 @@ digraph process {
     "Task has browser-visible UI?" -> "Mark task complete in TodoWrite" [label="no — backend/data/infra only"];
     "Start app, dispatch Playwright evaluator (./playwright-evaluator-prompt.md)" -> "Playwright evaluator PASS?";
     "Playwright evaluator PASS?" -> "Mark task complete in TodoWrite" [label="PASS"];
-    "Playwright evaluator PASS?" -> "Implementer subagent fixes browser issues" [label="FAIL/PASS_WITH_FIXES"];
+    "Playwright evaluator PASS?" -> "Implementer subagent fixes browser issues" [label="FAIL"];
     "Implementer subagent fixes browser issues" -> "Re-run Codex reviews on browser fixes";
     "Re-run Codex reviews on browser fixes" -> "Codex re-reviews pass?";
     "Codex re-reviews pass?" -> "Start app, dispatch Playwright evaluator (./playwright-evaluator-prompt.md)" [label="yes — re-evaluate"];
     "Codex re-reviews pass?" -> "Implementer subagent fixes browser issues" [label="no — fix code issues first"];
     "Mark task complete in TodoWrite" -> "More tasks remain?";
     "More tasks remain?" -> "Dispatch implementer subagent (./implementer-prompt.md)" [label="yes"];
-    "More tasks remain?" -> "Dispatch final code reviewer subagent for entire implementation" [label="no"];
-    "Dispatch final code reviewer subagent for entire implementation" -> "Final Playwright evaluation of full app";
+    "More tasks remain?" -> "Run final Codex CLI quality review over the entire implementation diff (./code-quality-reviewer-prompt.md)" [label="no"];
+    "Run final Codex CLI quality review over the entire implementation diff (./code-quality-reviewer-prompt.md)" -> "Final Playwright evaluation of full app";
     "Final Playwright evaluation of full app" -> "Final Playwright PASS?";
     "Final Playwright PASS?" -> "Use superpowers:finishing-a-development-branch" [label="PASS"];
     "Final Playwright PASS?" -> "Fix and re-evaluate" [label="FAIL"];
@@ -136,7 +136,7 @@ digraph process {
 - Integration tasks (multi-file) → standard Claude model
 - Architecture tasks → most capable Claude model
 
-**Evaluator (Codex CLI):** Always uses the configured Codex model (default: `gpt-5.5` with `xhigh` reasoning). This is configured in `~/.codex/config.toml`, not controlled per-task.
+**Evaluator (Codex CLI):** Always uses whatever model `~/.codex/config.toml` configures — not controlled per-task. Don't hard-code model names in prompts; the config is the source of truth.
 
 **Playwright Evaluator:** Uses Claude (inherits parent model) — it needs Playwright MCP tools which Codex doesn't have.
 
@@ -151,9 +151,9 @@ Implementer subagents report one of four statuses. Handle each appropriately:
 **NEEDS_CONTEXT:** The implementer needs information that wasn't provided. Provide the missing context and re-dispatch.
 
 **BLOCKED:** The implementer cannot complete the task. Assess the blocker:
-1. If it's a context problem, provide more context and re-dispatch with the same model
-2. If the task requires more reasoning, re-dispatch with a more capable model
-3. If the task is too large, break it into smaller pieces
+1. FIRST verify the dispatch carried the FULL task spec, acceptance criteria, and every file/context reference it needs — measured on this host, incomplete subagent output almost always traces to an incomplete spec reaching the subagent, not to model capability (effort/model A/B showed no completeness difference on well-specified tasks). Fix the spec and re-dispatch.
+2. If the task is too large, break it into smaller pieces
+3. Only for genuinely ambiguous architectural work: consider a more capable model
 4. If the plan itself is wrong, escalate to the human
 
 **Never** ignore an escalation or force the same model to retry without changes. If the implementer said it's stuck, something needs to change.
@@ -266,18 +266,16 @@ Codex (GPT): Strengths: Clean components. Issues: None. Ready: Yes.
 [Dispatch Playwright evaluator at http://localhost:5173]
 
 Playwright Evaluator:
-  Overall Score: 32/50
-  Important Issues:
-    - Stats cards have no loading state (shows "undefined" briefly)
-    - No error state when API fails
-  Verdict: PASS_WITH_FIXES
+  verdict: FAIL
+  findings:
+    - [blocking] Stats cards have no loading state (shows "undefined" briefly)
+    - [minor] No error state when API fails
 
 [Claude implementer fixes: adds loading skeleton + error state]
 [Re-dispatch Playwright evaluator]
 
 Playwright Evaluator:
-  Overall Score: 38/50
-  Verdict: PASS
+  verdict: PASS
 
 [Mark Task 1 complete]
 
@@ -373,7 +371,7 @@ OpenAI 계정에서 크레딧을 충전해주세요: https://platform.openai.com
 ## Integration
 
 **Required workflow skills:**
-- **superpowers:using-git-worktrees** - REQUIRED: Set up isolated workspace before starting
+- **superpowers:using-git-worktrees** - RECOMMENDED: isolated workspace before starting (honors user consent; may work in place if the user declines)
 - **superpowers:writing-plans** - Creates the plan this skill executes
 - **codex-cli** - REQUIRED: Codex CLI for spec + quality reviews (must have credits)
 - **superpowers:web-app-evaluation** - REQUIRED for web projects: Playwright browser evaluation

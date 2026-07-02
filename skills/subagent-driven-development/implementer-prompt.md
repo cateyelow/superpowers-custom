@@ -3,7 +3,7 @@
 Use this template when dispatching an implementer subagent.
 
 ```
-Task tool (general-purpose):
+Agent tool (general-purpose):
   description: "Implement Task N: [task name]"
   prompt: |
     You are implementing Task N: [task name]
@@ -15,6 +15,14 @@ Task tool (general-purpose):
     ## Context
 
     [Scene-setting: where this fits, dependencies, architectural context]
+
+    ## Acceptance Criteria (Definition of Done)
+
+    [Concrete, checkable criteria copied/derived from the plan — the subagent must be able
+    to verify each one itself. Always include: type-check passes, lint clean, relevant
+    tests pass. For UI tasks: the exact user-visible behavior that must work in a browser.
+    Measured on this host: incomplete subagent output traces to incomplete specs, not
+    model capability — this section is the completeness lever.]
 
     ## Before You Begin
 
@@ -68,8 +76,8 @@ Task tool (general-purpose):
 
     **How to escalate:** Report back with status BLOCKED or NEEDS_CONTEXT. Describe
     specifically what you're stuck on, what you've tried, and what kind of help you need.
-    The controller can provide more context, re-dispatch with a more capable model,
-    or break the task into smaller pieces.
+    The controller can provide more context or a fuller spec, break the task into
+    smaller pieces, or (for genuinely ambiguous architectural work) escalate the model.
 
     ## Before Reporting Back: Self-Review
 

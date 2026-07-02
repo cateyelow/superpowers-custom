@@ -20,7 +20,7 @@ Focus on:
 
 Do not do deep feature exploration.
 
-Always call `browser_close` before returning (on PASS or FAIL) — never leave the browser open, or it leaks and piles up across runs.
+Before returning (on PASS or FAIL): close ONLY the tabs you opened, via `browser_tabs`. NEVER call `browser_close` — on this host Playwright MCP attaches to the shared logged-in Chrome (CDP 127.0.0.1:9222) that other sessions depend on. Only if you yourself launched an isolated browser may you close that browser fully.
 
 Return only:
 

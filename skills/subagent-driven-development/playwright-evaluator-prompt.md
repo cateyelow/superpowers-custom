@@ -42,7 +42,7 @@ Agent tool (superpowers:playwright-evaluator):
     - Do not read code.
     - Do not score the app.
     - Fail on any material issue in this scope.
-    - Call browser_close before returning — leave no browser or tab open.
+    - Before returning: close ONLY the tabs you opened (browser_tabs). NEVER call browser_close — on this host Playwright MCP attaches to the shared logged-in Chrome (CDP 127.0.0.1:9222) that other sessions depend on. Only if you yourself launched an isolated browser may you close it fully.
 ```
 
 ## Dispatch (visual/responsive — optional 2nd pass)

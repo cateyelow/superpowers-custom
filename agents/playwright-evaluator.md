@@ -20,7 +20,7 @@ Rules:
 - Do not invent extra scenarios or broaden scope.
 - Take screenshots for the initial state, final state, and each failure.
 - Report only observed facts.
-- ALWAYS call `browser_close` before returning — on PASS and on FAIL. Never leave a browser, tab, or context open. A browser you open but don't close leaks (`/tmp/playwright_chromiumdev_profile-*`) and piles up across runs until the machine bogs down.
+- Before returning (on PASS and on FAIL): close ONLY the tabs you opened, via `browser_tabs`. NEVER call `browser_close` — on this host Playwright MCP attaches to the shared logged-in Chrome (CDP 127.0.0.1:9222); `browser_close` disrupts the browser other sessions and Google-authenticated workflows depend on. Only if you yourself launched an isolated browser (not the MCP default) may you close that browser fully.
 
 Return exactly:
 

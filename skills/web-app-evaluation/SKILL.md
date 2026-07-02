@@ -64,7 +64,7 @@ digraph eval_loop {
     "Start app + readiness probe" -> "Dispatch Playwright Evaluator";
     "Dispatch Playwright Evaluator" -> "Evaluator tests app via browser";
     "Evaluator tests app via browser" -> "Verdict?";
-    "Verdict?" -> "Generator fixes issues" [label="FAIL or PASS_WITH_FIXES"];
+    "Verdict?" -> "Generator fixes issues" [label="FAIL (blocking findings)"];
     "Generator fixes issues" -> "Codex re-reviews fix code";
     "Codex re-reviews fix code" -> "Dispatch Playwright Evaluator" [label="re-evaluate"];
     "Verdict?" -> "Feature complete" [label="PASS"];
@@ -117,11 +117,12 @@ Key fields to provide:
 
 ### Step 3: Act on the Verdict
 
-| Verdict | Structured Status | Action |
-|---------|------------------|--------|
-| **PASS** | `critical: 0, important: 0` | Feature complete. Proceed. |
-| **PASS_WITH_FIXES** | `critical: 0, important: N` | Fix Important issues → Codex re-reviews → re-evaluate |
-| **FAIL** | `critical: N` | Fix Critical issues → Codex re-reviews → re-evaluate |
+The `playwright-evaluator` agent returns only `verdict: PASS | FAIL` with findings tagged `blocking` or `minor` (no scores, no intermediate verdict):
+
+| Verdict | Findings | Action |
+|---------|----------|--------|
+| **PASS** | none, or `minor` only | Feature complete. Fix worthwhile minor findings, then proceed. |
+| **FAIL** | any `blocking` | Fix blocking findings → Codex re-reviews → re-evaluate |
 
 ### Step 4: Re-evaluation
 
@@ -134,17 +135,19 @@ After Generator fixes issues:
 
 **Terminal conditions (escalate to user when ANY is hit):**
 - 3 consecutive FAIL verdicts on the same issues
-- 3 consecutive PASS_WITH_FIXES verdicts where the same Important issue persists
+- 3 consecutive rounds where the same minor finding persists
 - Total of 5 evaluation rounds on a single task without reaching PASS
 - The task may need to be re-scoped, the requirements clarified, or the approach changed
 
 ## Teardown (MANDATORY — run on EVERY exit path)
 
-The evaluation **owns the dev server it started**, and the Playwright Evaluator **owns the browser it opened**. Neither exits on its own — a leaked `npm run dev` (Node, ~0.5–1 GB) plus a leaked Playwright Chromium (`/tmp/playwright_chromiumdev_profile-*`, ~5–10 processes) accumulate every round and bog the machine down within a handful of cycles.
+The evaluation **owns the dev server it started**, and the Playwright Evaluator **owns the tabs it opened**. A leaked `npm run dev` (Node, ~0.5–1 GB) accumulates every round and bogs the machine down within a handful of cycles.
+
+**Host note:** on this box Playwright MCP attaches to the ONE shared logged-in Chrome over CDP (`127.0.0.1:9222`). There is no per-session Chromium and no `/tmp/playwright_chromiumdev_profile-*` to leak. The corollary: `browser_close` must NEVER be called — it acts on the shared browser other sessions and Google-authenticated workflows depend on. Tabs are the unit of ownership.
 
 Two owners, two duties:
 
-1. **The Playwright Evaluator closes its own browser.** The `playwright-evaluator` / `playwright-visual-evaluator` agents and their dispatch template require a `browser_close` before returning — on PASS and FAIL. Confirm the returned report says it closed the browser.
+1. **The Playwright Evaluator closes the tabs it opened** (via `browser_tabs`) — on PASS and FAIL — and never `browser_close`. Confirm the returned report says it closed its tabs. (Exception: an evaluator that explicitly launched its own isolated browser closes that browser fully.)
 2. **The orchestrator stops the dev server it started** — on PASS, FAIL, and when escalating:
 
 ```bash
@@ -158,7 +161,7 @@ if [ -f "$TRACK" ]; then
 fi
 ```
 
-Do **not** blanket-`pkill` Playwright/Chromium from here — other concurrent evaluations may have a browser open. The browser's owner is the evaluator agent's `browser_close`. Stale `/tmp/playwright_chromiumdev_profile-*` left by a crashed agent can be swept separately once no eval is running.
+Do **not** blanket-`pkill` Playwright/Chromium from here — the shared CDP Chrome serves every session on this box, and other concurrent evaluations may have tabs open in it. Tab cleanup belongs to each evaluator agent.
 
 ## Integration with Subagent-Driven Development
 
