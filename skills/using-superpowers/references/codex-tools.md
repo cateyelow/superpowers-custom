@@ -28,6 +28,7 @@ Legacy note: Codex builds before `rust-v0.115.0` exposed spawned-agent
 waiting as `wait`. Current Codex uses `wait_agent` for spawned agents. The
 `wait` name now belongs to code-mode `exec/wait`, which resumes a yielded exec
 cell by `cell_id`; it is not the spawned-agent result tool.
+When using subagent-driven-development, always close implementer and reviewer subagents when they have finished all their work.
 
 ## Environment Detection
 
