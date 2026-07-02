@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign up</title>
+<style>
+  :root {
+    --color-text: #1c1c1e;
+    --color-border: #767680;
+    --color-accent: #2450c8;
+    --color-accent-dark: #1d43a8;
+    --color-error: #b3261e;
+    --color-ok: #1a7f37;
+    --color-muted: #6e6e73;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    font-size: 16px;
+    line-height: 1.4;
+    color: var(--color-text);
+    background: #fafafa;
+  }
+
+  .container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    margin: 0 0 20px;
+  }
+
+  .field { margin-bottom: 10px; }
+
+  .field > label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  input[type="email"],
+  input[type="password"],
+  input[type="text"] {
+    width: 100%;
+    min-height: 44px;            /* touch target >= 44px (R11) */
+    padding: 10px 12px;
+    font: inherit;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  input:focus-visible,
+  button:focus-visible,
+  .success:focus {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  input[aria-invalid="true"] { border-color: var(--color-error); }
+
+  .hint {
+    margin: 4px 0 0;
+    font-size: 0.875rem;
+    color: var(--color-muted);
+  }
+
+  /*
+   * Error slots are always in the DOM and reserve exactly one line of
+   * height, so a message appearing or disappearing never shifts the
+   * controls below it (R10). Messages are kept short enough to stay on
+   * one line even at 375px width.
+   */
+  .error {
+    display: block;
+    min-height: 20px;
+    margin: 4px 0 0;
+    font-size: 0.875rem;
+    line-height: 20px;
+    font-weight: 600;
+    color: var(--color-error);
+  }
+
+  /* Password rule checklist: always visible, so it never pops in (R10). */
+  .rules {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0;
+    font-size: 0.875rem;
+  }
+
+  .rules li {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-height: 22px;
+    color: var(--color-muted);
+  }
+
+  /* Color change PLUS the icon swap (unmet "✗" -> met "✓"), so the state
+     is not conveyed by color alone. */
+  .rules li.met { color: var(--color-ok); }
+
+  .rule-icon {
+    flex: none;
+    width: 1.1em;
+    font-weight: 700;
+  }
+
+  .field-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;            /* checkbox row hit area >= 44px (R11) */
+    margin: 8px 0 16px;
+  }
+
+  .field-checkbox input[type="checkbox"] {
+    flex: none;
+    width: 24px;
+    height: 24px;
+    margin: 0;
+    accent-color: var(--color-accent);
+    cursor: pointer;
+  }
+
+  .field-checkbox label {
+    display: flex;
+    align-items: center;
+    min-height: 44px;            /* label itself is a >= 44px-tall target */
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  button[type="submit"] {
+    width: 100%;
+    min-height: 48px;            /* touch target >= 44px (R11) */
+    font: inherit;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    color: #fff;
+    background: var(--color-accent);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  button[type="submit"]:hover:not(:disabled) { background: var(--color-accent-dark); }
+
+  /* Visually distinct disabled state (R6): muted colors + not-allowed cursor. */
+  button[type="submit"]:disabled {
+    background: #d4d4d9;
+    color: #6b6b70;
+    cursor: not-allowed;
+  }
+
+  .success {
+    background: #eef7ef;
+    border: 1px solid var(--color-ok);
+    border-radius: 8px;
+    padding: 20px;
+  }
+
+  .success h2 { margin: 0 0 8px; font-size: 1.25rem; }
+  .success dl { margin: 12px 0 0; }
+  .success dt { font-weight: 700; }
+  .success dd { margin: 0 0 8px; overflow-wrap: anywhere; }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+<main class="container">
+  <h1>Create your account</h1>
+
+  <!-- novalidate: the page's own validators drive all messaging; native
+       browser bubbles would conflict with the custom error UI. -->
+  <form id="signup-form" novalidate>
+    <div class="field">
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" autocomplete="email"
+             aria-describedby="email-error" required>
+      <p class="error" id="email-error" role="alert"></p>
+    </div>
+
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="new-password"
+             aria-describedby="password-rules" required>
+      <ul class="rules" id="password-rules">
+        <li id="rule-length">
+          <span class="rule-icon" aria-hidden="true">✗</span>
+          <span>At least 10 characters</span>
+          <span class="visually-hidden rule-state"> (not met)</span>
+        </li>
+        <li id="rule-letter-digit">
+          <span class="rule-icon" aria-hidden="true">✗</span>
+          <span>At least one letter and one digit</span>
+          <span class="visually-hidden rule-state"> (not met)</span>
+        </li>
+        <li id="rule-symbol">
+          <span class="rule-icon" aria-hidden="true">✗</span>
+          <span>At least one symbol</span>
+          <span class="visually-hidden rule-state"> (not met)</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="field">
+      <label for="password-confirm">Confirm password</label>
+      <input id="password-confirm" name="password-confirm" type="password"
+             autocomplete="new-password" aria-describedby="password-confirm-error" required>
+      <p class="error" id="password-confirm-error" role="alert"></p>
+    </div>
+
+    <div class="field">
+      <label for="nickname">Nickname</label>
+      <input id="nickname" name="nickname" type="text" autocomplete="nickname"
+             aria-describedby="nickname-hint nickname-error" required>
+      <p class="hint" id="nickname-hint">2–12 characters: letters, digits, or Korean.</p>
+      <p class="error" id="nickname-error" role="alert"></p>
+    </div>
+
+    <div class="field-checkbox">
+      <input id="terms" name="terms" type="checkbox">
+      <label for="terms">I agree to the Terms of Service</label>
+    </div>
+
+    <button type="submit" id="submit-btn" disabled>Create account</button>
+  </form>
+
+  <!-- Success panel: hidden until submit; tabindex="-1" so it can receive
+       programmatic keyboard focus (R7). The password is never shown here. -->
+  <section id="success-panel" class="success" tabindex="-1" hidden
+           aria-labelledby="success-title">
+    <h2 id="success-title">Account created</h2>
+    <p>Welcome! Your signup was successful.</p>
+    <dl>
+      <dt>Email</dt>
+      <dd id="success-email"></dd>
+      <dt>Nickname</dt>
+      <dd id="success-nickname"></dd>
+    </dl>
+  </section>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  /*
+   * Behavior model
+   * --------------
+   * - Validation logic lives in pure validator functions; every event path
+   *   (input, blur, submit) goes through the same getValidationState() ->
+   *   render() pipeline, so there is exactly one source of truth and no
+   *   duplicated per-event validation.
+   * - First-blur gating: a field's error message is only *displayed* once
+   *   the field has been blurred at least once (`touched`). After that
+   *   first blur, every input event re-renders, so corrections clear the
+   *   error live. The password checklist is exempt: it is live from the
+   *   first keystroke by design (R3).
+   * - The submit button uses the native `disabled` attribute, recomputed on
+   *   every event, so an invalid form can never be submitted (R6).
+   */
+
+  // --- Element references -------------------------------------------------
+
+  var form = document.getElementById('signup-form');
+  var emailInput = document.getElementById('email');
+  var passwordInput = document.getElementById('password');
+  var confirmInput = document.getElementById('password-confirm');
+  var nicknameInput = document.getElementById('nickname');
+  var termsInput = document.getElementById('terms');
+  var submitBtn = document.getElementById('submit-btn');
+
+  var emailErrorEl = document.getElementById('email-error');
+  var confirmErrorEl = document.getElementById('password-confirm-error');
+  var nicknameErrorEl = document.getElementById('nickname-error');
+
+  var ruleLengthEl = document.getElementById('rule-length');
+  var ruleLetterDigitEl = document.getElementById('rule-letter-digit');
+  var ruleSymbolEl = document.getElementById('rule-symbol');
+
+  var successPanel = document.getElementById('success-panel');
+  var successEmailEl = document.getElementById('success-email');
+  var successNicknameEl = document.getElementById('success-nickname');
+
+  // Which fields have been blurred at least once (first-blur gating, R2/R4/R5).
+  var touched = { email: false, password: false, confirm: false, nickname: false };
+
+  // --- Validators (pure functions; return '' when valid) -------------------
+
+  // Pragmatic email check: non-space local part, "@", non-space domain
+  // containing at least one dot (rejects "a@b", accepts "a@b.co").
+  var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  // Nickname: 2–12 chars of Latin letters, digits, or Korean. Choice
+  // documented per spec: complete Hangul syllables (가-힣) AND standalone
+  // jamo (ㄱ-ㅎ consonants, ㅏ-ㅣ vowels) are all accepted; anything else
+  // (spaces, symbols, other scripts) is rejected.
+  var NICKNAME_RE = /^[A-Za-z0-9가-힣ㄱ-ㅎㅏ-ㅣ]{2,12}$/;
+
+  // Atomic password conditions. All FOUR must hold for the password to be
+  // valid; the visible checklist merges hasLetter+hasDigit into one item
+  // but validity still requires each condition individually (R3).
+  // "Symbol" = any character that is not a letter, digit, or whitespace.
+  function getPasswordChecks(pw) {
+    return {
+      minLength: pw.length >= 10,
+      hasLetter: /[A-Za-z]/.test(pw),
+      hasDigit: /[0-9]/.test(pw),
+      hasSymbol: /[^A-Za-z0-9\s]/.test(pw)
+    };
+  }
+
+  function validateEmail(value) {
+    if (value === '') return 'Email is required.';
+    return EMAIL_RE.test(value) ? '' : 'Enter a valid email address.';
+  }
+
+  // Returns a message for consistency with the other validators; the
+  // password field communicates specifics through the checklist instead
+  // of an error slot, so the text itself is only used as a truthy flag.
+  function validatePassword(value) {
+    var c = getPasswordChecks(value);
+    var valid = c.minLength && c.hasLetter && c.hasDigit && c.hasSymbol;
+    return valid ? '' : 'Password does not meet all requirements.';
+  }
+
+  function validateConfirm(password, confirm) {
+    if (confirm === '') return 'Please re-enter your password.';
+    return confirm === password ? '' : 'Passwords do not match.';
+  }
+
+  function validateNickname(value) {
+    if (value === '') return 'Nickname is required.';
+    return NICKNAME_RE.test(value) ? '' : '2–12 letters, digits, or Korean only.';
+  }
+
+  // --- Single source of truth ----------------------------------------------
+
+  function getValidationState() {
+    var emailError = validateEmail(emailInput.value);
+    var passwordError = validatePassword(passwordInput.value);
+    var confirmError = validateConfirm(passwordInput.value, confirmInput.value);
+    var nicknameError = validateNickname(nicknameInput.value);
+    var termsChecked = termsInput.checked;
+    return {
+      checks: getPasswordChecks(passwordInput.value),
+      emailError: emailError,
+      passwordError: passwordError,
+      confirmError: confirmError,
+      nicknameError: nicknameError,
+      termsChecked: termsChecked,
+      formValid: !emailError && !passwordError && !confirmError &&
+                 !nicknameError && termsChecked
+    };
+  }
+
+  // --- Rendering ------------------------------------------------------------
+
+  // Shows/clears one field's error message and aria-invalid flag.
+  // `show` implements the first-blur gate: until the field is touched the
+  // message stays hidden even if the value is invalid.
+  function renderFieldError(input, errorEl, message, show) {
+    var hasError = show && message !== '';
+    errorEl.textContent = hasError ? message : '';
+    if (hasError) {
+      input.setAttribute('aria-invalid', 'true');
+    } else {
+      input.removeAttribute('aria-invalid');
+    }
+  }
+
+  function renderRule(li, met) {
+    li.classList.toggle('met', met);
+    li.querySelector('.rule-icon').textContent = met ? '✓' : '✗';
+    li.querySelector('.rule-state').textContent = met ? ' (met)' : ' (not met)';
+  }
+
+  function render() {
+    var s = getValidationState();
+
+    renderFieldError(emailInput, emailErrorEl, s.emailError, touched.email);
+    renderFieldError(confirmInput, confirmErrorEl, s.confirmError, touched.confirm);
+    renderFieldError(nicknameInput, nicknameErrorEl, s.nicknameError, touched.nickname);
+
+    // Checklist is live from the first keystroke (no touch gating).
+    renderRule(ruleLengthEl, s.checks.minLength);
+    renderRule(ruleLetterDigitEl, s.checks.hasLetter && s.checks.hasDigit);
+    renderRule(ruleSymbolEl, s.checks.hasSymbol);
+
+    // Password has no error slot (the checklist plays that role), but it
+    // still flags aria-invalid once blurred while unmet.
+    if (touched.password && s.passwordError) {
+      passwordInput.setAttribute('aria-invalid', 'true');
+    } else {
+      passwordInput.removeAttribute('aria-invalid');
+    }
+
+    submitBtn.disabled = !s.formValid;
+  }
+
+  // --- Events ----------------------------------------------------------------
+
+  function markTouched(key) {
+    return function () {
+      touched[key] = true;
+      render();
+    };
+  }
+
+  // `input` covers typing, paste, and IME (Korean) composition updates.
+  // Re-rendering everything on any event is what makes cross-field rules
+  // (e.g. confirm mismatch clearing while typing in the *password* field)
+  // work without special cases.
+  emailInput.addEventListener('input', render);
+  passwordInput.addEventListener('input', render);
+  confirmInput.addEventListener('input', render);
+  nicknameInput.addEventListener('input', render);
+  termsInput.addEventListener('change', render);
+
+  emailInput.addEventListener('blur', markTouched('email'));
+  passwordInput.addEventListener('blur', markTouched('password'));
+  confirmInput.addEventListener('blur', markTouched('confirm'));
+  nicknameInput.addEventListener('blur', markTouched('nickname'));
+
+  form.addEventListener('submit', function (event) {
+    // Never navigate: the page works from file:// with no server (R7).
+    event.preventDefault();
+
+    // Belt and braces: the button is disabled while invalid, but re-check
+    // through the same single validation pipeline anyway.
+    if (!getValidationState().formValid) return;
+
+    // textContent (never innerHTML) so typed values are inert.
+    successEmailEl.textContent = emailInput.value;
+    successNicknameEl.textContent = nicknameInput.value;
+
+    form.hidden = true;
+    successPanel.hidden = false;
+    // Move keyboard focus to the panel so screen readers and keyboard
+    // users land on the confirmation (R7).
+    successPanel.focus();
+  });
+
+  // Initial paint (button starts disabled, checklist starts all-unmet).
+  render();
+})();
+</script>
+</body>
+</html>

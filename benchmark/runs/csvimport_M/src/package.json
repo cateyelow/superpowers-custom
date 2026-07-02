@@ -1,0 +1,6 @@
+{
+  "name": "csvimport-cli",
+  "private": true,
+  "type": "module",
+  "main": "parser.test.js"
+}

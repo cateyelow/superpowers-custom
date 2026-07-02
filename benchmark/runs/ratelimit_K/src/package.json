@@ -1,0 +1,4 @@
+{
+  "type": "module",
+  "main": "rateLimiter.test.js"
+}

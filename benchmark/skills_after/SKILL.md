@@ -30,16 +30,6 @@ timeout -k 60 1200 codex exec -s danger-full-access -c mcp_servers='{}' "$(cat <
 
 See the `codex-cli` skill for the full rationale and verification.
 
-## Dispatching subagents: never idle-wait
-
-Dispatch implementer/evaluator subagents **synchronously** (wait for the Agent tool result in
-the same turn). If one runs in background anyway, do NOT end your turn "to wait for it" —
-measured on this host (benchmark 2026-07-02, 3 of 6 controllers stalled): a turn that ends in
-"waiting for the child" just sits there until a human nudges it, and a background child often
-CANNOT message you back ("No agent named ... is currently addressable"). Before ever waiting,
-check the child's artifacts on disk (file mtimes, its report file) — in every observed stall
-the child had already finished and written its output.
-
 ## When to Use
 
 ```dot

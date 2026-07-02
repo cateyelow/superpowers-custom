@@ -1,0 +1,1090 @@
+Reading additional input from stdin...
+OpenAI Codex v0.142.5
+--------
+workdir: /home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M
+model: gpt-5.5
+provider: openai
+approval: never
+sandbox: danger-full-access
+reasoning effort: xhigh
+reasoning summaries: none
+session id: 019f2303-8923-7ff0-8c0d-e772cdbd4273
+--------
+user
+Review the code quality of the changes. This project is NOT a git repository, so there is no diff — the implementation is entirely new code (greenfield). Read the actual source files:
+- /home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M/src/parser.js
+- /home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M/src/importCsv.js
+- /home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M/src/parser.test.js
+- /home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M/src/package.json
+You may also run the tests: cd /home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M && node --test src/
+
+## What Was Implemented
+
+- src/parser.js — pure module: parseCsv(content) -> { contacts, errors }; exported HeaderError class thrown for fatal header conditions (missing / unexpected / duplicate columns, messages combinable). Hand-rolled character-level CSV tokenizer (quoted fields, escaped "" quotes, CRLF/LF, BOM) that tracks original 1-based line numbers through multi-line quoted fields. Row validation: wrong field count, empty name, syntactic email check (/^[^\s@]+@[^\s@]+\.[^\s@]+$/), case-insensitive duplicate email ("duplicate email"), phone normalized by stripping [\s\-()] then required to be all digits.
+- src/importCsv.js — thin CLI wrapper: --help/-h (stdout, exit 0), argc check (usage to stderr, exit 2), reads input (unreadable -> exit 2), calls parser (HeaderError -> exit 2), writes { contacts } JSON + trailing newline atomically (temp file in same dir + rename, temp unlinked on failure; unwritable -> exit 2), prints per-row errors to stderr as "line <n>: <reason>", prints "imported <k>/<total> rows" to stdout, exit 0 if no rejected rows else 1.
+- src/parser.test.js — 28 tests / 8 suites: parser-level in-memory-string tests for quoted commas + escaped quotes, line-number correctness with mixed valid/invalid rows, duplicate email, header-only file, LF vs CRLF equivalence, BOM tolerance, exact-header-set enforcement (missing/unexpected/duplicate columns), plus a CLI end-to-end suite (spawns node src/importCsv.js on mkdtemp fixtures; exit 0/1/2 cases, JSON output shape + trailing newline, stdout summary, stderr lines, no stray temp files).
+- src/package.json — {"type":"module","main":"parser.test.js"}. The "main" pointing at the test file is a documented workaround: on this host's Node v22.19.0, `node --test src/` with a bare directory argument resolves the directory as a CJS module (package.json main / index.js) instead of scanning for test files; the constraint requires that literal command to work.
+
+Test status: node --test src/ -> 28/28 pass, exit 0.
+
+## Task Context
+
+Standalone zero-dependency Node 20+ ESM CLI that imports a contacts CSV (header name,email,phone in any order, exact set) into { contacts: [...] } JSON with atomic write; invalid rows are reported to stderr with original line numbers without aborting; exit codes 0/1/2. The spec mandates the parser be pure (no fs/process/console) and the CLI be a thin wrapper. Tests must run via `node --test src/`. This is the entire project — one task, greenfield; this is both the per-task and the final whole-implementation quality review.
+
+## Code Quality Checklist
+
+### Architecture
+- Does each file have one clear responsibility with a well-defined interface?
+- Are units decomposed so they can be understood and tested independently?
+- Sound design decisions? Scalability? Performance implications?
+- Security concerns?
+
+### Code Quality
+- Clean separation of concerns?
+- Proper error handling?
+- Type safety (if applicable)?
+- DRY principle followed?
+- Edge cases handled?
+
+### Testing
+- Tests actually test logic (not just mocks)?
+- Edge cases covered?
+- Integration tests where needed?
+- All tests passing?
+
+### File Organization
+- Following the expected file structure?
+- New files are focused and not already large?
+- Existing files not significantly bloated by this change?
+
+## Required Output Format (MUST follow exactly)
+
+status: APPROVED | NEEDS_FIXES | BLOCKED_ERROR
+strengths: [what's well done — file:line references]
+critical_issues: [list, or "none"]
+important_issues: [list, or "none"]
+minor_issues: [list, or "none"]
+
+## Status Determination Rule (MUST follow exactly)
+- APPROVED: ONLY when critical_issues is "none" AND important_issues is "none"
+  (minor_issues may still be present — they do not block approval)
+- NEEDS_FIXES: when critical_issues OR important_issues has any entries
+- BLOCKED_ERROR: when you cannot complete the review for technical reasons
+exec
+/bin/bash -lc "sed -n '1,220p' ~/.codex/skills/using-superpowers/SKILL.md && sed -n '1,220p' ~/.codex/skills/universal-verify/SKILL.md && sed -n '1,220p' ~/.codex/skills/verification-before-completion/SKILL.md" in /home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M
+ succeeded in 0ms:
+---
+name: using-superpowers
+description: Use when starting any conversation - establishes how to find and use skills, requiring Skill tool invocation before ANY response including clarifying questions
+---
+
+<EXTREMELY-IMPORTANT>
+If you think there is even a 1% chance a skill might apply to what you are doing, you ABSOLUTELY MUST invoke the skill.
+
+IF A SKILL APPLIES TO YOUR TASK, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT.
+
+This is not negotiable. This is not optional. You cannot rationalize your way out of this.
+</EXTREMELY-IMPORTANT>
+
+## How to Access Skills
+
+**In Claude Code:** Use the `Skill` tool. When you invoke a skill, its content is loaded and presented to you—follow it directly. Never use the Read tool on skill files.
+
+**In other environments:** Check your platform's documentation for how skills are loaded.
+
+# Using Skills
+
+## The Rule
+
+**Invoke relevant or requested skills BEFORE any response or action.** Even a 1% chance a skill might apply means that you should invoke the skill to check. If an invoked skill turns out to be wrong for the situation, you don't need to use it.
+
+```dot
+digraph skill_flow {
+    "User message received" [shape=doublecircle];
+    "Might any skill apply?" [shape=diamond];
+    "Invoke Skill tool" [shape=box];
+    "Announce: 'Using [skill] to [purpose]'" [shape=box];
+    "Has checklist?" [shape=diamond];
+    "Create TodoWrite todo per item" [shape=box];
+    "Follow skill exactly" [shape=box];
+    "Respond (including clarifications)" [shape=doublecircle];
+
+    "User message received" -> "Might any skill apply?";
+    "Might any skill apply?" -> "Invoke Skill tool" [label="yes, even 1%"];
+    "Might any skill apply?" -> "Respond (including clarifications)" [label="definitely not"];
+    "Invoke Skill tool" -> "Announce: 'Using [skill] to [purpose]'";
+    "Announce: 'Using [skill] to [purpose]'" -> "Has checklist?";
+    "Has checklist?" -> "Create TodoWrite todo per item" [label="yes"];
+    "Has checklist?" -> "Follow skill exactly" [label="no"];
+    "Create TodoWrite todo per item" -> "Follow skill exactly";
+}
+```
+
+## Red Flags
+
+These thoughts mean STOP—you're rationalizing:
+
+| Thought | Reality |
+|---------|---------|
+| "This is just a simple question" | Questions are tasks. Check for skills. |
+| "I need more context first" | Skill check comes BEFORE clarifying questions. |
+| "Let me explore the codebase first" | Skills tell you HOW to explore. Check first. |
+| "I can check git/files quickly" | Files lack conversation context. Check for skills. |
+| "Let me gather information first" | Skills tell you HOW to gather information. |
+| "This doesn't need a formal skill" | If a skill exists, use it. |
+| "I remember this skill" | Skills evolve. Read current version. |
+| "This doesn't count as a task" | Action = task. Check for skills. |
+| "The skill is overkill" | Simple things become complex. Use it. |
+| "I'll just do this one thing first" | Check BEFORE doing anything. |
+| "This feels productive" | Undisciplined action wastes time. Skills prevent this. |
+| "I know what that means" | Knowing the concept ≠ using the skill. Invoke it. |
+
+## Skill Priority
+
+When multiple skills could apply, use this order:
+
+1. **Process skills first** (brainstorming, debugging) - these determine HOW to approach the task
+2. **Implementation skills second** (frontend-design, mcp-builder) - these guide execution
+
+"Let's build X" → brainstorming first, then implementation skills.
+"Fix this bug" → debugging first, then domain-specific skills.
+
+## Skill Types
+
+**Rigid** (TDD, debugging): Follow exactly. Don't adapt away discipline.
+
+**Flexible** (patterns): Adapt principles to context.
+
+The skill itself tells you which.
+
+## User Instructions
+
+Instructions say WHAT, not HOW. "Add X" or "Fix Y" doesn't mean skip workflows.
+---
+name: universal-verify
+description: After code changes or when asked to test/verify, run the repository’s standard verification (tests/lint/build) and include command output as evidence.
+metadata:
+  short-description: Run verify and print logs.
+---
+
+Rules:
+- Prefer explicit project verify entrypoints if present (in this order):
+  1) ./scripts/verify.sh
+  2) make verify / task verify / just verify
+- If none exist, run best-effort stack detection:
+  - Node: run available scripts among lint/typecheck/test/build
+  - Flutter: flutter analyze + flutter test
+  - Python: pytest if available
+- Never claim success without showing the final output excerpt.
+---
+name: verification-before-completion
+description: Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always
+---
+
+# Verification Before Completion
+
+## Overview
+
+Claiming work is complete without verification is dishonesty, not efficiency.
+
+**Core principle:** Evidence before claims, always.
+
+**Violating the letter of this rule is violating the spirit of this rule.**
+
+## The Iron Law
+
+```
+NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
+```
+
+If you haven't run the verification command in this message, you cannot claim it passes.
+
+## The Gate Function
+
+```
+BEFORE claiming any status or expressing satisfaction:
+
+1. IDENTIFY: What command proves this claim?
+2. RUN: Execute the FULL command (fresh, complete)
+3. READ: Full output, check exit code, count failures
+4. VERIFY: Does output confirm the claim?
+   - If NO: State actual status with evidence
+   - If YES: State claim WITH evidence
+5. ONLY THEN: Make the claim
+
+Skip any step = lying, not verifying
+```
+
+## Common Failures
+
+| Claim | Requires | Not Sufficient |
+|-------|----------|----------------|
+| Tests pass | Test command output: 0 failures | Previous run, "should pass" |
+| Linter clean | Linter output: 0 errors | Partial check, extrapolation |
+| Build succeeds | Build command: exit 0 | Linter passing, logs look good |
+| Bug fixed | Test original symptom: passes | Code changed, assumed fixed |
+| Regression test works | Red-green cycle verified | Test passes once |
+| Agent completed | VCS diff shows changes | Agent reports "success" |
+| Requirements met | Line-by-line checklist | Tests passing |
+
+## Red Flags - STOP
+
+- Using "should", "probably", "seems to"
+- Expressing satisfaction before verification ("Great!", "Perfect!", "Done!", etc.)
+- About to commit/push/PR without verification
+- Trusting agent success reports
+- Relying on partial verification
+- Thinking "just this once"
+- Tired and wanting work over
+- **ANY wording implying success without having run verification**
+
+## Rationalization Prevention
+
+| Excuse | Reality |
+|--------|---------|
+| "Should work now" | RUN the verification |
+| "I'm confident" | Confidence ≠ evidence |
+| "Just this once" | No exceptions |
+| "Linter passed" | Linter ≠ compiler |
+| "Agent said success" | Verify independently |
+| "I'm tired" | Exhaustion ≠ excuse |
+| "Partial check is enough" | Partial proves nothing |
+| "Different words so rule doesn't apply" | Spirit over letter |
+
+## Key Patterns
+
+**Tests:**
+```
+✅ [Run test command] [See: 34/34 pass] "All tests pass"
+❌ "Should pass now" / "Looks correct"
+```
+
+**Regression tests (TDD Red-Green):**
+```
+✅ Write → Run (pass) → Revert fix → Run (MUST FAIL) → Restore → Run (pass)
+❌ "I've written a regression test" (without red-green verification)
+```
+
+**Build:**
+```
+✅ [Run build] [See: exit 0] "Build passes"
+❌ "Linter passed" (linter doesn't check compilation)
+```
+
+**Requirements:**
+```
+✅ Re-read plan → Create checklist → Verify each → Report gaps or completion
+❌ "Tests pass, phase complete"
+```
+
+**Agent delegation:**
+```
+✅ Agent reports success → Check VCS diff → Verify changes → Report actual state
+❌ Trust agent report
+```
+
+## Why This Matters
+
+From 24 failure memories:
+- your human partner said "I don't believe you" - trust broken
+- Undefined functions shipped - would crash
+- Missing requirements shipped - incomplete features
+- Time wasted on false completion → redirect → rework
+- Violates: "Honesty is a core value. If you lie, you'll be replaced."
+
+## When To Apply
+
+**ALWAYS before:**
+- ANY variation of success/completion claims
+- ANY expression of satisfaction
+- ANY positive statement about work state
+- Committing, PR creation, task completion
+- Moving to next task
+- Delegating to agents
+
+**Rule applies to:**
+- Exact phrases
+- Paraphrases and synonyms
+- Implications of success
+- ANY communication suggesting completion/correctness
+
+## The Bottom Line
+
+**No shortcuts for verification.**
+
+Run the command. Read the output. THEN claim the result.
+
+This is non-negotiable.
+
+codex
+Using `using-superpowers`, `universal-verify`, and `verification-before-completion` because this is a code review where any approval or test status needs fresh evidence. I’ll read the specified source files directly, run the requested verification command, then report only in the required format.
+exec
+/bin/bash -lc 'ls -la ~/.agents/skills/superpowers' in /home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M
+ succeeded in 0ms:
+lrwxrwxrwx 1 ubuntu ubuntu 38 Feb  8 16:04 /home/ubuntu/.agents/skills/superpowers -> /home/ubuntu/.codex/superpowers/skills
+
+exec
+/bin/bash -lc 'nl -ba /home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M/src/parser.js' in /home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M
+ succeeded in 0ms:
+     1	// Pure CSV-to-contacts parser. No filesystem, no process, no console — see R10.
+     2	// parseCsv(content) takes the full CSV text and returns { contacts, errors }.
+     3	// A malformed/missing header is fatal and is signaled by throwing HeaderError;
+     4	// per-row problems are non-fatal and collected into `errors` instead.
+     5	
+     6	const REQUIRED_COLUMNS = ['name', 'email', 'phone'];
+     7	
+     8	// Minimum bar for "syntactically valid": non-empty local part, an '@', a
+     9	// domain with at least one dot, and no whitespace anywhere.
+    10	const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    11	
+    12	export class HeaderError extends Error {
+    13	  constructor(message) {
+    14	    super(message);
+    15	    this.name = 'HeaderError';
+    16	  }
+    17	}
+    18	
+    19	// R1: the header must be EXACTLY the set {name,email,phone} (any order).
+    20	// Missing, unexpected, and duplicated columns are all fatal; every problem
+    21	// that applies is named in the thrown HeaderError's message.
+    22	function validateHeader(headerFields) {
+    23	  const problems = [];
+    24	
+    25	  const missing = REQUIRED_COLUMNS.filter((col) => !headerFields.includes(col));
+    26	  if (missing.length > 0) {
+    27	    problems.push(`missing required column(s): ${missing.join(', ')}`);
+    28	  }
+    29	
+    30	  const unexpected = [...new Set(headerFields.filter((f) => !REQUIRED_COLUMNS.includes(f)))];
+    31	  if (unexpected.length > 0) {
+    32	    problems.push(`unexpected column(s): ${unexpected.join(', ')}`);
+    33	  }
+    34	
+    35	  const duplicated = [...new Set(headerFields.filter((f, idx) => headerFields.indexOf(f) !== idx))];
+    36	  if (duplicated.length > 0) {
+    37	    problems.push(`duplicate column(s): ${duplicated.join(', ')}`);
+    38	  }
+    39	
+    40	  if (problems.length > 0) {
+    41	    throw new HeaderError(problems.join('; '));
+    42	  }
+    43	}
+    44	
+    45	function stripBom(text) {
+    46	  return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
+    47	}
+    48	
+    49	// Tokenizes raw CSV text into rows of { fields: string[], line: number }.
+    50	// `line` is the 1-based line number in the original text where the row
+    51	// begins (the header is line 1). Handles quoted fields containing commas,
+    52	// escaped quotes (""), embedded newlines, and both CRLF and LF endings.
+    53	function tokenizeRows(text) {
+    54	  const rows = [];
+    55	  const n = text.length;
+    56	  let i = 0;
+    57	  let line = 1;
+    58	  let rowStartLine = line;
+    59	  let field = '';
+    60	  let row = [];
+    61	  let inQuotes = false;
+    62	  let atFieldStart = true;
+    63	
+    64	  const endField = () => {
+    65	    row.push(field);
+    66	    field = '';
+    67	    atFieldStart = true;
+    68	  };
+    69	  const endRow = () => {
+    70	    endField();
+    71	    rows.push({ fields: row, line: rowStartLine });
+    72	    row = [];
+    73	  };
+    74	
+    75	  while (i < n) {
+    76	    const ch = text[i];
+    77	
+    78	    if (inQuotes) {
+    79	      if (ch === '"') {
+    80	        if (text[i + 1] === '"') {
+    81	          field += '"';
+    82	          i += 2;
+    83	        } else {
+    84	          inQuotes = false;
+    85	          i += 1;
+    86	        }
+    87	      } else if (ch === '\r' && text[i + 1] === '\n') {
+    88	        field += '\n';
+    89	        line += 1;
+    90	        i += 2;
+    91	      } else if (ch === '\n') {
+    92	        field += '\n';
+    93	        line += 1;
+    94	        i += 1;
+    95	      } else {
+    96	        field += ch;
+    97	        i += 1;
+    98	      }
+    99	      continue;
+   100	    }
+   101	
+   102	    if (atFieldStart && ch === '"') {
+   103	      inQuotes = true;
+   104	      atFieldStart = false;
+   105	      i += 1;
+   106	      continue;
+   107	    }
+   108	
+   109	    if (ch === ',') {
+   110	      endField();
+   111	      i += 1;
+   112	      continue;
+   113	    }
+   114	
+   115	    if (ch === '\r' && text[i + 1] === '\n') {
+   116	      endRow();
+   117	      line += 1;
+   118	      i += 2;
+   119	      rowStartLine = line;
+   120	      continue;
+   121	    }
+   122	
+   123	    if (ch === '\n') {
+   124	      endRow();
+   125	      line += 1;
+   126	      i += 1;
+   127	      rowStartLine = line;
+   128	      continue;
+   129	    }
+   130	
+   131	    field += ch;
+   132	    atFieldStart = false;
+   133	    i += 1;
+   134	  }
+   135	
+   136	  // Only flush a trailing row if there's actually unterminated content —
+   137	  // a file ending in a newline must not produce a phantom empty row.
+   138	  if (field.length > 0 || row.length > 0) {
+   139	    endRow();
+   140	  }
+   141	
+   142	  return rows;
+   143	}
+   144	
+   145	function normalizePhone(raw) {
+   146	  return raw.replace(/[\s\-()]/g, '');
+   147	}
+   148	
+   149	// string in -> { contacts, errors } out. Throws HeaderError for a missing
+   150	// or absent header (fatal); per-row problems are pushed onto `errors`
+   151	// instead of aborting the run.
+   152	export function parseCsv(content) {
+   153	  const text = stripBom(content);
+   154	  const rows = tokenizeRows(text);
+   155	
+   156	  if (rows.length === 0) {
+   157	    throw new HeaderError(`missing required column(s): ${REQUIRED_COLUMNS.join(', ')}`);
+   158	  }
+   159	
+   160	  const headerFields = rows[0].fields.map((f) => f.trim());
+   161	  validateHeader(headerFields);
+   162	
+   163	  const colIndex = {
+   164	    name: headerFields.indexOf('name'),
+   165	    email: headerFields.indexOf('email'),
+   166	    phone: headerFields.indexOf('phone'),
+   167	  };
+   168	  const expectedFieldCount = headerFields.length;
+   169	
+   170	  const contacts = [];
+   171	  const errors = [];
+   172	  const seenEmails = new Set();
+   173	
+   174	  for (const { fields, line } of rows.slice(1)) {
+   175	    if (fields.length !== expectedFieldCount) {
+   176	      errors.push({
+   177	        line,
+   178	        reason: `wrong field count (expected ${expectedFieldCount}, got ${fields.length})`,
+   179	      });
+   180	      continue;
+   181	    }
+   182	
+   183	    const name = fields[colIndex.name].trim();
+   184	    if (name.length === 0) {
+   185	      errors.push({ line, reason: 'empty name' });
+   186	      continue;
+   187	    }
+   188	
+   189	    const email = fields[colIndex.email].trim();
+   190	    if (!EMAIL_RE.test(email)) {
+   191	      errors.push({ line, reason: 'invalid email' });
+   192	      continue;
+   193	    }
+   194	
+   195	    const emailKey = email.toLowerCase();
+   196	    if (seenEmails.has(emailKey)) {
+   197	      errors.push({ line, reason: 'duplicate email' });
+   198	      continue;
+   199	    }
+   200	
+   201	    const phone = normalizePhone(fields[colIndex.phone].trim());
+   202	    if (!/^\d+$/.test(phone)) {
+   203	      errors.push({ line, reason: 'invalid phone' });
+   204	      continue;
+   205	    }
+   206	
+   207	    seenEmails.add(emailKey);
+   208	    contacts.push({ name, email, phone });
+   209	  }
+   210	
+   211	  return { contacts, errors };
+   212	}
+
+exec
+/bin/bash -lc 'nl -ba /home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M/src/parser.test.js' in /home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M
+ succeeded in 0ms:
+     1	import { test, describe, before, after } from 'node:test';
+     2	import assert from 'node:assert/strict';
+     3	import { execFile } from 'node:child_process';
+     4	import { mkdtemp, readFile, writeFile, rm, readdir } from 'node:fs/promises';
+     5	import { tmpdir } from 'node:os';
+     6	import { join, dirname } from 'node:path';
+     7	import { fileURLToPath } from 'node:url';
+     8	import process from 'node:process';
+     9	
+    10	import { parseCsv, HeaderError } from './parser.js';
+    11	
+    12	const __dirname = dirname(fileURLToPath(import.meta.url));
+    13	const cliPath = join(__dirname, 'importCsv.js');
+    14	
+    15	function runCli(args) {
+    16	  return new Promise((resolve, reject) => {
+    17	    execFile(process.execPath, [cliPath, ...args], (error, stdout, stderr) => {
+    18	      if (error && typeof error.code !== 'number') {
+    19	        // Process failed to spawn at all, or was killed by a signal.
+    20	        reject(error);
+    21	        return;
+    22	      }
+    23	      resolve({ code: error ? error.code : 0, stdout, stderr });
+    24	    });
+    25	  });
+    26	}
+    27	
+    28	describe('parseCsv — R2: quoted fields', () => {
+    29	  test('handles a quoted field containing a comma', () => {
+    30	    const csv = 'name,email,phone\n"Kim, Minsu",kim@example.com,010-1234-5678\n';
+    31	    const { contacts, errors } = parseCsv(csv);
+    32	    assert.deepEqual(errors, []);
+    33	    assert.equal(contacts.length, 1);
+    34	    assert.equal(contacts[0].name, 'Kim, Minsu');
+    35	    assert.equal(contacts[0].email, 'kim@example.com');
+    36	    assert.equal(contacts[0].phone, '01012345678');
+    37	  });
+    38	
+    39	  test('handles escaped double quotes inside a quoted field', () => {
+    40	    const csv = 'name,email,phone\n"Bob ""The Builder"" Smith",bob@example.com,(555) 123-4567\n';
+    41	    const { contacts, errors } = parseCsv(csv);
+    42	    assert.deepEqual(errors, []);
+    43	    assert.equal(contacts.length, 1);
+    44	    assert.equal(contacts[0].name, 'Bob "The Builder" Smith');
+    45	    assert.equal(contacts[0].phone, '5551234567');
+    46	  });
+    47	
+    48	  test('a naive split(",") would break on this row, the real parser must not', () => {
+    49	    const csv = 'name,email,phone\n"Kim, Minsu, Jr.",kim@example.com,0101234567\n';
+    50	    const { contacts, errors } = parseCsv(csv);
+    51	    assert.deepEqual(errors, []);
+    52	    assert.equal(contacts[0].name, 'Kim, Minsu, Jr.');
+    53	  });
+    54	});
+    55	
+    56	describe('parseCsv — R5: original line numbers', () => {
+    57	  test('reports correct 1-based line numbers for a mix of valid/invalid rows, including after a wrong-field-count row', () => {
+    58	    const csv = [
+    59	      'name,email,phone', // line 1 (header)
+    60	      'Alice,alice@example.com,111-222-3333', // line 2, valid
+    61	      'BadRow,notanemail', // line 3, invalid: wrong field count
+    62	      '"Carol, Jones",carol@example.com,444-555-6666', // line 4, valid (quoted comma)
+    63	      'Dave,dave@example.com,', // line 5, invalid: empty/invalid phone
+    64	      'Eve,eve@example.com,555-000-1111', // line 6, valid — must not have drifted
+    65	    ].join('\n') + '\n';
+    66	
+    67	    const { contacts, errors } = parseCsv(csv);
+    68	
+    69	    assert.equal(contacts.length, 3);
+    70	    assert.deepEqual(
+    71	      contacts.map((c) => c.name),
+    72	      ['Alice', 'Carol, Jones', 'Eve']
+    73	    );
+    74	
+    75	    assert.equal(errors.length, 2);
+    76	    assert.equal(errors[0].line, 3);
+    77	    assert.match(errors[0].reason, /wrong field count/);
+    78	    assert.equal(errors[1].line, 5);
+    79	    assert.equal(errors[1].reason, 'invalid phone');
+    80	
+    81	    // Sanity: the row after the malformed ones lands on the right line
+    82	    // number (i.e. line counting didn't drift because of the earlier
+    83	    // wrong-field-count row or the multi-field quoted row).
+    84	    const eve = contacts.find((c) => c.name === 'Eve');
+    85	    assert.ok(eve);
+    86	  });
+    87	});
+    88	
+    89	describe('parseCsv — R6: duplicate emails', () => {
+    90	  test('rejects a case-insensitive duplicate email after the first occurrence', () => {
+    91	    const csv = [
+    92	      'name,email,phone',
+    93	      'Alice,Alice@Example.com,111-111-1111',
+    94	      'Alice Two,alice@example.com,222-222-2222',
+    95	    ].join('\n') + '\n';
+    96	
+    97	    const { contacts, errors } = parseCsv(csv);
+    98	
+    99	    assert.equal(contacts.length, 1);
+   100	    assert.equal(contacts[0].email, 'Alice@Example.com');
+   101	    assert.equal(errors.length, 1);
+   102	    assert.equal(errors[0].line, 3);
+   103	    assert.equal(errors[0].reason, 'duplicate email');
+   104	  });
+   105	});
+   106	
+   107	describe('parseCsv — R8: header-only input', () => {
+   108	  test('an empty data file (header only) yields no contacts and no errors', () => {
+   109	    const { contacts, errors } = parseCsv('name,email,phone\n');
+   110	    assert.deepEqual(contacts, []);
+   111	    assert.deepEqual(errors, []);
+   112	  });
+   113	
+   114	  test('works with no trailing newline after the header either', () => {
+   115	    const { contacts, errors } = parseCsv('name,email,phone');
+   116	    assert.deepEqual(contacts, []);
+   117	    assert.deepEqual(errors, []);
+   118	  });
+   119	});
+   120	
+   121	describe('parseCsv — R9: line endings and BOM', () => {
+   122	  test('CRLF and LF inputs produce identical results', () => {
+   123	    const lf = [
+   124	      'name,email,phone',
+   125	      'Alice,alice@example.com,111-222-3333',
+   126	      '"Kim, Minsu",kim@example.com,010-1234-5678',
+   127	    ].join('\n') + '\n';
+   128	    const crlf = lf.replace(/\n/g, '\r\n');
+   129	
+   130	    const lfResult = parseCsv(lf);
+   131	    const crlfResult = parseCsv(crlf);
+   132	
+   133	    assert.deepEqual(crlfResult, lfResult);
+   134	    assert.equal(lfResult.contacts.length, 2);
+   135	  });
+   136	
+   137	  test('tolerates a UTF-8 BOM on the header line', () => {
+   138	    const csv = '﻿name,email,phone\nAlice,alice@example.com,111-222-3333\n';
+   139	    const { contacts, errors } = parseCsv(csv);
+   140	    assert.deepEqual(errors, []);
+   141	    assert.equal(contacts.length, 1);
+   142	    assert.equal(contacts[0].name, 'Alice');
+   143	  });
+   144	});
+   145	
+   146	describe('parseCsv — R1: header validation', () => {
+   147	  test('throws HeaderError naming the missing column when one required column is absent', () => {
+   148	    assert.throws(
+   149	      () => parseCsv('name,phone\nAlice,111\n'),
+   150	      (err) => {
+   151	        assert.ok(err instanceof HeaderError);
+   152	        assert.match(err.message, /email/);
+   153	        return true;
+   154	      }
+   155	    );
+   156	  });
+   157	
+   158	  test('throws HeaderError naming all missing columns when several are absent', () => {
+   159	    assert.throws(
+   160	      () => parseCsv('name\nAlice\n'),
+   161	      (err) => {
+   162	        assert.ok(err instanceof HeaderError);
+   163	        assert.match(err.message, /email/);
+   164	        assert.match(err.message, /phone/);
+   165	        return true;
+   166	      }
+   167	    );
+   168	  });
+   169	
+   170	  test('accepts a reordered header (any order, exact set)', () => {
+   171	    const csv = 'email,name,phone\nalice@example.com,Alice,111-222-3333\n';
+   172	    const { contacts, errors } = parseCsv(csv);
+   173	    assert.deepEqual(errors, []);
+   174	    assert.equal(contacts.length, 1);
+   175	    assert.equal(contacts[0].name, 'Alice');
+   176	  });
+   177	
+   178	  test('throws HeaderError for a completely empty file', () => {
+   179	    assert.throws(() => parseCsv(''), HeaderError);
+   180	  });
+   181	
+   182	  test('throws HeaderError naming an unexpected extra column (exact set enforced)', () => {
+   183	    assert.throws(
+   184	      () => parseCsv('name,email,phone,notes\nAlice,alice@example.com,111,hi\n'),
+   185	      (err) => {
+   186	        assert.ok(err instanceof HeaderError);
+   187	        assert.match(err.message, /unexpected column\(s\): notes/);
+   188	        return true;
+   189	      }
+   190	    );
+   191	  });
+   192	
+   193	  test('throws HeaderError naming a duplicated column', () => {
+   194	    assert.throws(
+   195	      () => parseCsv('name,email,email\nAlice,alice@example.com,alice@example.com\n'),
+   196	      (err) => {
+   197	        assert.ok(err instanceof HeaderError);
+   198	        assert.match(err.message, /duplicate column\(s\): email/);
+   199	        return true;
+   200	      }
+   201	    );
+   202	  });
+   203	
+   204	  test('a header with both a missing and an unexpected column reports both problems', () => {
+   205	    assert.throws(
+   206	      () => parseCsv('name,phone,notes\nAlice,111,hi\n'),
+   207	      (err) => {
+   208	        assert.ok(err instanceof HeaderError);
+   209	        assert.match(err.message, /missing required column\(s\): email/);
+   210	        assert.match(err.message, /unexpected column\(s\): notes/);
+   211	        return true;
+   212	      }
+   213	    );
+   214	  });
+   215	});
+   216	
+   217	describe('parseCsv — R3: row validation', () => {
+   218	  test('rejects an empty name after trimming', () => {
+   219	    const { errors } = parseCsv('name,email,phone\n   ,alice@example.com,111\n');
+   220	    assert.equal(errors.length, 1);
+   221	    assert.equal(errors[0].reason, 'empty name');
+   222	  });
+   223	
+   224	  test('rejects a syntactically invalid email', () => {
+   225	    const { errors } = parseCsv('name,email,phone\nAlice,not-an-email,111\n');
+   226	    assert.equal(errors.length, 1);
+   227	    assert.equal(errors[0].reason, 'invalid email');
+   228	  });
+   229	
+   230	  test('normalizes phone by stripping spaces, dashes and parentheses', () => {
+   231	    const { contacts, errors } = parseCsv('name,email,phone\nAlice,alice@example.com,(010) 1234-5678\n');
+   232	    assert.deepEqual(errors, []);
+   233	    assert.equal(contacts[0].phone, '01012345678');
+   234	  });
+   235	
+   236	  test('rejects a phone that is not digits-only after normalization', () => {
+   237	    const { errors } = parseCsv('name,email,phone\nAlice,alice@example.com,+82-10-1234-5678\n');
+   238	    assert.equal(errors.length, 1);
+   239	    assert.equal(errors[0].reason, 'invalid phone');
+   240	  });
+   241	});
+   242	
+   243	describe('CLI wrapper (importCsv.js) — end to end', () => {
+   244	  let dir;
+   245	
+   246	  before(async () => {
+   247	    dir = await mkdtemp(join(tmpdir(), 'csvimport-test-'));
+   248	  });
+   249	
+   250	  after(async () => {
+   251	    await rm(dir, { recursive: true, force: true });
+   252	  });
+   253	
+   254	  test('--help prints usage and exits 0', async () => {
+   255	    const { code, stdout } = await runCli(['--help']);
+   256	    assert.equal(code, 0);
+   257	    assert.match(stdout, /Usage:/);
+   258	  });
+   259	
+   260	  test('missing args exits 2 with usage on stderr', async () => {
+   261	    const { code, stderr } = await runCli([]);
+   262	    assert.equal(code, 2);
+   263	    assert.match(stderr, /Usage:/);
+   264	  });
+   265	
+   266	  test('missing input file exits 2', async () => {
+   267	    const inputPath = join(dir, 'does-not-exist.csv');
+   268	    const outputPath = join(dir, 'out-missing.json');
+   269	    const { code, stderr } = await runCli([inputPath, outputPath]);
+   270	    assert.equal(code, 2);
+   271	    assert.match(stderr, /cannot read input file/);
+   272	  });
+   273	
+   274	  test('bad header exits 2 naming the missing column', async () => {
+   275	    const inputPath = join(dir, 'bad-header.csv');
+   276	    const outputPath = join(dir, 'out-bad-header.json');
+   277	    await writeFile(inputPath, 'name,phone\nAlice,111\n', 'utf8');
+   278	    const { code, stderr } = await runCli([inputPath, outputPath]);
+   279	    assert.equal(code, 2);
+   280	    assert.match(stderr, /email/);
+   281	    await assert.rejects(() => readFile(outputPath));
+   282	  });
+   283	
+   284	  test('header with an extra column exits 2 naming the unexpected column', async () => {
+   285	    const inputPath = join(dir, 'extra-header.csv');
+   286	    const outputPath = join(dir, 'out-extra-header.json');
+   287	    await writeFile(inputPath, 'name,email,phone,notes\nAlice,alice@example.com,111,hi\n', 'utf8');
+   288	    const { code, stderr } = await runCli([inputPath, outputPath]);
+   289	    assert.equal(code, 2);
+   290	    assert.match(stderr, /unexpected column\(s\): notes/);
+   291	    await assert.rejects(() => readFile(outputPath));
+   292	  });
+   293	
+   294	  test('all-valid rows: exit 0, correct summary, atomic output with trailing newline', async () => {
+   295	    const inputPath = join(dir, 'valid.csv');
+   296	    const outputPath = join(dir, 'valid-out.json');
+   297	    const csv = [
+   298	      'name,email,phone',
+   299	      'Alice,alice@example.com,111-222-3333',
+   300	      '"Kim, Minsu",kim@example.com,010-1234-5678',
+   301	    ].join('\n') + '\n';
+   302	    await writeFile(inputPath, csv, 'utf8');
+   303	
+   304	    const { code, stdout, stderr } = await runCli([inputPath, outputPath]);
+   305	
+   306	    assert.equal(code, 0);
+   307	    assert.equal(stdout, 'imported 2/2 rows\n');
+   308	    assert.equal(stderr, '');
+   309	
+   310	    const raw = await readFile(outputPath, 'utf8');
+   311	    assert.ok(/[^\n]\n$/.test(raw), 'output must end with exactly one trailing newline');
+   312	    const parsed = JSON.parse(raw);
+   313	    assert.equal(parsed.contacts.length, 2);
+   314	    assert.equal(parsed.contacts[1].name, 'Kim, Minsu');
+   315	    assert.equal(parsed.contacts[1].phone, '01012345678');
+   316	
+   317	    // No leftover temp files from the atomic write-then-rename.
+   318	    const entries = await readdir(dir);
+   319	    const stray = entries.filter((e) => e.includes('.tmp-'));
+   320	    assert.deepEqual(stray, []);
+   321	  });
+   322	
+   323	  test('mixed valid/invalid rows: exit 1, summary counts total, stderr has line-tagged reasons', async () => {
+   324	    const inputPath = join(dir, 'mixed.csv');
+   325	    const outputPath = join(dir, 'mixed-out.json');
+   326	    const csv = [
+   327	      'name,email,phone',
+   328	      'Alice,alice@example.com,111-222-3333',
+   329	      'Bad,notanemail,111',
+   330	      'Carol,carol@example.com,222-333-4444',
+   331	    ].join('\n') + '\n';
+   332	    await writeFile(inputPath, csv, 'utf8');
+   333	
+   334	    const { code, stdout, stderr } = await runCli([inputPath, outputPath]);
+   335	
+   336	    assert.equal(code, 1);
+   337	    assert.equal(stdout, 'imported 2/3 rows\n');
+   338	    assert.equal(stderr, 'line 3: invalid email\n');
+   339	
+   340	    const parsed = JSON.parse(await readFile(outputPath, 'utf8'));
+   341	    assert.equal(parsed.contacts.length, 2);
+   342	  });
+   343	
+   344	  test('header-only input: exit 0, empty contacts, "imported 0/0 rows"', async () => {
+   345	    const inputPath = join(dir, 'empty.csv');
+   346	    const outputPath = join(dir, 'empty-out.json');
+   347	    await writeFile(inputPath, 'name,email,phone\n', 'utf8');
+   348	
+   349	    const { code, stdout } = await runCli([inputPath, outputPath]);
+   350	
+   351	    assert.equal(code, 0);
+   352	    assert.equal(stdout, 'imported 0/0 rows\n');
+   353	    const parsed = JSON.parse(await readFile(outputPath, 'utf8'));
+   354	    assert.deepEqual(parsed, { contacts: [] });
+   355	  });
+   356	});
+
+exec
+/bin/bash -lc 'nl -ba /home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M/src/importCsv.js' in /home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M
+ succeeded in 0ms:
+     1	#!/usr/bin/env node
+     2	// Thin I/O shell around parser.js: argv handling, reading input, writing
+     3	// output atomically, and choosing the process exit code (R10 — all parsing
+     4	// logic itself lives in the pure parser module).
+     5	
+     6	import { readFile, writeFile, rename, unlink } from 'node:fs/promises';
+     7	import { dirname, join, basename } from 'node:path';
+     8	import process from 'node:process';
+     9	import { parseCsv, HeaderError } from './parser.js';
+    10	
+    11	const USAGE = `Usage: node src/importCsv.js <input.csv> <output.json>
+    12	
+    13	Imports a contacts CSV (header: name,email,phone, any order) into a
+    14	normalized JSON file: { "contacts": [ { "name", "email", "phone" }, ... ] }.
+    15	
+    16	Invalid rows are skipped and reported on stderr; the run still succeeds
+    17	unless the input is unreadable, the header is missing a required column,
+    18	or the output can't be written.
+    19	
+    20	Options:
+    21	  -h, --help    Show this help message and exit
+    22	`;
+    23	
+    24	async function writeAtomic(outputPath, data) {
+    25	  const dir = dirname(outputPath) || '.';
+    26	  const tempPath = join(dir, `.${basename(outputPath)}.tmp-${process.pid}-${Date.now()}`);
+    27	  try {
+    28	    await writeFile(tempPath, data, 'utf8');
+    29	    await rename(tempPath, outputPath);
+    30	  } catch (err) {
+    31	    await unlink(tempPath).catch(() => {});
+    32	    throw err;
+    33	  }
+    34	}
+    35	
+    36	async function main(argv) {
+    37	  if (argv.includes('--help') || argv.includes('-h')) {
+    38	    process.stdout.write(USAGE);
+    39	    return 0;
+    40	  }
+    41	
+    42	  if (argv.length !== 2) {
+    43	    process.stderr.write(USAGE);
+    44	    return 2;
+    45	  }
+    46	
+    47	  const [inputPath, outputPath] = argv;
+    48	
+    49	  let content;
+    50	  try {
+    51	    content = await readFile(inputPath, 'utf8');
+    52	  } catch (err) {
+    53	    process.stderr.write(`error: cannot read input file '${inputPath}': ${err.message}\n`);
+    54	    return 2;
+    55	  }
+    56	
+    57	  let result;
+    58	  try {
+    59	    result = parseCsv(content);
+    60	  } catch (err) {
+    61	    if (err instanceof HeaderError) {
+    62	      process.stderr.write(`error: ${err.message}\n`);
+    63	      return 2;
+    64	    }
+    65	    throw err;
+    66	  }
+    67	
+    68	  const { contacts, errors } = result;
+    69	  const total = contacts.length + errors.length;
+    70	  const outputJson = `${JSON.stringify({ contacts }, null, 2)}\n`;
+    71	
+    72	  try {
+    73	    await writeAtomic(outputPath, outputJson);
+    74	  } catch (err) {
+    75	    process.stderr.write(`error: cannot write output file '${outputPath}': ${err.message}\n`);
+    76	    return 2;
+    77	  }
+    78	
+    79	  for (const { line, reason } of errors) {
+    80	    process.stderr.write(`line ${line}: ${reason}\n`);
+    81	  }
+    82	  process.stdout.write(`imported ${contacts.length}/${total} rows\n`);
+    83	
+    84	  return errors.length > 0 ? 1 : 0;
+    85	}
+    86	
+    87	try {
+    88	  const exitCode = await main(process.argv.slice(2));
+    89	  process.exit(exitCode);
+    90	} catch (err) {
+    91	  process.stderr.write(`error: ${err.message}\n`);
+    92	  process.exit(2);
+    93	}
+
+exec
+/bin/bash -lc 'nl -ba /home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M/src/package.json' in /home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M
+ succeeded in 0ms:
+     1	{
+     2	  "name": "csvimport-cli",
+     3	  "private": true,
+     4	  "type": "module",
+     5	  "main": "parser.test.js"
+     6	}
+
+codex
+I’ve got the source context now. The parser and CLI are small and separated as described; I’m checking for behavioral gaps against the stated contract before deciding whether any issue rises above minor.
+exec
+/bin/bash -lc 'node --test src/' in /home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M
+ succeeded in 209ms:
+    # Subtest: bad header exits 2 naming the missing column
+    ok 4 - bad header exits 2 naming the missing column
+      ---
+      duration_ms: 19.59006
+      type: 'test'
+      ...
+    # Subtest: header with an extra column exits 2 naming the unexpected column
+    ok 5 - header with an extra column exits 2 naming the unexpected column
+      ---
+      duration_ms: 19.160522
+      type: 'test'
+      ...
+    # Subtest: all-valid rows: exit 0, correct summary, atomic output with trailing newline
+    ok 6 - all-valid rows: exit 0, correct summary, atomic output with trailing newline
+      ---
+      duration_ms: 21.382367
+      type: 'test'
+      ...
+    # Subtest: mixed valid/invalid rows: exit 1, summary counts total, stderr has line-tagged reasons
+    ok 7 - mixed valid/invalid rows: exit 1, summary counts total, stderr has line-tagged reasons
+      ---
+      duration_ms: 25.364385
+      type: 'test'
+      ...
+    # Subtest: header-only input: exit 0, empty contacts, "imported 0/0 rows"
+    ok 8 - header-only input: exit 0, empty contacts, "imported 0/0 rows"
+      ---
+      duration_ms: 25.973874
+      type: 'test'
+      ...
+    1..8
+ok 8 - CLI wrapper (importCsv.js) — end to end
+  ---
+  duration_ms: 188.228175
+  type: 'suite'
+  ...
+1..8
+# tests 28
+# suites 8
+# pass 28
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 235.216307
+
+codex
+The required test command returned exit code 0 with `# tests 28`, `# pass 28`, and `# fail 0`. I’m not changing files; I’m only validating whether the remaining observations are blocking for the stated greenfield scope.
+codex
+status: APPROVED
+strengths: [
+  "/home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M/src/parser.js:152 - Parser exposes a pure `parseCsv(content)` interface with validation kept out of CLI I/O.",
+  "/home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M/src/parser.js:22 - Header validation cleanly combines missing, unexpected, and duplicate column errors.",
+  "/home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M/src/importCsv.js:24 - Atomic write is scoped and cleans up the temp file on failure.",
+  "/home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M/src/parser.test.js:243 - CLI tests exercise real subprocess behavior, output files, exit codes, stderr/stdout, and temp-file cleanup.",
+  "/home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M/src/parser.test.js:28 - Verification run: `cd /home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M && node --test src/`; output excerpt: `# tests 28`, `# pass 28`, `# fail 0`."
+]
+critical_issues: none
+important_issues: none
+minor_issues: [
+  "/home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M/src/parser.js:78 - CSV quote handling is intentionally permissive for malformed quote syntax; acceptable for the stated spec, but stricter parse errors would be safer if untrusted malformed CSVs are in scope."
+]
+tokens used
+51,321
+status: APPROVED
+strengths: [
+  "/home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M/src/parser.js:152 - Parser exposes a pure `parseCsv(content)` interface with validation kept out of CLI I/O.",
+  "/home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M/src/parser.js:22 - Header validation cleanly combines missing, unexpected, and duplicate column errors.",
+  "/home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M/src/importCsv.js:24 - Atomic write is scoped and cleans up the temp file on failure.",
+  "/home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M/src/parser.test.js:243 - CLI tests exercise real subprocess behavior, output files, exit codes, stderr/stdout, and temp-file cleanup.",
+  "/home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M/src/parser.test.js:28 - Verification run: `cd /home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M && node --test src/`; output excerpt: `# tests 28`, `# pass 28`, `# fail 0`."
+]
+critical_issues: none
+important_issues: none
+minor_issues: [
+  "/home/ubuntu/Github/superpowers-custom/benchmark/runs/csvimport_M/src/parser.js:78 - CSV quote handling is intentionally permissive for malformed quote syntax; acceptable for the stated spec, but stricter parse errors would be safer if untrusted malformed CSVs are in scope."
+]

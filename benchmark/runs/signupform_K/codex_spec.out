@@ -1,0 +1,1027 @@
+Reading additional input from stdin...
+OpenAI Codex v0.142.5
+--------
+workdir: /home/ubuntu/Github/superpowers-custom/benchmark/runs/signupform_K
+model: gpt-5.5
+provider: openai
+approval: never
+sandbox: danger-full-access
+reasoning effort: xhigh
+reasoning summaries: none
+session id: 019f22fb-6b75-7342-8470-4ae09c718260
+--------
+user
+You are reviewing whether an implementation matches its specification.
+There is no git repo here. The ENTIRE implementation is one new file — read it directly:
+/home/ubuntu/Github/superpowers-custom/benchmark/runs/signupform_K/src/signup.html
+
+## What Was Requested
+
+# Task: accessible signup form page
+
+Build a single-file HTML page (all CSS/JS inline, no frameworks, no build tools) implementing a signup form with client-side validation.
+
+## Deliverables
+- `src/signup.html`
+
+## Requirements
+
+R1. Fields: email, password, password-confirm, nickname, a required terms checkbox, and a submit button.
+R2. Email validation: syntactically valid email required; error shows AFTER first blur of the field, not while the user is still typing their first entry.
+R3. Password rules: >=10 chars AND at least one letter, one digit, one symbol. Show a live checklist of the three rules that ticks off as each is satisfied.
+R4. Password-confirm must match; mismatch error appears on blur and clears as soon as the values match.
+R5. Nickname: 2-12 chars, letters/digits/Korean only; validated on blur.
+R6. Submit is disabled until ALL validations pass (including the checkbox); disabled state must be visually distinct AND carry aria-disabled semantics or native disabled.
+R7. On submit: prevent default, show a success panel containing the entered email and nickname (password never displayed), and move keyboard focus to that panel.
+R8. Every input has a programmatically associated <label> (for/id), and every error message is announced to screen readers via aria-describedby on the input plus role="alert" or aria-live="polite" on the error container.
+R9. Keyboard-only flow works end-to-end: tab order follows visual order, checkbox toggles with Space, submit reachable and activatable with Enter — nothing requires a mouse.
+R10. Errors must not shift layout when appearing (reserve space or use a technique that avoids cumulative layout shift).
+R11. The page is usable at 375px wide with no horizontal scroll; touch targets (inputs, checkbox, button) are at least 44px tall.
+R12. No console errors at load or during the full happy-path flow.
+
+## Constraints
+- Single file, vanilla JS, works from file:// (no server required).
+
+## What Implementer Claims They Built
+
+- Single file, inline CSS/JS, no frameworks, works from file://.
+- R1: email / password / password-confirm / nickname / terms checkbox / submit button.
+- R2: per-field "touched" state; email error only after first blur, then live update/clear while typing.
+- R3: live password checklist (data-met + tick glyph + screen-reader "(rule met/not met)" text). Rules implemented: length >=10 / letter / digit / symbol. NOTE: implementer interpreted the spec's "three rules" wording as a FOUR-item checklist (length, letter, digit, symbol each shown individually) — judge whether this satisfies the spec.
+- R4: confirm shows mismatch error on blur, clears immediately (without blur) once values match; editing the password side also updates it live.
+- R5: nickname ^[A-Za-z0-9가-힣]{2,12}$, blur validation + live update after touched, maxlength=12. "Korean" interpreted as complete syllables (가-힣), lone jamo rejected.
+- R6: native disabled gating; disabled gray vs enabled indigo visual distinction.
+- R7: preventDefault -> hide form -> show success panel (email+nickname only, no password) -> focus() to tabindex="-1" panel.
+- R8: label[for] on every input; error containers linked via aria-describedby + role="alert"; password rules list also in aria-describedby; aria-invalid toggled on error.
+- R10: error area reserves one line of height permanently (min-height) -> zero layout shift.
+- R11: 375px-friendly, inputs 48px / checkbox 44px (appearance:none custom, native semantics kept) / button 52px.
+- R9/R12: verified via real headless Chrome automation — 54 checks passed including tab order email->password->confirm->nickname->terms->submit, Space toggles checkbox, Enter submits, focus moves to success panel, zero console errors, no horizontal scroll at 375/768/1280.
+
+## CRITICAL: Do Not Trust the Report
+The implementer's report may be incomplete, inaccurate, or optimistic. Verify EVERYTHING by reading the actual source file.
+
+DO NOT take their word. DO read the code.
+
+## Check For
+
+1. Missing requirements — anything in spec that's not in the code?
+2. Extra/unneeded work — anything in code that's not in spec?
+3. Misunderstandings — correct feature but wrong approach?
+
+## Required Output Format (MUST follow exactly)
+
+status: APPROVED | NEEDS_FIXES | BLOCKED_ERROR
+missing: [list of missing requirements, or "none"]
+extra: [list of extra/unneeded work, or "none"]
+misunderstandings: [list, or "none"]
+details: [file:line references for each issue]
+
+## Status Determination Rule (MUST follow exactly)
+- APPROVED: ONLY when missing is "none" AND extra is "none" AND misunderstandings is "none"
+- NEEDS_FIXES: when any of missing, extra, or misunderstandings has entries
+- BLOCKED_ERROR: when you cannot complete the review for technical reasons
+codex
+I’m using the `using-superpowers` skill first because the session instructions require it before acting.
+exec
+/bin/bash -lc "sed -n '1,220p' /home/ubuntu/.codex/skills/using-superpowers/SKILL.md" in /home/ubuntu/Github/superpowers-custom/benchmark/runs/signupform_K
+ succeeded in 0ms:
+---
+name: using-superpowers
+description: Use when starting any conversation - establishes how to find and use skills, requiring Skill tool invocation before ANY response including clarifying questions
+---
+
+<EXTREMELY-IMPORTANT>
+If you think there is even a 1% chance a skill might apply to what you are doing, you ABSOLUTELY MUST invoke the skill.
+
+IF A SKILL APPLIES TO YOUR TASK, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT.
+
+This is not negotiable. This is not optional. You cannot rationalize your way out of this.
+</EXTREMELY-IMPORTANT>
+
+## How to Access Skills
+
+**In Claude Code:** Use the `Skill` tool. When you invoke a skill, its content is loaded and presented to you—follow it directly. Never use the Read tool on skill files.
+
+**In other environments:** Check your platform's documentation for how skills are loaded.
+
+# Using Skills
+
+## The Rule
+
+**Invoke relevant or requested skills BEFORE any response or action.** Even a 1% chance a skill might apply means that you should invoke the skill to check. If an invoked skill turns out to be wrong for the situation, you don't need to use it.
+
+```dot
+digraph skill_flow {
+    "User message received" [shape=doublecircle];
+    "Might any skill apply?" [shape=diamond];
+    "Invoke Skill tool" [shape=box];
+    "Announce: 'Using [skill] to [purpose]'" [shape=box];
+    "Has checklist?" [shape=diamond];
+    "Create TodoWrite todo per item" [shape=box];
+    "Follow skill exactly" [shape=box];
+    "Respond (including clarifications)" [shape=doublecircle];
+
+    "User message received" -> "Might any skill apply?";
+    "Might any skill apply?" -> "Invoke Skill tool" [label="yes, even 1%"];
+    "Might any skill apply?" -> "Respond (including clarifications)" [label="definitely not"];
+    "Invoke Skill tool" -> "Announce: 'Using [skill] to [purpose]'";
+    "Announce: 'Using [skill] to [purpose]'" -> "Has checklist?";
+    "Has checklist?" -> "Create TodoWrite todo per item" [label="yes"];
+    "Has checklist?" -> "Follow skill exactly" [label="no"];
+    "Create TodoWrite todo per item" -> "Follow skill exactly";
+}
+```
+
+## Red Flags
+
+These thoughts mean STOP—you're rationalizing:
+
+| Thought | Reality |
+|---------|---------|
+| "This is just a simple question" | Questions are tasks. Check for skills. |
+| "I need more context first" | Skill check comes BEFORE clarifying questions. |
+| "Let me explore the codebase first" | Skills tell you HOW to explore. Check first. |
+| "I can check git/files quickly" | Files lack conversation context. Check for skills. |
+| "Let me gather information first" | Skills tell you HOW to gather information. |
+| "This doesn't need a formal skill" | If a skill exists, use it. |
+| "I remember this skill" | Skills evolve. Read current version. |
+| "This doesn't count as a task" | Action = task. Check for skills. |
+| "The skill is overkill" | Simple things become complex. Use it. |
+| "I'll just do this one thing first" | Check BEFORE doing anything. |
+| "This feels productive" | Undisciplined action wastes time. Skills prevent this. |
+| "I know what that means" | Knowing the concept ≠ using the skill. Invoke it. |
+
+## Skill Priority
+
+When multiple skills could apply, use this order:
+
+1. **Process skills first** (brainstorming, debugging) - these determine HOW to approach the task
+2. **Implementation skills second** (frontend-design, mcp-builder) - these guide execution
+
+"Let's build X" → brainstorming first, then implementation skills.
+"Fix this bug" → debugging first, then domain-specific skills.
+
+## Skill Types
+
+**Rigid** (TDD, debugging): Follow exactly. Don't adapt away discipline.
+
+**Flexible** (patterns): Adapt principles to context.
+
+The skill itself tells you which.
+
+## User Instructions
+
+Instructions say WHAT, not HOW. "Add X" or "Fix Y" doesn't mean skip workflows.
+
+codex
+I’ll also use `universal-verify` because this is an explicit verification/review task, even though there are no code changes to make.
+exec
+/bin/bash -lc "sed -n '1,220p' /home/ubuntu/.codex/skills/universal-verify/SKILL.md" in /home/ubuntu/Github/superpowers-custom/benchmark/runs/signupform_K
+ succeeded in 0ms:
+---
+name: universal-verify
+description: After code changes or when asked to test/verify, run the repository’s standard verification (tests/lint/build) and include command output as evidence.
+metadata:
+  short-description: Run verify and print logs.
+---
+
+Rules:
+- Prefer explicit project verify entrypoints if present (in this order):
+  1) ./scripts/verify.sh
+  2) make verify / task verify / just verify
+- If none exist, run best-effort stack detection:
+  - Node: run available scripts among lint/typecheck/test/build
+  - Flutter: flutter analyze + flutter test
+  - Python: pytest if available
+- Never claim success without showing the final output excerpt.
+
+codex
+I’m checking the superpowers symlink requested by the workspace instructions, then I’ll read the single HTML file directly.
+exec
+/bin/bash -lc 'ls -la ~/.agents/skills/superpowers' in /home/ubuntu/Github/superpowers-custom/benchmark/runs/signupform_K
+ succeeded in 0ms:
+lrwxrwxrwx 1 ubuntu ubuntu 38 Feb  8 16:04 /home/ubuntu/.agents/skills/superpowers -> /home/ubuntu/.codex/superpowers/skills
+
+exec
+/bin/bash -lc 'nl -ba /home/ubuntu/Github/superpowers-custom/benchmark/runs/signupform_K/src/signup.html' in /home/ubuntu/Github/superpowers-custom/benchmark/runs/signupform_K
+ succeeded in 0ms:
+     1	<!DOCTYPE html>
+     2	<html lang="en">
+     3	<head>
+     4	<meta charset="utf-8">
+     5	<meta name="viewport" content="width=device-width, initial-scale=1">
+     6	<title>Create account</title>
+     7	<style>
+     8	  :root {
+     9	    --bg: #f4f5fb;
+    10	    --card: #ffffff;
+    11	    --ink: #1c2130;
+    12	    --muted: #555c70;
+    13	    --line: #8b93ab;
+    14	    --line-soft: #e3e6f0;
+    15	    --accent: #4338ca;
+    16	    --accent-ink: #ffffff;
+    17	    --focus: #1d4ed8;
+    18	    --error: #b3261e;
+    19	    --ok: #1a7f37;
+    20	    --disabled-bg: #e2e4ef;
+    21	    --disabled-ink: #6d7389;
+    22	  }
+    23	
+    24	  * { box-sizing: border-box; }
+    25	  [hidden] { display: none !important; }
+    26	
+    27	  html { -webkit-text-size-adjust: 100%; }
+    28	
+    29	  body {
+    30	    margin: 0;
+    31	    font-family: "Segoe UI", system-ui, -apple-system, Roboto,
+    32	      "Helvetica Neue", Arial, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    33	    background: var(--bg);
+    34	    color: var(--ink);
+    35	    line-height: 1.5;
+    36	  }
+    37	
+    38	  main {
+    39	    max-width: 27rem;
+    40	    margin: 0 auto;
+    41	    padding: 2.25rem 1rem 4rem;
+    42	  }
+    43	
+    44	  h1 {
+    45	    font-size: 1.75rem;
+    46	    line-height: 1.2;
+    47	    margin: 0 0 0.5rem;
+    48	    letter-spacing: -0.01em;
+    49	  }
+    50	
+    51	  .lede {
+    52	    margin: 0 0 1.5rem;
+    53	    color: var(--muted);
+    54	  }
+    55	
+    56	  form,
+    57	  .success {
+    58	    background: var(--card);
+    59	    border: 1px solid var(--line-soft);
+    60	    border-radius: 16px;
+    61	    padding: 1.5rem 1.25rem;
+    62	    box-shadow: 0 10px 30px rgba(28, 33, 48, 0.06);
+    63	  }
+    64	
+    65	  .field { margin: 0 0 0.25rem; }
+    66	
+    67	  label {
+    68	    display: block;
+    69	    font-weight: 600;
+    70	    margin: 0 0 0.4rem;
+    71	  }
+    72	
+    73	  .control {
+    74	    display: block;
+    75	    width: 100%;
+    76	    min-height: 48px;
+    77	    padding: 0.625rem 0.875rem;
+    78	    font: inherit;
+    79	    color: inherit;
+    80	    background: #fff;
+    81	    border: 1.5px solid var(--line);
+    82	    border-radius: 10px;
+    83	  }
+    84	
+    85	  .control:focus-visible,
+    86	  input[type="checkbox"]:focus-visible,
+    87	  button:focus-visible {
+    88	    outline: 3px solid var(--focus);
+    89	    outline-offset: 2px;
+    90	  }
+    91	
+    92	  .control[aria-invalid="true"] { border-color: var(--error); }
+    93	
+    94	  .hint {
+    95	    margin: 0.35rem 0 0;
+    96	    font-size: 0.85rem;
+    97	    color: var(--muted);
+    98	  }
+    99	
+   100	  /* Space for one line is always reserved, so an appearing message
+   101	     never shifts the layout below it (R10). */
+   102	  .error {
+   103	    min-height: 1.3rem;
+   104	    margin: 0.3rem 0 0.45rem;
+   105	    font-size: 0.85rem;
+   106	    line-height: 1.3rem;
+   107	    font-weight: 600;
+   108	    color: var(--error);
+   109	  }
+   110	
+   111	  .rules {
+   112	    margin: 0.1rem 0 1rem;
+   113	    padding: 0.85rem 1rem;
+   114	    background: #f7f8fd;
+   115	    border: 1px solid #e6e8f4;
+   116	    border-radius: 10px;
+   117	  }
+   118	
+   119	  .rules > p {
+   120	    margin: 0 0 0.4rem;
+   121	    font-size: 0.85rem;
+   122	    font-weight: 600;
+   123	    color: var(--muted);
+   124	  }
+   125	
+   126	  .rules ul {
+   127	    list-style: none;
+   128	    margin: 0;
+   129	    padding: 0;
+   130	  }
+   131	
+   132	  .rules li {
+   133	    display: flex;
+   134	    gap: 0.5rem;
+   135	    font-size: 0.9rem;
+   136	    color: var(--muted);
+   137	  }
+   138	
+   139	  .rules li + li { margin-top: 0.25rem; }
+   140	
+   141	  .rules .tick {
+   142	    flex: 0 0 1.25rem;
+   143	    text-align: center;
+   144	    font-weight: 700;
+   145	    color: #8b93ab;
+   146	  }
+   147	
+   148	  .rules li[data-met="true"],
+   149	  .rules li[data-met="true"] .tick {
+   150	    color: var(--ok);
+   151	  }
+   152	
+   153	  .terms {
+   154	    display: flex;
+   155	    align-items: center;
+   156	    gap: 0.75rem;
+   157	    margin: 0.5rem 0 1.25rem;
+   158	  }
+   159	
+   160	  .terms label {
+   161	    margin: 0;
+   162	    font-weight: 500;
+   163	    cursor: pointer;
+   164	  }
+   165	
+   166	  input[type="checkbox"] {
+   167	    -webkit-appearance: none;
+   168	    appearance: none;
+   169	    width: 44px;
+   170	    height: 44px;
+   171	    flex: 0 0 auto;
+   172	    margin: 0;
+   173	    border: 2px solid var(--line);
+   174	    border-radius: 12px;
+   175	    background: #fff no-repeat center / 26px 26px;
+   176	    cursor: pointer;
+   177	  }
+   178	
+   179	  input[type="checkbox"]:checked {
+   180	    border-color: var(--accent);
+   181	    background-color: var(--accent);
+   182	    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 12.5l5.5 5.5L20 7' fill='none' stroke='%23fff' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+   183	  }
+   184	
+   185	  button[type="submit"] {
+   186	    width: 100%;
+   187	    min-height: 52px;
+   188	    border: none;
+   189	    border-radius: 12px;
+   190	    font: inherit;
+   191	    font-size: 1.05rem;
+   192	    font-weight: 700;
+   193	    background: var(--accent);
+   194	    color: var(--accent-ink);
+   195	    cursor: pointer;
+   196	  }
+   197	
+   198	  button[type="submit"]:hover:not(:disabled) { filter: brightness(1.1); }
+   199	
+   200	  button[type="submit"]:disabled {
+   201	    background: var(--disabled-bg);
+   202	    color: var(--disabled-ink);
+   203	    cursor: not-allowed;
+   204	  }
+   205	
+   206	  .success { border-top: 4px solid var(--ok); }
+   207	
+   208	  .success:focus {
+   209	    outline: 3px solid var(--focus);
+   210	    outline-offset: 2px;
+   211	  }
+   212	
+   213	  .success h2 {
+   214	    margin: 0 0 0.5rem;
+   215	    font-size: 1.35rem;
+   216	    color: var(--ok);
+   217	  }
+   218	
+   219	  .success p { margin: 0; color: var(--muted); }
+   220	
+   221	  .success dl { margin: 1.25rem 0 0; }
+   222	
+   223	  .success dt {
+   224	    font-size: 0.78rem;
+   225	    font-weight: 700;
+   226	    text-transform: uppercase;
+   227	    letter-spacing: 0.05em;
+   228	    color: var(--muted);
+   229	  }
+   230	
+   231	  .success dd {
+   232	    margin: 0.1rem 0 0.85rem;
+   233	    font-weight: 600;
+   234	    font-size: 1.05rem;
+   235	    overflow-wrap: anywhere;
+   236	  }
+   237	
+   238	  .visually-hidden {
+   239	    position: absolute;
+   240	    width: 1px;
+   241	    height: 1px;
+   242	    margin: -1px;
+   243	    padding: 0;
+   244	    overflow: hidden;
+   245	    clip: rect(0 0 0 0);
+   246	    clip-path: inset(50%);
+   247	    white-space: nowrap;
+   248	    border: 0;
+   249	  }
+   250	</style>
+   251	</head>
+   252	<body>
+   253	<main>
+   254	  <h1>Create your account</h1>
+   255	  <p class="lede">Join in under a minute. All fields are required.</p>
+   256	
+   257	  <form id="signup-form" novalidate>
+   258	    <div class="field">
+   259	      <label for="email">Email</label>
+   260	      <input class="control" id="email" name="email" type="email"
+   261	             autocomplete="email" aria-describedby="email-error">
+   262	      <p class="error" id="email-error" role="alert"></p>
+   263	    </div>
+   264	
+   265	    <div class="field">
+   266	      <label for="password">Password</label>
+   267	      <input class="control" id="password" name="password" type="password"
+   268	             autocomplete="new-password"
+   269	             aria-describedby="password-rules password-error">
+   270	      <p class="error" id="password-error" role="alert"></p>
+   271	      <div class="rules" id="password-rules">
+   272	        <p>Your password must contain:</p>
+   273	        <ul>
+   274	          <li id="rule-length" data-met="false">
+   275	            <span class="tick" aria-hidden="true">&bull;</span>
+   276	            <span>At least 10 characters</span>
+   277	            <span class="rule-state visually-hidden">(rule not met)</span>
+   278	          </li>
+   279	          <li id="rule-letter" data-met="false">
+   280	            <span class="tick" aria-hidden="true">&bull;</span>
+   281	            <span>At least one letter</span>
+   282	            <span class="rule-state visually-hidden">(rule not met)</span>
+   283	          </li>
+   284	          <li id="rule-digit" data-met="false">
+   285	            <span class="tick" aria-hidden="true">&bull;</span>
+   286	            <span>At least one number</span>
+   287	            <span class="rule-state visually-hidden">(rule not met)</span>
+   288	          </li>
+   289	          <li id="rule-symbol" data-met="false">
+   290	            <span class="tick" aria-hidden="true">&bull;</span>
+   291	            <span>At least one symbol</span>
+   292	            <span class="rule-state visually-hidden">(rule not met)</span>
+   293	          </li>
+   294	        </ul>
+   295	      </div>
+   296	    </div>
+   297	
+   298	    <div class="field">
+   299	      <label for="password-confirm">Confirm password</label>
+   300	      <input class="control" id="password-confirm" name="password-confirm"
+   301	             type="password" autocomplete="new-password"
+   302	             aria-describedby="password-confirm-error">
+   303	      <p class="error" id="password-confirm-error" role="alert"></p>
+   304	    </div>
+   305	
+   306	    <div class="field">
+   307	      <label for="nickname">Nickname</label>
+   308	      <input class="control" id="nickname" name="nickname" type="text"
+   309	             autocomplete="nickname" maxlength="12"
+   310	             aria-describedby="nickname-hint nickname-error">
+   311	      <p class="hint" id="nickname-hint">2&ndash;12 characters &mdash; letters, numbers, and Korean only.</p>
+   312	      <p class="error" id="nickname-error" role="alert"></p>
+   313	    </div>
+   314	
+   315	    <div class="terms">
+   316	      <input type="checkbox" id="terms" name="terms">
+   317	      <label for="terms">I agree to the Terms of Service (required)</label>
+   318	    </div>
+   319	
+   320	    <button type="submit" id="submit-button" disabled>Create account</button>
+   321	  </form>
+   322	
+   323	  <section class="success" id="success-panel" tabindex="-1" hidden
+   324	           aria-labelledby="success-title">
+   325	    <h2 id="success-title">Account created</h2>
+   326	    <p>Welcome! Here is what you signed up with:</p>
+   327	    <dl>
+   328	      <div>
+   329	        <dt>Email</dt>
+   330	        <dd id="success-email"></dd>
+   331	      </div>
+   332	      <div>
+   333	        <dt>Nickname</dt>
+   334	        <dd id="success-nickname"></dd>
+   335	      </div>
+   336	    </dl>
+   337	  </section>
+   338	</main>
+   339	
+   340	<script>
+   341	(function () {
+   342	  'use strict';
+   343	
+   344	  var form = document.getElementById('signup-form');
+   345	  var emailInput = document.getElementById('email');
+   346	  var passwordInput = document.getElementById('password');
+   347	  var confirmInput = document.getElementById('password-confirm');
+   348	  var nicknameInput = document.getElementById('nickname');
+   349	  var termsInput = document.getElementById('terms');
+   350	  var submitButton = document.getElementById('submit-button');
+   351	
+   352	  var emailError = document.getElementById('email-error');
+   353	  var passwordError = document.getElementById('password-error');
+   354	  var confirmError = document.getElementById('password-confirm-error');
+   355	  var nicknameError = document.getElementById('nickname-error');
+   356	
+   357	  var successPanel = document.getElementById('success-panel');
+   358	  var successEmail = document.getElementById('success-email');
+   359	  var successNickname = document.getElementById('success-nickname');
+   360	
+   361	  var EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+   362	  var NICKNAME_PATTERN = /^[A-Za-z0-9가-힣]{2,12}$/;
+   363	
+   364	  var passwordRules = [
+   365	    { id: 'rule-length', test: function (v) { return v.length >= 10; } },
+   366	    { id: 'rule-letter', test: function (v) { return /[A-Za-z]/.test(v); } },
+   367	    { id: 'rule-digit',  test: function (v) { return /[0-9]/.test(v); } },
+   368	    { id: 'rule-symbol', test: function (v) { return /[^A-Za-z0-9\s]/.test(v); } }
+   369	  ];
+   370	
+   371	  /* Errors are only shown for fields the user has left at least once (R2). */
+   372	  var touched = { email: false, password: false, confirm: false, nickname: false };
+   373	
+   374	  function isEmailValid() { return EMAIL_PATTERN.test(emailInput.value); }
+   375	
+   376	  function isPasswordValid() {
+   377	    return passwordRules.every(function (rule) { return rule.test(passwordInput.value); });
+   378	  }
+   379	
+   380	  function isConfirmValid() {
+   381	    return confirmInput.value.length > 0 && confirmInput.value === passwordInput.value;
+   382	  }
+   383	
+   384	  function isNicknameValid() { return NICKNAME_PATTERN.test(nicknameInput.value); }
+   385	
+   386	  function isFormValid() {
+   387	    return isEmailValid() && isPasswordValid() && isConfirmValid() &&
+   388	           isNicknameValid() && termsInput.checked;
+   389	  }
+   390	
+   391	  function setFieldError(input, errorElement, message) {
+   392	    if (errorElement.textContent !== message) errorElement.textContent = message;
+   393	    if (message) {
+   394	      input.setAttribute('aria-invalid', 'true');
+   395	    } else {
+   396	      input.removeAttribute('aria-invalid');
+   397	    }
+   398	  }
+   399	
+   400	  function refreshEmailError() {
+   401	    if (!touched.email) return;
+   402	    if (emailInput.value === '') {
+   403	      setFieldError(emailInput, emailError, 'Email is required.');
+   404	    } else if (!isEmailValid()) {
+   405	      setFieldError(emailInput, emailError, 'Enter a valid email address.');
+   406	    } else {
+   407	      setFieldError(emailInput, emailError, '');
+   408	    }
+   409	  }
+   410	
+   411	  function refreshPasswordChecklist() {
+   412	    passwordRules.forEach(function (rule) {
+   413	      var item = document.getElementById(rule.id);
+   414	      var met = rule.test(passwordInput.value);
+   415	      item.setAttribute('data-met', met ? 'true' : 'false');
+   416	      item.querySelector('.tick').textContent = met ? '✓' : '•';
+   417	      item.querySelector('.rule-state').textContent = met ? '(rule met)' : '(rule not met)';
+   418	    });
+   419	  }
+   420	
+   421	  function refreshPasswordError() {
+   422	    if (!touched.password) return;
+   423	    if (passwordInput.value === '') {
+   424	      setFieldError(passwordInput, passwordError, 'Password is required.');
+   425	    } else if (!isPasswordValid()) {
+   426	      setFieldError(passwordInput, passwordError, 'Password does not meet all the rules.');
+   427	    } else {
+   428	      setFieldError(passwordInput, passwordError, '');
+   429	    }
+   430	  }
+   431	
+   432	  function refreshConfirmError() {
+   433	    if (!touched.confirm) return;
+   434	    if (isConfirmValid()) {
+   435	      setFieldError(confirmInput, confirmError, '');
+   436	    } else if (confirmInput.value === '') {
+   437	      setFieldError(confirmInput, confirmError, 'Please confirm your password.');
+   438	    } else {
+   439	      setFieldError(confirmInput, confirmError, 'Passwords do not match.');
+   440	    }
+   441	  }
+   442	
+   443	  function refreshNicknameError() {
+   444	    if (!touched.nickname) return;
+   445	    var value = nicknameInput.value;
+   446	    if (value === '') {
+   447	      setFieldError(nicknameInput, nicknameError, 'Nickname is required.');
+   448	    } else if (value.length < 2 || value.length > 12) {
+   449	      setFieldError(nicknameInput, nicknameError, 'Nickname must be 2–12 characters.');
+   450	    } else if (!isNicknameValid()) {
+   451	      setFieldError(nicknameInput, nicknameError, 'Use letters, numbers, or Korean only.');
+   452	    } else {
+   453	      setFieldError(nicknameInput, nicknameError, '');
+   454	    }
+   455	  }
+   456	
+   457	  function refreshSubmitState() {
+   458	    submitButton.disabled = !isFormValid();
+   459	  }
+   460	
+   461	  emailInput.addEventListener('input', function () {
+   462	    refreshEmailError();
+   463	    refreshSubmitState();
+   464	  });
+   465	  emailInput.addEventListener('blur', function () {
+   466	    touched.email = true;
+   467	    refreshEmailError();
+   468	  });
+   469	
+   470	  passwordInput.addEventListener('input', function () {
+   471	    refreshPasswordChecklist();
+   472	    refreshPasswordError();
+   473	    refreshConfirmError(); /* keep the match error live when password changes (R4) */
+   474	    refreshSubmitState();
+   475	  });
+   476	  passwordInput.addEventListener('blur', function () {
+   477	    touched.password = true;
+   478	    refreshPasswordError();
+   479	  });
+   480	
+   481	  confirmInput.addEventListener('input', function () {
+   482	    refreshConfirmError(); /* clears as soon as the values match (R4) */
+   483	    refreshSubmitState();
+   484	  });
+   485	  confirmInput.addEventListener('blur', function () {
+   486	    touched.confirm = true;
+   487	    refreshConfirmError();
+   488	  });
+   489	
+   490	  nicknameInput.addEventListener('input', function () {
+   491	    refreshNicknameError();
+   492	    refreshSubmitState();
+   493	  });
+   494	  nicknameInput.addEventListener('blur', function () {
+   495	    touched.nickname = true;
+   496	    refreshNicknameError();
+   497	  });
+   498	
+   499	  termsInput.addEventListener('change', refreshSubmitState);
+   500	
+   501	  form.addEventListener('submit', function (event) {
+   502	    event.preventDefault();
+   503	    if (!isFormValid()) return;
+   504	    successEmail.textContent = emailInput.value;
+   505	    successNickname.textContent = nicknameInput.value;
+   506	    form.hidden = true;
+   507	    successPanel.hidden = false;
+   508	    successPanel.focus();
+   509	  });
+   510	
+   511	  refreshPasswordChecklist();
+   512	  refreshSubmitState();
+   513	})();
+   514	</script>
+   515	</body>
+   516	</html>
+
+codex
+I’ve read the file with line numbers. The structure mostly matches the requested behavior; I’m checking the edge cases now, especially accessibility wiring, submit gating, and the password-rule interpretation called out in the prompt.
+codex
+The HTML has no build system dependency, so I’m doing a lightweight local verification pass against the file itself rather than relying on the implementer’s automation summary.
+exec
+/bin/bash -lc 'rg --files' in /home/ubuntu/Github/superpowers-custom/benchmark/runs/signupform_K
+ succeeded in 0ms:
+task.md
+prompts/02_spec_reviewer.md
+prompts/01_implementer.md
+codex_spec.out
+process.json
+src/signup.html
+workflow/code-quality-reviewer-prompt.md
+workflow/SKILL.md
+workflow/implementer-prompt.md
+workflow/spec-reviewer-prompt.md
+workflow/playwright-evaluator-prompt.md
+
+exec
+/bin/bash -lc pwd in /home/ubuntu/Github/superpowers-custom/benchmark/runs/signupform_K
+ succeeded in 0ms:
+/home/ubuntu/Github/superpowers-custom/benchmark/runs/signupform_K
+
+codex
+I’m going to load the local file in a browser tool as a cross-check for console errors, focus movement, and the 375px layout behavior.
+mcp: playwright/browser_tabs started
+mcp: playwright/browser_tabs (failed)
+codex
+The browser connector blocks `file://` navigation, so I’m serving the directory temporarily from localhost for the dynamic checks. The source itself remains a single inline HTML file.
+exec
+/bin/bash -lc 'python3 -m http.server 8787 --bind 127.0.0.1' in /home/ubuntu/Github/superpowers-custom/benchmark/runs/signupform_K
+codex
+The temporary server is up on port 8787. I’ll run the browser checks now and stop it before I finish.
+mcp: playwright/browser_tabs started
+mcp: playwright/browser_tabs (completed)
+codex
+The page loaded, but the browser tool reports one console error. I’m pulling that message before deciding whether it is from the page or the connector/navigation environment.
+mcp: playwright/browser_console_messages started
+mcp: playwright/browser_console_messages (completed)
+codex
+The reported console error is a favicon 404 from my temporary HTTP server, not an exception from the page script. I’m checking whether the environment has a direct browser runner that can load the actual `file://` URL to avoid misclassifying that.
+exec
+/bin/bash -lc 'which chromium || which chromium-browser || which google-chrome || which google-chrome-stable || true' in /home/ubuntu/Github/superpowers-custom/benchmark/runs/signupform_K
+ succeeded in 0ms:
+/snap/bin/chromium
+
+exec
+/bin/bash -lc "node -e \"try{require('playwright'); console.log('playwright yes')}catch(e){console.log('playwright no')} try{require('puppeteer'); console.log('puppeteer yes')}catch(e){console.log('puppeteer no')}\"" in /home/ubuntu/Github/superpowers-custom/benchmark/runs/signupform_K
+ succeeded in 106ms:
+codex
+Direct Playwright is available from Node, so I’m switching to that for the actual `file://` check and a compact happy-path run.
+exec
+/bin/bash -lc "node <<'NODE'
+const { chromium } = require('playwright');
+const fileUrl = 'file:///home/ubuntu/Github/superpowers-custom/benchmark/runs/signupform_K/src/signup.html';
+(async () => {
+  const browser = await chromium.launch({ headless: true, executablePath: '/snap/bin/chromium', args: ['--no-sandbox'] });
+  const page = await browser.newPage({ viewport: { width: 375, height: 900 } });
+  const messages = [];
+  page.on('console', msg => messages.push({ type: msg.type(), text: msg.text() }));
+  page.on('pageerror', err => messages.push({ type: 'pageerror', text: err.message }));
+  await page.goto(fileUrl, { waitUntil: 'load' });
+  await page.waitForTimeout(200);
+
+  const initial = await page.evaluate(() => ({
+    url: location.href,
+    scrollWidth: document.documentElement.scrollWidth,
+    innerWidth: window.innerWidth,
+    heights: {
+      email: document.getElementById('email').getBoundingClientRect().height,
+      password: document.getElementById('password').getBoundingClientRect().height,
+      confirm: document.getElementById('password-confirm').getBoundingClientRect().height,
+      nickname: document.getElementById('nickname').getBoundingClientRect().height,
+      terms: document.getElementById('terms').getBoundingClientRect().height,
+      submit: document.getElementById('submit-button').getBoundingClientRect().height,
+    },
+    submitDisabled: document.getElementById('submit-button').disabled,
+    passwordChecklistItems: Array.from(document.querySelectorAll('#password-rules li')).map(li => li.textContent.trim().replace(/\\s+/g, ' ')),
+    labels: Array.from(document.querySelectorAll('input')).map(input => ({ id: input.id, labelFor: "'!!document.querySelector(`label[for="${input.id}"]`) })),
+    describedErrors: ['"'email','password','password-confirm','nickname'].map(id => {
+      const input = document.getElementById(id);
+      const described = (input.getAttribute('aria-describedby') || '').split(/\\s+/).filter(Boolean);
+      return { id, described, alertIds: described.filter(d => document.getElementById(d)?.getAttribute('role') === 'alert') };
+    })
+  }));
+
+  await page.locator('#email').fill('bad');
+  const emailBeforeBlur = await page.locator('#email-error').textContent();
+  await page.locator('#password').focus();
+  const emailAfterBlur = await page.locator('#email-error').textContent();
+
+  await page.locator('#email').fill('ada@example.com');
+  await page.locator('#password').fill('abc123"'!@#$'"');
+  const checklistAfterPassword = await page.evaluate(() => Array.from(document.querySelectorAll('#password-rules li')).map(li => li.getAttribute('data-met')));
+  await page.locator('#password-confirm').fill('wrong');
+  await page.locator('#nickname').focus();
+  const confirmAfterBlur = await page.locator('#password-confirm-error').textContent();
+  await page.locator('#password-confirm').fill('abc123"'!@#$'"');
+  const confirmAfterMatch = await page.locator('#password-confirm-error').textContent();
+  await page.locator('#nickname').fill('테스트12');
+  await page.locator('#nickname').blur();
+  await page.locator('#terms').check();
+  const enabledBeforeSubmit = await page.locator('#submit-button').isEnabled();
+  await page.locator('#submit-button').press('Enter');
+  await page.waitForTimeout(100);
+  const success = await page.evaluate(() => ({
+    panelHidden: document.getElementById('success-panel').hidden,
+    activeId: document.activeElement.id,
+    emailText: document.getElementById('success-email').textContent,
+    nickText: document.getElementById('success-nickname').textContent,
+    bodyIncludesPassword: document.body.textContent.includes('abc123"'!@#$'"')
+  }));
+
+  await browser.close();
+  console.log(JSON.stringify({
+    consoleErrors: messages.filter(m => m.type === 'error' || m.type === 'pageerror'),
+    initial,
+    emailBeforeBlur,
+    emailAfterBlur,
+    checklistAfterPassword,
+    confirmAfterBlur,
+    confirmAfterMatch,
+    enabledBeforeSubmit,
+    success
+  }, null, 2));
+})().catch(err => { console.error(err); process.exit(1); });
+NODE" in /home/ubuntu/Github/superpowers-custom/benchmark/runs/signupform_K
+ succeeded in 967ms:
+{
+  "consoleErrors": [],
+  "initial": {
+    "url": "file:///home/ubuntu/Github/superpowers-custom/benchmark/runs/signupform_K/src/signup.html",
+    "scrollWidth": 375,
+    "innerWidth": 375,
+    "heights": {
+      "email": 48,
+      "password": 48,
+      "confirm": 48,
+      "nickname": 48,
+      "terms": 44,
+      "submit": 52
+    },
+    "submitDisabled": true,
+    "passwordChecklistItems": [
+      "• At least 10 characters (rule not met)",
+      "• At least one letter (rule not met)",
+      "• At least one number (rule not met)",
+      "• At least one symbol (rule not met)"
+    ],
+    "labels": [
+      {
+        "id": "email",
+        "labelFor": true
+      },
+      {
+        "id": "password",
+        "labelFor": true
+      },
+      {
+        "id": "password-confirm",
+        "labelFor": true
+      },
+      {
+        "id": "nickname",
+        "labelFor": true
+      },
+      {
+        "id": "terms",
+        "labelFor": true
+      }
+    ],
+    "describedErrors": [
+      {
+        "id": "email",
+        "described": [
+          "email-error"
+        ],
+        "alertIds": [
+          "email-error"
+        ]
+      },
+      {
+        "id": "password",
+        "described": [
+          "password-rules",
+          "password-error"
+        ],
+        "alertIds": [
+          "password-error"
+        ]
+      },
+      {
+        "id": "password-confirm",
+        "described": [
+          "password-confirm-error"
+        ],
+        "alertIds": [
+          "password-confirm-error"
+        ]
+      },
+      {
+        "id": "nickname",
+        "described": [
+          "nickname-hint",
+          "nickname-error"
+        ],
+        "alertIds": [
+          "nickname-error"
+        ]
+      }
+    ]
+  },
+  "emailBeforeBlur": "",
+  "emailAfterBlur": "Enter a valid email address.",
+  "checklistAfterPassword": [
+    "true",
+    "true",
+    "true",
+    "true"
+  ],
+  "confirmAfterBlur": "Passwords do not match.",
+  "confirmAfterMatch": "",
+  "enabledBeforeSubmit": true,
+  "success": {
+    "panelHidden": false,
+    "activeId": "success-panel",
+    "emailText": "ada@example.com",
+    "nickText": "테스트12",
+    "bodyIncludesPassword": false
+  }
+}
+
+codex
+The direct `file://` browser run had no console errors and confirmed the key happy-path behavior. I’m stopping the temporary HTTP server now.
+ succeeded in 55687ms:
+127.0.0.1 - - [02/Jul/2026 22:20:01] "GET /src/signup.html HTTP/1.1" 200 -
+127.0.0.1 - - [02/Jul/2026 22:20:01] code 404, message File not found
+127.0.0.1 - - [02/Jul/2026 22:20:01] "GET /favicon.ico HTTP/1.1" 404 -
+^C
+Keyboard interrupt received, exiting.
+
+codex
+I’m doing one last focused keyboard-order check because the submit button starts disabled and only becomes reachable after the form is valid.
+exec
+/bin/bash -lc "node <<'NODE'
+const { chromium } = require('playwright');
+const fileUrl = 'file:///home/ubuntu/Github/superpowers-custom/benchmark/runs/signupform_K/src/signup.html';
+(async () => {
+  const browser = await chromium.launch({ headless: true, executablePath: '/snap/bin/chromium', args: ['--no-sandbox'] });
+  const page = await browser.newPage({ viewport: { width: 375, height: 900 } });
+  await page.goto(fileUrl, { waitUntil: 'load' });
+  const initialTabs = [];
+  for (let i = 0; i < 5; i++) {
+    await page.keyboard.press('Tab');
+    initialTabs.push(await page.evaluate(() => document.activeElement.id));
+  }
+  await page.locator('#email').fill('ada@example.com');
+  await page.locator('#password').fill('abc123"'!@#$'"');
+  await page.locator('#password-confirm').fill('abc123"'!@#$'"');
+  await page.locator('#nickname').fill('테스트12');
+  await page.locator('#terms').focus();
+  await page.keyboard.press('Space');
+  const checkedBySpace = await page.locator('#terms').isChecked();
+  await page.keyboard.press('Tab');
+  const afterTermsTab = await page.evaluate(() => document.activeElement.id);
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(100);
+  const afterEnter = await page.evaluate(() => ({ activeId: document.activeElement.id, successHidden: document.getElementById('success-panel').hidden }));
+  await browser.close();
+  console.log(JSON.stringify({ initialTabs, checkedBySpace, afterTermsTab, afterEnter }, null, 2));
+})().catch(err => { console.error(err); process.exit(1); });
+NODE" in /home/ubuntu/Github/superpowers-custom/benchmark/runs/signupform_K
+ succeeded in 889ms:
+{
+  "initialTabs": [
+    "email",
+    "password",
+    "password-confirm",
+    "nickname",
+    "terms"
+  ],
+  "checkedBySpace": true,
+  "afterTermsTab": "submit-button",
+  "afterEnter": {
+    "activeId": "success-panel",
+    "successHidden": false
+  }
+}
+
+codex
+status: APPROVED
+missing: none
+extra: none
+misunderstandings: none
+details: none
+tokens used
+62,289
+status: APPROVED
+missing: none
+extra: none
+misunderstandings: none
+details: none
