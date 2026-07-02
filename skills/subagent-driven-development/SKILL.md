@@ -66,6 +66,16 @@ digraph when_to_use {
 - Two-stage review after each task: spec compliance first, then code quality
 - Faster iteration (no human-in-loop between tasks)
 
+## Trivial tasks: batch the review, never skip it
+
+A task that is purely mechanical — single file, no new behavior or logic (typo/comment/doc
+change, a rename fully verified by the type-checker, a config value the plan fixes verbatim) —
+may skip its DEDICATED per-task Codex rounds and fold into the next task's review or the final
+whole-diff review instead. Coverage is preserved: the final Codex review sees every line.
+Any new behavior, branching, or user-visible change → full per-task gates. When unsure, run
+the gates. (This keeps SDD usable as a library for mixed-size plans instead of taxing one-line
+tasks with a full review cycle.)
+
 ## The Process
 
 ```dot
@@ -196,7 +206,7 @@ A project is a "web project" if ANY of these are true:
 1. Ensure dev server is started before Playwright evaluation
 2. Playwright evaluation applies **per-task only when the task has browser-visible UI changes** (components, pages, layouts, styles, user interactions)
 3. Tasks that are backend-only, data layer, or infrastructure (e.g., "Todo Store", "API routes", "database schema") skip Playwright — unit/integration tests are sufficient
-4. Final Playwright evaluation covers the **entire app** after all tasks complete — this one is always mandatory
+4. Final Playwright evaluation covers the **entire app** after all tasks complete — this one is always mandatory, and it must run as a BLIND checker per web-app-evaluation §"Final signoff must be a BLIND checker": operationalized checklist + fresh evaluator with no task history or project access (measured 2026-07-02: internal gates passed defects an independent checker caught instantly)
 5. The evaluator tests at mobile, tablet, and desktop viewports
 
 **Per-task Playwright trigger:** Does this specific task produce something a user can see or interact with in the browser? If yes → Playwright. If no → skip to mark complete.

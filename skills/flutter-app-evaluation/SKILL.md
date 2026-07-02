@@ -217,6 +217,14 @@ Per Task (logic/data only — no UI):
 **Per-task Flutter evaluation:** Only when the task produces user-visible changes.
 **Final full-app evaluation:** ALWAYS mandatory after all tasks — tests complete user journeys across both platforms.
 
+**Final signoff must be a BLIND checker** (measured: SDD benchmark 2026-07-02 — real defects
+passed every pipeline-internal gate, including cross-model review, and only an independent
+checker caught them). Operationalize the requirements into a concrete checklist (measurable
+expectations, e.g. "every tap target ≥ 48dp — report the smallest"), then dispatch a fresh
+evaluator that receives ONLY the checklist + how to reach the running app — no task history,
+no prior findings, no project-directory access. It emits `CHECK <id> PASS|FAIL <evidence>`
+lines + `TOTAL n/N`; anything below N/N re-enters the fix → Codex re-review → re-evaluate loop.
+
 ## What the Evaluator Checks
 
 ### Functionality (FIRST PRIORITY)

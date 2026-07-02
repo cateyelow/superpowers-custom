@@ -183,6 +183,23 @@ Per Task (backend/data/infra only — no UI):
 
 **The final full-app Playwright evaluation after all tasks is ALWAYS mandatory**, regardless of individual task types.
 
+### Final signoff must be a BLIND checker, not the pipeline's own evaluator
+
+Measured on this host (SDD benchmark 2026-07-02): a 24px touch target and a contrast failure
+sailed through EVERY pipeline-internal gate — the implementer's own 62-check verification,
+Codex cross-model reviews, the per-task Playwright smoke AND the visual evaluator — and were
+caught immediately by an independent blind checker. Evaluators that share the implementation's
+context inherit its blind spots, even across models. So for the final signoff:
+
+1. **Write the requirements as an operationalized checklist first** — concrete steps with
+   measurable expectations ("resize to 375px; every input/checkbox/button has rendered height
+   ≥ 44px; report the smallest"), not adjectives ("mobile friendly").
+2. **Dispatch a fresh evaluator that receives ONLY the checklist + the URL** — no task history,
+   no prior findings, no implementation notes, no "this was already reviewed". It must not read
+   the project directory.
+3. Have it emit one `CHECK <id> PASS|FAIL <evidence>` line per item plus a `TOTAL n/N` line.
+   Anything below N/N goes back through the normal fix → Codex re-review → re-evaluate loop.
+
 ## What the Evaluator Checks
 
 ### Functionality (FIRST PRIORITY)

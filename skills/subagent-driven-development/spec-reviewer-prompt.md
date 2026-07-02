@@ -8,7 +8,7 @@ Verify spec compliance using **Codex CLI (OpenAI GPT)**, not a Claude subagent. 
 
 ## How to Run
 
-**Use the host-safe form.** On this host every `codex` run loads heavyweight MCP servers (`playwright` headed-Chrome, `serena`, `context7`) that can wedge codex so it never exits → the harness fires a completion notification only on process termination → you never get woken → infinite idle. `-c mcp_servers='{}'` loads zero MCP servers; `timeout -k 60 1200` guarantees termination (hence a guaranteed notification); `-s danger-full-access` avoids bwrap sandbox errors. Launch with `run_in_background: true` and **do not poll**.
+**Use the host-safe form below exactly** — rationale lives once in SKILL.md's "host-safe command" section (plain `codex`/`codex review` hangs on this host; if this file and SKILL.md ever disagree, SKILL.md wins). Launch with `run_in_background: true` and **do not poll**; the inner `timeout` guarantees the completion notification.
 
 ```bash
 cd {PROJECT_DIR} && git diff {BASE_SHA}..HEAD > /tmp/codex_review_diff.txt && \
