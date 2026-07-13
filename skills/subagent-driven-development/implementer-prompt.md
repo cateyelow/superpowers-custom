@@ -1,9 +1,13 @@
-# Implementer Subagent Prompt Template
+# Implementer Subagent Prompt Template — via codex-worker (OpenAI GPT)
 
-Use this template when dispatching an implementer subagent.
+Use this template when dispatching an implementer. The implementer is **Codex/GPT**, dispatched through the `codex-worker` agent (`~/.claude/agents/codex-worker.md`), which relays this prompt VERBATIM to `codex exec` (gpt-5.6-sol, reasoning max, host-safe flags) and relays the result back. That means:
+
+- **The prompt below is the ENTIRE world the implementer sees.** Nothing you don't paste in reaches it — full task text, acceptance criteria, and every file/context reference must be included.
+- **One-shot semantics.** Codex cannot pause mid-run to ask you questions. Questions come back as a `NEEDS_CONTEXT` final report instead — answer them and re-dispatch.
+- **Credit exhaustion = HARD STOP.** If codex-worker reports an OpenAI credit/quota/rate-limit error (`insufficient_quota` / `429`), implementation CANNOT proceed. Do not fall back to a Claude implementer. Stop and tell the user to recharge (see SKILL.md).
 
 ```
-Agent tool (general-purpose):
+Agent tool (codex-worker):
   description: "Implement Task N: [task name]"
   prompt: |
     You are implementing Task N: [task name]
@@ -26,13 +30,11 @@ Agent tool (general-purpose):
 
     ## Before You Begin
 
-    If you have questions about:
-    - The requirements or acceptance criteria
-    - The approach or implementation strategy
-    - Dependencies or assumptions
-    - Anything unclear in the task description
-
-    **Ask them now.** Raise any concerns before starting work.
+    You run one-shot: you cannot pause to ask questions mid-run. So decide NOW, before
+    writing any code: if the requirements, acceptance criteria, approach, dependencies,
+    or anything in the task description is unclear or contradictory, do NOT implement.
+    Instead return status NEEDS_CONTEXT with your specific questions as your final
+    report. A round-trip for answers is cheap; guessed-wrong work is not.
 
     ## Your Job
 
@@ -45,9 +47,12 @@ Agent tool (general-purpose):
     6. Report back
 
     Work from: [directory]
+    Apply the changes directly to the files.
 
-    **While you work:** If you encounter something unexpected or unclear, **ask questions**.
-    It's always OK to pause and clarify. Don't guess or make assumptions.
+    **While you work:** If you hit something unexpected that changes the shape of the
+    task — a missing dependency, code that contradicts the plan, an assumption that
+    turns out false — do not guess through it. Stop and return BLOCKED or NEEDS_CONTEXT
+    describing exactly what you found.
 
     ## Code Organization
 
@@ -76,8 +81,8 @@ Agent tool (general-purpose):
 
     **How to escalate:** Report back with status BLOCKED or NEEDS_CONTEXT. Describe
     specifically what you're stuck on, what you've tried, and what kind of help you need.
-    The controller can provide more context or a fuller spec, break the task into
-    smaller pieces, or (for genuinely ambiguous architectural work) escalate the model.
+    The controller can provide more context or a fuller spec, or break the task into
+    smaller pieces.
 
     ## Before Reporting Back: Self-Review
 
@@ -119,3 +124,9 @@ Agent tool (general-purpose):
     Use BLOCKED if you cannot complete the task. Use NEEDS_CONTEXT if you need
     information that wasn't provided. Never silently produce work you're unsure about.
 ```
+
+## Controller notes
+
+- codex-worker prepends a status line (`[codex gpt-5.6-sol / effort max / exit N / M min]`) and appends the list of files codex actually touched (`git status --porcelain`) — cross-check that list against the implementer's own "Files changed" claim before sending the work to review.
+- If codex-worker reports exit 124/137 (hung / over-ran its 20-min ceiling), treat it as BLOCKED: read the partial report, split the task into smaller pieces, and re-dispatch. Do not silently re-run the same oversized task.
+- Re-dispatches (fix rounds after a review) are NEW codex-worker dispatches — include the reviewer's findings verbatim plus the original task spec, since codex has no memory of the previous run.
