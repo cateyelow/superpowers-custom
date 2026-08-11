@@ -7,6 +7,8 @@ description: Use when completing tasks, implementing major features, or before m
 
 **ALWAYS use Codex CLI (GPT) for code review. NEVER self-review.**
 
+Catch issues before they cascade. The reviewer gets precisely crafted context for evaluation — never your session's history.
+
 Self-review is biased — the model that wrote the code will always think it's good. A different model (GPT via Codex CLI) provides genuine independent evaluation. This is the Generator-Evaluator pattern.
 
 **Core principle:** Review via Codex CLI, not self-review. Always.
@@ -148,15 +150,34 @@ Codex (GPT):
 [Proceed to next task or Playwright/Flutter evaluation]
 ```
 
-## Integration with Workflows
+## Common Rationalizations
 
-**Any workflow — code review = Codex CLI. No exceptions.**
+| Excuse | Reality |
+|--------|---------|
+| "I'll just review the diff myself instead of dispatching a review" | You're the coordinator — reviewing the diff inline burns the context window you need to keep driving the work. Send it out: the diff and the evaluation live in the reviewer's context, and only the findings come back to you. |
+| "The reviewer needs my whole session history to understand the change" | Hand it precisely crafted context, never your session's history. That keeps the review on the work product, not your thought process. |
 
-**Subagent-Driven Development:**
-- Codex spec review + Codex quality review per task
+**Never:**
+- Skip review because "it's simple"
+- Ignore Critical issues
+- Proceed with unfixed Important issues
+- Argue with valid technical feedback
 
-**Executing Plans / Ad-Hoc Development:**
-- Codex review before merge or when feature complete
+**If the review is wrong:**
+- Push back with technical reasoning
+- Show code/tests that prove it works
+- Request clarification
+
+## Workflow coverage
+
+**Any workflow — code review = a DIFFERENT model family than the one that wrote the code. No exceptions.**
+
+**Subagent-Driven Development:** the implementer is Codex/GPT (via `codex-worker`), so the reviewers are **fresh-context Claude subagents** — spec review, then quality review, per task. See `subagent-driven-development`.
+
+**Executing Plans / Ad-Hoc Development** (Claude wrote the code):
+- Codex CLI review before merge or when feature complete
 
 **Web/Flutter Projects:**
-- Codex review THEN Playwright/Flutter evaluator
+- Code review THEN Playwright/Flutter evaluator
+
+Claude-reviewer template (used by SDD): [code-reviewer.md](code-reviewer.md)
