@@ -1,0 +1,76 @@
+DEFECT 1
+what: While an upload is running, clicking a file's "Remove" button does nothing at all — the file stays in the list and the user gets no feedback.
+where: button.remove-button inside ul#file-list .file-item (click is delegated on #file-list; render() rebuilds the entire list on every requestAnimationFrame while uploading)
+repro: Added 2 files, clicked Upload, then pressed and released Remove at the button centre with page.mouse.down/up. Hold times 20, 50, 80, 120, 200 ms -> item count stayed 2 of 2 in every trial, and no click event was dispatched on the button at all (a capture-phase document click listener recorded nothing for the press). The identical press while idle removed the item (2 -> 1) in all 6 control trials. Only a 0 ms same-frame down/up works. Cause: the per-frame full re-render replaces the <li> and its button between mousedown and mouseup, so Chrome never fires click on it. "Clear all", which sits outside the re-rendered list, still works mid-upload with the same 80 ms press.
+severity: blocking
+category: logic
+
+DEFECT 2
+what: Starting an upload rips keyboard focus off whatever control the user was on and dumps it on the document body, so the control can no longer be operated.
+where: ul#file-list, rebuilt by render() on every animation frame while an upload is in progress
+repro: Tabbed to a file's Remove button (document.activeElement = BUTTON.remove-button), started the upload, waited 120 ms -> document.activeElement = BODY. Reproduced 3/3 runs. Pressing Enter at that point removed nothing (item count 2 -> 2). Focus was still BODY after the upload finished.
+severity: blocking
+category: a11y
+
+DEFECT 3
+what: Activating "Upload" with the keyboard throws focus away — it lands on the body and is never restored when the upload completes.
+where: button#upload-button (set disabled by render() for the duration of the upload)
+repro: Focused #upload-button, pressed Enter. document.activeElement went BUTTON.upload-button -> BODY during the upload -> still BODY 2.3 s after it finished. Reproduced 2/2 runs. The user has to Tab from the top of the document again.
+severity: minor
+category: a11y
+
+DEFECT 4
+what: The second Tab stop is the visually hidden file input, so the focus indicator vanishes from the page entirely and a keyboard user cannot tell where focus is.
+where: input#file-input (1x1 px, clip: rect(0px, 0px, 0px, 0px)) nested inside div#drop-zone[role="button"][tabindex="0"]
+repro: Loaded the page and pressed Tab twice. Tab 1 = #drop-zone, clearly indicated (border colour measured rgb(159,172,204) -> rgb(78,110,232), background rgb(248,250,255) -> rgb(241,244,255) after the 160 ms transition settled). Tab 2 = #file-input, measured 1x1 px at (640, 397) with clip rect(0,0,0,0); a screenshot of the card taken at that moment shows no focus indicator anywhere on the page. Both stops do the same thing (open the file picker).
+severity: minor
+category: a11y
+
+DEFECT 5
+what: The file list is an aria-live="polite" region that is torn down and rebuilt about 60 times per second during an upload, so a screen-reader user is flooded with announcements for the whole 2-second upload.
+where: ul#file-list[aria-live="polite"]; render() is called from the requestAnimationFrame progress loop
+repro: Attached a MutationObserver to #file-list ({childList, subtree, attributes, characterData}) and ran one upload of 2 files: 123 mutation records and 246 added nodes. Identical count in 3/3 runs.
+severity: minor
+category: a11y
+
+DEFECT 6
+what: The drop-zone hint text "You can select multiple files" is too faint to read against the drop zone.
+where: .drop-zone small
+repro: Measured computed style: color rgb(122,132,153) on effective background rgb(248,250,255), font-size 13.33px, weight 400 -> contrast ratio 3.6:1. WCAG AA requires 4.5:1 for text this size.
+severity: minor
+category: contrast
+
+DEFECT 7
+what: The empty-list message "No files selected." is below the minimum readable contrast.
+where: p#empty-state
+repro: Measured computed style: color rgb(122,132,153) on rgb(255,255,255), font-size 16px, weight 400 -> contrast ratio 3.76:1, against the 4.5:1 AA requirement.
+severity: minor
+category: contrast
+
+DEFECT 8
+what: Every file's size and status line ("2.0 KB", "Ready", and the live "37%" percentage) is below the minimum readable contrast.
+where: .file-meta span — both the size span and span.file-status
+repro: Measured computed style: color rgb(116,126,146) on effective background rgb(251,252,254), font-size 13.6px, weight 400 -> contrast ratio 3.98:1, against the 4.5:1 AA requirement. Same values measured at 1280px and at 375px.
+severity: minor
+category: contrast
+
+DEFECT 9
+what: The per-file "Remove" button is only 22 px tall, making it a very small tap target on a phone.
+where: button.remove-button (padding: 2px 0 2px 8px; font-size: 0.875rem)
+repro: At viewport 375x800, getBoundingClientRect = 61.1 x 22.0 px. That is under the 24x24 CSS px minimum of WCAG 2.2 SC 2.5.8 — it escapes the criterion only through the spacing exception (nearest other targets measured 101 px and 56 px away centre-to-centre) — and far under the 44 px mobile guidance. Identical size measured at 768px and 1280px.
+severity: minor
+category: touch-target
+
+DEFECT 10
+what: The "Clear all" button is 33 px tall, under the 44 px mobile touch-target guidance.
+where: button#clear-all.clear-button (padding: 6px 0)
+repro: At viewport 375x800, getBoundingClientRect = 61.5 x 33.0 px. Unchanged at 768px and 1280px.
+severity: minor
+category: touch-target
+
+DEFECT 11
+what: Pressing "Clear all" during an upload empties the list but leaves the widget claiming "Uploading…" on a disabled button for the rest of the two seconds, with nothing to upload.
+where: button#upload-button label and disabled state; button#clear-all is not disabled while an upload is running
+repro: Added 2 files, clicked Upload, then clicked "Clear all" ~300 ms in. Measured immediately after: 0 items in the list and the empty state visible, yet #upload-button.textContent = "Uploading…" and disabled = true. About 1.7 s later it reverted to "Upload". Recoverable — adding files afterwards re-enables the button.
+severity: minor
+category: state

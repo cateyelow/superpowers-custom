@@ -1,0 +1,41 @@
+DEFECT 1
+what: The step-indicator connector line is drawn on top of the step labels, so "Shipping" and "Payment" appear struck through (they read as crossed-out/disabled text).
+where: .step-indicator li::after (2px line) painting over .step-indicator .step-label
+repro: Load the page at 1280x900 (also reproduces at 768). Measured with getBoundingClientRect/getComputedStyle: li#1 box x=349 y=177.5 h=32; its ::after is position:absolute, left:34px, width:162.7px, top:16px, height:2px -> line occupies y 193.5-195.5, x 383-545.7. The "Shipping" label box is x 389-448, y 183-204 (vertical centre 193.5), so the line crosses the glyphs exactly. The label is position:static/z-index:auto while ::after is positioned, so the line paints above the text. Visible in screenshots of steps 1, 2 and 3.
+severity: minor
+category: a11y
+
+DEFECT 2
+what: Placeholder text in the payment fields is too light to read (fails WCAG AA 4.5:1).
+where: input#card-number::placeholder, input#expiry::placeholder, input#cvc::placeholder ("1234 5678 9012 3456", "MM/YY", "123")
+repro: Step 2 at 1280x900. getComputedStyle(el,'::placeholder').color = rgb(152,162,179) on rgb(255,255,255) field background at 16px/400 -> contrast ratio 2.58:1, required 4.5:1.
+severity: minor
+category: contrast
+
+DEFECT 3
+what: The keyboard focus ring on the Next / Back / Place order buttons is almost invisible against the white card (fails WCAG 2.2 1.4.11 non-text contrast of 3:1).
+where: .button-primary:focus-visible / .button-secondary:focus-visible - outline: solid 3px rgba(49,87,213,0.2), outline-offset: 2px
+repro: Tab to the "Next" button (element matched :focus-visible = true), waited 600ms for the CSS transition to settle, then read computed styles: outline rgba(49,87,213,0.2) 3px, offset 2px. Composited over the white card that colour is rgb(214,221,247) -> 1.35:1 against the white on both sides of the ring (the 2px offset gap is white too). By contrast the text inputs get a proper focus treatment (border rgb(49,87,213) = 6.08:1), so the weak indicator is specific to the buttons.
+severity: minor
+category: contrast
+
+DEFECT 4
+what: Correcting a digit in the middle of the card number jumps the text cursor to the end of the field, so the next keystroke lands in the wrong place.
+where: input#card-number (the auto-formatting input handler rewrites .value and does not restore the caret)
+repro: Step 2, field value "4111 1111 1111 1111". setSelectionRange(2,2) then typed "9" -> value "4191 1111 1111 1111 1" and selectionStart = 21 (end of field) instead of 3. Same with deletion: value "4111 1111 1111 1112", caret at 3, pressed Backspace -> value "4111 1111 1111 112" and selectionStart = 18 (end).
+severity: minor
+category: logic
+
+DEFECT 5
+what: On the review step the masked card number splits the visible last four digits across bullet groups whenever the card is not a multiple of 4 digits, so it looks like fewer digits are shown.
+where: dd#summary-card-number on step 3 (.step[data-step="2"])
+repro: Enter a 15-digit card 378282246310005 (accepted, field formats to "3782 8224 6310 005") and go to step 3 -> summary shows "•••• •••• •••0 005"; the last four digits 0005 are broken into "0" glued to the bullets plus "005". Same with a 13-digit card 4222222222222 -> "•••• •••• •222 2". A 16-digit card renders correctly ("•••• •••• •••• 1111"). The field's own hint allows "12 to 19 digits", so 13/14/15/17/18/19-digit cards all render this way.
+severity: minor
+category: logic
+
+DEFECT 6
+what: Fields containing only spaces pass the required-field check, so the user reaches the review step with blank Full name / Address / City / Postal code / Cardholder name and can still place the order.
+where: step 1 and step 2 required inputs (#full-name, #address, #city, #postal-code, #cardholder-name) and dd elements in .summary
+repro: On step 1 type a single space (or a few) into Full name, Address line, City and Postal code, choose a country, click Next - it advances to step 2. Type a space into Cardholder name, a valid card/expiry/CVC, click Next - it advances to step 3. The Shipping card then shows the labels FULL NAME, ADDRESS LINE, CITY, POSTAL CODE and CARDHOLDER NAME with completely empty values (textContent === ""), and "Place order" still works and produces a confirmation with an order number.
+severity: minor
+category: logic

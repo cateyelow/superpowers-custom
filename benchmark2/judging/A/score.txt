@@ -1,0 +1,27 @@
+REFERENCE_TOTAL: 14
+
+R1 | cand_1: HIT | cand_2: MISS | "Remove" button is dead to mouse clicks during an upload (per-frame re-render destroys it between mousedown and mouseup)
+R2 | cand_1: HIT | cand_2: HIT | During an upload keyboard focus cannot stay inside the file list — thrown to <body> within one frame, so Remove is unreachable while uploading
+R3 | cand_1: HIT | cand_2: HIT | The aria-live="polite" file list is torn down/rebuilt ~60x/sec during upload, flooding screen readers with repeat announcements
+R4 | cand_1: HIT | cand_2: HIT | Activating "Remove" with the keyboard drops focus to <body> (no focus restoration after re-render)
+R5 | cand_1: MISS | cand_2: MISS | Activating "Clear all" with the keyboard drops focus to <body> — it disables itself while focused and nothing takes focus
+R6 | cand_1: HIT | cand_2: HIT | The visually hidden <input type="file"> is still in the tab order: invisible 1x1 stop, no accessible name, nested inside the drop zone's role="button"
+R7 | cand_1: MISS | cand_2: HIT | Drop zone focus indication is outline:none plus a border-colour shift identical to :hover (1.96:1, below 3:1)
+R8 | cand_1: MISS | cand_2: HIT | Focus ring on Upload/Clear all/Remove is a 28%-opacity blue outline, 1.50:1 against the white card (3:1 required)
+R9 | cand_1: HIT | cand_2: HIT | Drop zone helper line "You can select multiple files" fails text contrast (3.60:1)
+R10 | cand_1: HIT | cand_2: HIT | Empty-state message "No files selected." fails text contrast (3.76:1)
+R11 | cand_1: HIT | cand_2: HIT | Per-file size/status line (.file-meta) fails text contrast (3.98:1)
+R12 | cand_1: MISS | cand_2: MISS | Drop zone's dashed border — the control's only visual boundary — fails non-text contrast (2.17:1 / 2.27:1)
+R13 | cand_1: HIT | cand_2: HIT | "Remove" control is only 22 px tall — half the recommended 44 px touch target, and it is the destructive action
+R14 | cand_1: MISS | cand_2: MISS | Dropping a non-file (folder / text-URL drag) highlights the zone as acceptable then silently does nothing — no file, no message, no error state
+
+CAND_1_EXTRAS
+- CONFIRMED_REAL | A file dropped on the page but outside the dashed zone is not intercepted; the browser takes the default action and opens the file, navigating away from the widget and discarding the queued list | In the live page I dispatched cancelable dragover+drop carrying a real File on document.body and on main.upload-card: defaultPrevented === false for all four events, and the list was unchanged; the identical events on #drop-zone come back defaultPrevented === true and do add the file. Since the event bubbles to document/window unprevented, no page-level handler exists and the browser default (open/navigate to the dropped file) stands.
+- CONFIRMED_REAL | Pressing "Clear all" mid-upload leaves the Upload button stuck reading "Uploading…" and disabled over an empty list, and any file added in the remaining ~2 s cannot be uploaded | Reproduced in the page: dropped 3 files, clicked Upload (button -> "Uploading…", disabled), after 400 ms clicked "Clear all" -> list count 0 and empty state visible, yet Upload still read "Uploading…" and disabled === true. Dropped a new file ("new-after-clear.txt", status "Ready") -> count 1 but Upload still "Uploading…"/disabled. Only after the leftover ~2 s timer expired did it return to "Upload"/enabled with the new file still queued.
+
+CAND_2_EXTRAS
+- CONFIRMED_REAL | A file dropped anywhere outside the dashed zone is not intercepted, so the browser handles it and navigates away, discarding the already-selected files | Same verification as above: cancelable dragover and drop carrying a File dispatched on document.body and main.upload-card both report defaultPrevented === false with the list unchanged, while the same events on #drop-zone report defaultPrevented === true — no document-level handler cancels the browser default.
+
+TOTALS
+cand_1: hits=9/14  confirmed_extras=2  false_alarms=0
+cand_2: hits=10/14  confirmed_extras=1  false_alarms=0

@@ -1,0 +1,69 @@
+DEFECT 1
+what: The drop zone hint "You can select multiple files" is too low-contrast to read comfortably (3.6:1, below the 4.5:1 minimum for 13.3px text).
+where: .drop-zone small — color rgb(122,132,153) on background rgb(248,250,255), font-size 13.33px
+repro: Loaded the page, walked every text node with getComputedStyle and composited each element's effective background; computed the WCAG luminance-contrast ratio for this node = 3.60:1 (required 4.5:1 for text under 18.66px).
+severity: minor
+category: contrast
+
+DEFECT 2
+what: In every file row, the size and status line ("1.0 KB", "Ready") is below the minimum text contrast (3.98:1 vs 4.5:1 required).
+where: .file-meta span / span.file-status inside each li — color rgb(116,126,146) on row background rgb(251,252,254), font-size 13.6px
+repro: Dropped files exactly-1024.txt / exactly-1536.dat / zero-bytes.bin onto the drop zone, then measured computed color vs composited background on the rendered rows: 3.98:1 (required 4.5:1).
+severity: minor
+category: contrast
+
+DEFECT 3
+what: The "No files selected." empty-state message is below the minimum text contrast (3.76:1 vs 4.5:1 required).
+where: p.empty-state — color rgb(122,132,153) on white card rgb(255,255,255), font-size 16px
+repro: Clicked "Clear all" to return the widget to its empty state, waited for the CSS transition to settle, then measured the computed color of the empty-state paragraph against the white card: 3.76:1.
+severity: minor
+category: contrast
+
+DEFECT 4
+what: The per-file "Remove" control is only 22px tall, too small a touch target on a phone (below the 24px WCAG 2.2 minimum and far below the 44px recommended size).
+where: button.remove-button in each li — measured bounding box 61.1 x 22.0 CSS px
+repro: Resized the viewport to 375x760, dropped two files, then read getBoundingClientRect() for every button: Remove = 61.1x22.0, Clear all = 61.5x33.0, Upload = 313x48. Same 22px height measured again at 768px width.
+severity: minor
+category: touch-target
+
+DEFECT 5
+what: Keyboard focus on the drop zone (the widget's primary control) is nearly invisible — the browser's focus outline is removed and replaced only by a faint dashed-border tint that is identical to the hover style.
+where: .drop-zone (div[role=button][tabindex=0]) — CSS rule ".drop-zone:hover, .drop-zone:focus-visible { border-color: rgb(78,110,232); background: rgb(241,244,255); outline: none; }"
+repro: Tabbed to the drop zone with real Tab key presses (:focus-visible confirmed true) and read computed styles after the 0.16s transition settled: outline-style "none", border rgb(159,172,204) -> rgb(78,110,232), background rgb(248,250,255) -> rgb(241,244,255). Contrast between the unfocused and focused border is 1.96:1 and between the backgrounds 1.05:1, both below the 3:1 required for a focus indicator.
+severity: minor
+category: a11y
+
+DEFECT 6
+what: The focus ring on the Upload / Clear all / Remove buttons is so pale it is barely visible against the white card (1.5:1).
+where: .upload-button:focus-visible, .clear-button:focus-visible, .remove-button:focus-visible { outline: rgba(64,95,216,0.28) solid 3px; outline-offset: 2px }
+repro: Tabbed through the controls with real Tab presses; a focusin listener recorded outline "solid 3px rgba(64,95,216,0.28)" with :focus-visible true on the Remove and Upload buttons. Composited over the white card that ring renders as rgb(202,210,244), which is 1.50:1 against the surrounding white (3:1 required for a focus indicator).
+severity: minor
+category: a11y
+
+DEFECT 7
+what: Tabbing through the widget hits an invisible stop — one Tab press lands on the hidden 1x1 file input, so keyboard users see the focus indicator vanish for a step.
+where: input#file-input.file-input (between .drop-zone and .clear-button in DOM order) — 1x1 px, position absolute, clip rect(0,0,0,0), opacity 1, visibility visible, no aria-hidden, tabIndex 0
+repro: Called input.focus() and confirmed document.activeElement became the input (focus accepted), with tabIndex=0, display "block", visibility "visible" and no aria-hidden or tabindex="-1" — i.e. it is in the sequential focus order while being clipped to zero visible area. Its only focus indicator is the 1px UA outline on a 1x1 clipped box.
+severity: minor
+category: a11y
+
+DEFECT 8
+what: Removing a file with the keyboard throws focus back to the top of the document — after activating "Remove" the focus lands on <body>, so the user has to Tab all the way in again for each file they remove.
+where: button.remove-button -> the whole ul.file-list is re-rendered on every state change
+repro: Dropped k1.txt/k2.txt/k3.txt, focused the second Remove button (document.activeElement aria-label "Remove k2.txt"), activated it. The right row was removed (k1, k3 remain) but document.activeElement became BODY. Same focus loss observed when dropping an additional file while a Remove button was focused, and during upload (the li node identity changes, 123 DOM mutations recorded in ~2.5s).
+severity: minor
+category: a11y
+
+DEFECT 9
+what: During an upload a screen reader is flooded — the entire file list is an aria-live region and it is fully re-rendered on every progress tick, so the whole list is re-announced continuously instead of just the progress changing.
+where: ul.file-list[aria-live="polite"] (no aria-atomic / aria-relevant), containing all rows plus the per-file percentage text
+repro: Read the live-region attributes on the rendered list (aria-live="polite", aria-atomic null, aria-relevant null), then attached a MutationObserver to ul.file-list and clicked Upload: 123 mutations over ~2.5s, with each row's status text changing 0% -> 12% -> 38% -> 73% -> 98% -> Done and the li nodes being replaced rather than updated in place.
+severity: minor
+category: a11y
+
+DEFECT 10
+what: A file dropped anywhere on the page outside the dashed zone is not intercepted, so the browser handles it itself and navigates away from the widget, discarding the list of files already selected.
+where: document/body — no dragover/drop handler; only .drop-zone calls preventDefault
+repro: Dispatched dragover and drop carrying a file on document.body and inspected the events: defaultPrevented was false for both (and the list was unchanged), whereas the same events on .drop-zone come back with defaultPrevented true. With the page-level default left in place the browser opens the dropped file in the tab, replacing the page and its selection.
+severity: minor
+category: logic

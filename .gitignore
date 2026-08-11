@@ -13,3 +13,9 @@ triage/
 # development (see CLAUDE.md / README.md). It is not part of the published
 # plugin, so the whole directory is ignored here.
 evals/
+
+# benchmark2 scratch: per-cell page copies and codex generation logs
+benchmark2/runs/
+benchmark2/runs2/
+benchmark2/judging/page.html
+benchmark2/artifacts/*/gen.out

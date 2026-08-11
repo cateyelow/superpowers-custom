@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Checkout</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --background: #f4f7fb;
+      --surface: #ffffff;
+      --text: #18212f;
+      --muted: #667085;
+      --border: #d0d5dd;
+      --accent: #3157d5;
+      --accent-dark: #2444ad;
+      --success: #147a50;
+      --focus: rgba(49, 87, 213, 0.2);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 32px 16px;
+      background: linear-gradient(145deg, #edf2ff 0%, var(--background) 50%, #f7f9fc 100%);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    .checkout-card {
+      width: min(100%, 680px);
+      padding: clamp(24px, 5vw, 48px);
+      border: 1px solid rgba(208, 213, 221, 0.75);
+      border-radius: 20px;
+      background: var(--surface);
+      box-shadow: 0 18px 50px rgba(16, 24, 40, 0.1);
+    }
+
+    h1,
+    h2,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      margin-bottom: 28px;
+      font-size: clamp(1.75rem, 5vw, 2.25rem);
+      line-height: 1.2;
+    }
+
+    h2 {
+      margin-bottom: 6px;
+      font-size: 1.35rem;
+    }
+
+    .step-intro {
+      margin-bottom: 24px;
+      color: var(--muted);
+    }
+
+    .step-indicator {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 0 0 36px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .step-indicator li {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.875rem;
+      font-weight: 650;
+    }
+
+    .step-indicator li:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      z-index: 0;
+      top: 16px;
+      left: 34px;
+      width: calc(100% - 26px);
+      height: 2px;
+      background: var(--border);
+    }
+
+    .step-number {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      width: 32px;
+      height: 32px;
+      flex: 0 0 32px;
+      place-items: center;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      background: var(--surface);
+    }
+
+    .step-indicator li.is-active,
+    .step-indicator li.is-complete {
+      color: var(--accent);
+    }
+
+    .step-indicator li.is-active .step-number {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .step-indicator li.is-complete .step-number {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .step-indicator li.is-complete::after {
+      background: var(--accent);
+    }
+
+    .step[hidden],
+    .confirmation[hidden] {
+      display: none;
+    }
+
+    .fields {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .field.full-width {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 0.925rem;
+      font-weight: 650;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 48px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: #fff;
+      color: var(--text);
+      font: inherit;
+      transition: border-color 140ms ease, box-shadow 140ms ease;
+    }
+
+    input::placeholder {
+      color: #98a2b3;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--focus);
+      outline: none;
+    }
+
+    .hint {
+      margin: -2px 0 0;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 30px;
+      padding-top: 22px;
+      border-top: 1px solid #eaecf0;
+    }
+
+    button {
+      min-height: 46px;
+      padding: 10px 20px;
+      border: 1px solid transparent;
+      border-radius: 9px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color 140ms ease, border-color 140ms ease, transform 140ms ease;
+    }
+
+    button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .button-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .button-primary:hover {
+      background: var(--accent-dark);
+    }
+
+    .button-secondary {
+      border-color: var(--border);
+      background: #fff;
+      color: var(--text);
+    }
+
+    .button-secondary:hover {
+      background: #f9fafb;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+      margin-top: 24px;
+    }
+
+    .summary-section {
+      padding: 20px;
+      border: 1px solid #e4e7ec;
+      border-radius: 12px;
+      background: #f9fafb;
+    }
+
+    .summary-section h3 {
+      margin: 0 0 14px;
+      font-size: 1rem;
+    }
+
+    .summary-section dl {
+      display: grid;
+      gap: 12px;
+      margin: 0;
+    }
+
+    .summary-section dt {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .summary-section dd {
+      margin: 2px 0 0;
+      overflow-wrap: anywhere;
+    }
+
+    .confirmation {
+      padding: 24px 0;
+      text-align: center;
+    }
+
+    .confirmation-icon {
+      display: grid;
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 22px;
+      place-items: center;
+      border-radius: 50%;
+      background: #e8f7f0;
+      color: var(--success);
+      font-size: 2rem;
+      font-weight: 800;
+    }
+
+    .confirmation h2 {
+      font-size: 1.65rem;
+    }
+
+    .order-number {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 8px 12px;
+      border-radius: 7px;
+      background: #f2f4f7;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-weight: 700;
+    }
+
+    @media (max-width: 560px) {
+      .fields,
+      .summary {
+        grid-template-columns: 1fr;
+      }
+
+      .step-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+      }
+
+      .step-indicator li {
+        justify-content: center;
+      }
+
+      .step-indicator li:not(:last-child)::after {
+        left: calc(50% + 16px);
+        width: calc(100% - 24px);
+      }
+
+      .controls button {
+        flex: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="checkout-card">
+    <form id="checkout-form">
+      <h1>Complete your order</h1>
+
+      <ol class="step-indicator" aria-label="Checkout progress">
+        <li class="is-active" aria-current="step">
+          <span class="step-number" aria-hidden="true">1</span>
+          <span class="step-label">Shipping</span>
+        </li>
+        <li>
+          <span class="step-number" aria-hidden="true">2</span>
+          <span class="step-label">Payment</span>
+        </li>
+        <li>
+          <span class="step-number" aria-hidden="true">3</span>
+          <span class="step-label">Review</span>
+        </li>
+      </ol>
+
+      <section class="step" data-step="0" aria-labelledby="shipping-heading">
+        <h2 id="shipping-heading" tabindex="-1">Shipping details</h2>
+        <p class="step-intro">Where should we send your order?</p>
+
+        <div class="fields">
+          <div class="field full-width">
+            <label for="full-name">Full name</label>
+            <input id="full-name" name="fullName" type="text" autocomplete="name" required>
+          </div>
+
+          <div class="field full-width">
+            <label for="address">Address line</label>
+            <input id="address" name="address" type="text" autocomplete="street-address" required>
+          </div>
+
+          <div class="field">
+            <label for="city">City</label>
+            <input id="city" name="city" type="text" autocomplete="address-level2" required>
+          </div>
+
+          <div class="field">
+            <label for="postal-code">Postal code</label>
+            <input id="postal-code" name="postalCode" type="text" autocomplete="postal-code" required>
+          </div>
+
+          <div class="field full-width">
+            <label for="country">Country</label>
+            <select id="country" name="country" autocomplete="country-name" required>
+              <option value="" selected disabled>Select a country</option>
+              <option value="Australia">Australia</option>
+              <option value="Canada">Canada</option>
+              <option value="Germany">Germany</option>
+              <option value="Japan">Japan</option>
+              <option value="Singapore">Singapore</option>
+              <option value="United Kingdom">United Kingdom</option>
+              <option value="United States">United States</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button class="button-primary" type="button" data-next>Next</button>
+        </div>
+      </section>
+
+      <section class="step" data-step="1" aria-labelledby="payment-heading" hidden>
+        <h2 id="payment-heading" tabindex="-1">Payment details</h2>
+        <p class="step-intro">Enter the card you would like to use.</p>
+
+        <div class="fields">
+          <div class="field full-width">
+            <label for="cardholder-name">Cardholder name</label>
+            <input id="cardholder-name" name="cardholderName" type="text" autocomplete="cc-name" required>
+          </div>
+
+          <div class="field full-width">
+            <label for="card-number">Card number</label>
+            <input id="card-number" name="cardNumber" type="text" inputmode="numeric" autocomplete="cc-number" maxlength="23" pattern="[0-9 ]{12,23}" placeholder="1234 5678 9012 3456" aria-describedby="card-number-hint" required>
+            <p class="hint" id="card-number-hint">12 to 19 digits</p>
+          </div>
+
+          <div class="field">
+            <label for="expiry">Expiry (MM/YY)</label>
+            <input id="expiry" name="expiry" type="text" inputmode="numeric" autocomplete="cc-exp" maxlength="5" pattern="(0[1-9]|1[0-2])\/[0-9]{2}" placeholder="MM/YY" required>
+          </div>
+
+          <div class="field">
+            <label for="cvc">CVC</label>
+            <input id="cvc" name="cvc" type="password" inputmode="numeric" autocomplete="cc-csc" maxlength="4" pattern="[0-9]{3,4}" placeholder="123" required>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button class="button-secondary" type="button" data-back>Back</button>
+          <button class="button-primary" type="button" data-next>Next</button>
+        </div>
+      </section>
+
+      <section class="step" data-step="2" aria-labelledby="review-heading" hidden>
+        <h2 id="review-heading" tabindex="-1">Review your order</h2>
+        <p class="step-intro">Check your details before placing the order.</p>
+
+        <div class="summary" aria-label="Order details">
+          <section class="summary-section" aria-labelledby="shipping-summary-heading">
+            <h3 id="shipping-summary-heading">Shipping</h3>
+            <dl>
+              <div>
+                <dt>Full name</dt>
+                <dd id="summary-full-name"></dd>
+              </div>
+              <div>
+                <dt>Address line</dt>
+                <dd id="summary-address"></dd>
+              </div>
+              <div>
+                <dt>City</dt>
+                <dd id="summary-city"></dd>
+              </div>
+              <div>
+                <dt>Postal code</dt>
+                <dd id="summary-postal-code"></dd>
+              </div>
+              <div>
+                <dt>Country</dt>
+                <dd id="summary-country"></dd>
+              </div>
+            </dl>
+          </section>
+
+          <section class="summary-section" aria-labelledby="payment-summary-heading">
+            <h3 id="payment-summary-heading">Payment</h3>
+            <dl>
+              <div>
+                <dt>Cardholder name</dt>
+                <dd id="summary-cardholder-name"></dd>
+              </div>
+              <div>
+                <dt>Card number</dt>
+                <dd id="summary-card-number"></dd>
+              </div>
+              <div>
+                <dt>Expiry</dt>
+                <dd id="summary-expiry"></dd>
+              </div>
+              <div>
+                <dt>CVC</dt>
+                <dd id="summary-cvc"></dd>
+              </div>
+            </dl>
+          </section>
+        </div>
+
+        <div class="controls">
+          <button class="button-secondary" type="button" data-back>Back</button>
+          <button class="button-primary" type="submit">Place order</button>
+        </div>
+      </section>
+    </form>
+
+    <section class="confirmation" id="confirmation" aria-labelledby="confirmation-heading" hidden>
+      <div class="confirmation-icon" aria-hidden="true">✓</div>
+      <h2 id="confirmation-heading" tabindex="-1">Order confirmed</h2>
+      <p>Thank you. Your order has been placed successfully.</p>
+      <p>Your order number is <span class="order-number" id="order-number"></span>.</p>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const form = document.getElementById("checkout-form");
+      const steps = Array.from(form.querySelectorAll(".step"));
+      const indicators = Array.from(form.querySelectorAll(".step-indicator li"));
+      const confirmation = document.getElementById("confirmation");
+      const cardNumber = document.getElementById("card-number");
+      const expiry = document.getElementById("expiry");
+      const cvc = document.getElementById("cvc");
+      let currentStep = 0;
+
+      const fields = {
+        fullName: document.getElementById("full-name"),
+        address: document.getElementById("address"),
+        city: document.getElementById("city"),
+        postalCode: document.getElementById("postal-code"),
+        country: document.getElementById("country"),
+        cardholderName: document.getElementById("cardholder-name"),
+        cardNumber,
+        expiry,
+        cvc
+      };
+
+      const summary = {
+        fullName: document.getElementById("summary-full-name"),
+        address: document.getElementById("summary-address"),
+        city: document.getElementById("summary-city"),
+        postalCode: document.getElementById("summary-postal-code"),
+        country: document.getElementById("summary-country"),
+        cardholderName: document.getElementById("summary-cardholder-name"),
+        cardNumber: document.getElementById("summary-card-number"),
+        expiry: document.getElementById("summary-expiry"),
+        cvc: document.getElementById("summary-cvc")
+      };
+
+      function showStep(index, moveFocus = true) {
+        currentStep = index;
+
+        steps.forEach((step, stepIndex) => {
+          const isCurrent = stepIndex === index;
+          step.hidden = !isCurrent;
+          step.setAttribute("aria-hidden", String(!isCurrent));
+        });
+
+        indicators.forEach((indicator, indicatorIndex) => {
+          const isCurrent = indicatorIndex === index;
+          indicator.classList.toggle("is-active", isCurrent);
+          indicator.classList.toggle("is-complete", indicatorIndex < index);
+
+          if (isCurrent) {
+            indicator.setAttribute("aria-current", "step");
+          } else {
+            indicator.removeAttribute("aria-current");
+          }
+        });
+
+        if (index === 2) {
+          updateSummary();
+        }
+
+        if (moveFocus) {
+          steps[index].querySelector("h2").focus();
+        }
+      }
+
+      function validateCurrentStep() {
+        const controls = Array.from(steps[currentStep].querySelectorAll("input, select"));
+
+        for (const control of controls) {
+          if (!control.checkValidity()) {
+            control.reportValidity();
+            return false;
+          }
+        }
+
+        return true;
+      }
+
+      function maskCardNumber(value) {
+        const digits = value.replace(/\D/g, "");
+        const lastFour = digits.slice(-4);
+        const masked = "•".repeat(Math.max(0, digits.length - lastFour.length)) + lastFour;
+        return masked.replace(/(.{4})/g, "$1 ").trim();
+      }
+
+      function updateSummary() {
+        summary.fullName.textContent = fields.fullName.value.trim();
+        summary.address.textContent = fields.address.value.trim();
+        summary.city.textContent = fields.city.value.trim();
+        summary.postalCode.textContent = fields.postalCode.value.trim();
+        summary.country.textContent = fields.country.options[fields.country.selectedIndex].text;
+        summary.cardholderName.textContent = fields.cardholderName.value.trim();
+        summary.cardNumber.textContent = maskCardNumber(fields.cardNumber.value);
+        summary.expiry.textContent = fields.expiry.value;
+        summary.cvc.textContent = fields.cvc.value;
+      }
+
+      form.addEventListener("click", (event) => {
+        const nextButton = event.target.closest("[data-next]");
+        const backButton = event.target.closest("[data-back]");
+
+        if (nextButton && validateCurrentStep()) {
+          showStep(currentStep + 1);
+        }
+
+        if (backButton) {
+          showStep(currentStep - 1);
+        }
+      });
+
+      cardNumber.addEventListener("input", () => {
+        const digits = cardNumber.value.replace(/\D/g, "").slice(0, 19);
+        cardNumber.value = digits.replace(/(\d{4})(?=\d)/g, "$1 ");
+      });
+
+      expiry.addEventListener("input", () => {
+        const digits = expiry.value.replace(/\D/g, "").slice(0, 4);
+        expiry.value = digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
+      });
+
+      cvc.addEventListener("input", () => {
+        cvc.value = cvc.value.replace(/\D/g, "").slice(0, 4);
+      });
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        if (currentStep !== 2) {
+          return;
+        }
+
+        const timePart = Date.now().toString(36).toUpperCase();
+        const randomPart = Math.random().toString(36).slice(2, 6).toUpperCase();
+        document.getElementById("order-number").textContent = `ORD-${timePart}-${randomPart}`;
+        form.replaceWith(confirmation);
+        confirmation.hidden = false;
+        document.getElementById("confirmation-heading").focus();
+      });
+
+      showStep(0, false);
+    })();
+  </script>
+</body>
+</html>

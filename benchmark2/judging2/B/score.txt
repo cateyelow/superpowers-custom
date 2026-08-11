@@ -1,0 +1,27 @@
+REFERENCE_TOTAL: 11
+
+R1 | cand_1: HIT | cand_2: HIT | Enter in a form field never advances the step and gives no feedback at all
+R2 | cand_1: HIT | cand_2: HIT | Card number accepts 10-11 digits despite the "12 to 19 digits" hint (pattern counts auto-inserted spaces)
+R3 | cand_1: MISS | cand_2: MISS | Backspace over an auto-inserted space is a no-op — the character is not removed and the caret jumps to the end
+R4 | cand_1: HIT | cand_2: HIT | Typing a digit into the middle of the card number throws the caret to the end of the field
+R5 | cand_1: HIT | cand_2: HIT | Whitespace-only entries satisfy "required", so the review step shows blank values and the order can be placed
+R6 | cand_1: HIT | cand_2: HIT | Review step prints the CVC in clear text although it was typed into a type="password" field
+R7 | cand_1: HIT | cand_2: HIT | Button focus ring (Next/Back/Place order) is 1.35:1 against the card — effectively invisible
+R8 | cand_1: HIT | cand_2: HIT | Placeholder text in the payment fields is 2.58:1, below 4.5:1
+R9 | cand_1: HIT | cand_2: MISS | Control boundaries fail non-text contrast: 1.47:1 border on inputs, select and the secondary Back button
+R10 | cand_1: MISS | cand_2: MISS | An expiry date in the past ("01/20") is accepted and the order is placed with it
+R11 | cand_1: MISS | cand_2: MISS | Rejected payment fields only get the generic native "Please match the requested format." — no stated format, no aria-invalid, no live region
+
+Notes on R3/R4: both candidates reported the caret-jump defect (R4) and both additionally exercised Backspace, but each placed the caret over a DIGIT (cand_1 at index 3, cand_2 at index 6), where the digit IS deleted and only the caret misbehaves — i.e. a second instance of R4. I reproduced R3 independently: caret set to index 5 (just after the first auto-inserted space) then Backspace leaves the value unchanged at "4111 1111 1111 1111" with selectionStart 19. Neither report states that deleting a space does nothing, so neither would lead a developer to that fix. MISS for both, scored identically.
+
+Note on R9: cand_1 names the nine text inputs and the country select but not the .button-secondary "Back" button. Same root cause (--border #d0d5dd at 1.47:1 on a white surface) and same fix, with the measurement correct, so scored HIT.
+
+CAND_1_EXTRAS
+(none — all 8 reported defects map to REFERENCE items)
+
+CAND_2_EXTRAS
+- CONFIRMED_REAL | The step-indicator connector line paints on top of the "Shipping" and "Payment" labels, so both words render struck through | Reproduced in an isolated headless Chromium. `.step-indicator li:not(:last-child)::after` is position:absolute; top:16px; left:34px; height:2px with z-index:0, while `.step-label` is a static, non-positioned inline box — so the positioned pseudo-element paints above the label text. Geometry at 1280x900: the ::after box resolves to x 383.0-545.7, y 193.5-195.5; the "Shipping" label box is x 389.0-447.9, y 183.0-204.0, giving a 58.9 x 2.0 px overlap (57.8 x 2.0 for "Payment") — matching the candidate's numbers exactly. Pixel-sampled a clip of the region: at page rows y=194 and y=195, 70/70 sampled pixels across the label's x-span are the connector colour rgb(208,213,221) with zero surviving blue label pixels, while the rows immediately above (192, 193) and below (196, 197, 198) contain 23-35 blue text pixels each. Screenshots at 1280 and 768 visibly show a line running through the middle of both words. At 375 the label is clipped to 1x1 (position:absolute, clip rect(0,0,0,0)), so the overlap disappears — also exactly as the candidate stated. Genuine user-visible rendering defect that REFERENCE missed.
+
+TOTALS
+cand_1: hits=8/11  confirmed_extras=0  false_alarms=0
+cand_2: hits=7/11  confirmed_extras=1  false_alarms=0

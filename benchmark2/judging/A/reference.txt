@@ -1,0 +1,97 @@
+DEFECT 1
+what: While an upload is running, the per-file "Remove" button is dead — a normal-length mouse click on it does nothing, so the user cannot take a file out of the list during the upload.
+where: upload.html:508-527 (updateProgress rAF loop calling render()) + upload.html:408 (fileList.replaceChildren) + upload.html:467-476 (delegated click handler); selector .file-item .remove-button
+repro: Add 3 files, click Upload, then press-and-hold the 2nd file's Remove for 30/60/100/200 ms and release (real mouse down+up via Playwright). File count stays 3 in all four trials. The identical press-and-hold with no upload running removes the file every time (3 -> 2 at all four hold durations). Control: "Clear all" (the one control that is not re-rendered) does work during an upload. Cause: render() is called on every animation frame (~61 renders/sec, measured), so replaceChildren destroys the button between mousedown and mouseup and no click event ever reaches it.
+severity: blocking
+category: logic
+
+DEFECT 2
+what: During an upload, keyboard focus cannot stay anywhere inside the file list — focus is thrown to <body> within one animation frame, so a keyboard or screen-reader user cannot reach or operate any Remove button while uploading.
+where: upload.html:408 (fileList.replaceChildren in render()), called from upload.html:517 inside the requestAnimationFrame loop
+repro: Add 2 files, click Upload, then call .remove-button focus(): document.activeElement is the button immediately, but after two requestAnimationFrame ticks activeElement is BODY and the button node reports isConnected === false. Also: focus "Clear all" during an upload and press Tab — activeElement becomes BODY instead of the first Remove button.
+severity: blocking
+category: a11y
+
+DEFECT 3
+what: The whole file list is an aria-live="polite" region that is torn down and rebuilt roughly 60 times a second during an upload, so a screen reader is flooded with repeat announcements of every file instead of the actual status change.
+where: upload.html:313 (<ul id="file-list" aria-live="polite">) with upload.html:408 replaceChildren inside the per-frame render()
+repro: Add 2 files, attach a MutationObserver to #file-list, click Upload. Over the ~2 s upload the observer records 121 mutation records and 244 list items inserted into the live region. Every insertion re-announces the full list text ("alpha.txt | 11.7 KB | ... | Remove | beta-report.pdf | ...").
+severity: blocking
+category: a11y
+
+DEFECT 4
+what: Activating "Remove" with the keyboard drops focus to <body>, so the user loses their place and has to tab from the top of the document again.
+where: upload.html:467-476 (remove handler -> render(), no focus restoration); selector .remove-button
+repro: Add 3 files, focus the 2nd file's Remove button (activeElement aria-label "Remove beta-report.pdf"), press Enter. The file is removed and document.activeElement becomes BODY.
+severity: minor
+category: a11y
+
+DEFECT 5
+what: Activating "Clear all" with the keyboard drops focus to <body> — the button disables itself while focused and nothing takes focus afterwards.
+where: upload.html:478-481 (clear handler) + upload.html:410 (clearButton.disabled = files.length === 0); selector #clear-all
+repro: Add files, focus #clear-all, press Enter. List empties, #clear-all becomes disabled, and document.activeElement becomes BODY.
+severity: minor
+category: a11y
+
+DEFECT 6
+what: The visually hidden <input type="file"> is still in the tab order: keyboard users hit an invisible 1x1 stop with no accessible name and no visible focus indicator, immediately after the drop zone that already does the same job.
+where: upload.html:304 (<input id="file-input" ...>, no tabindex="-1", no label) with upload.html:106-116 (clip-based hiding); it also sits inside upload.html:300 role="button"
+repro: Load the page, press Tab: focus 1 = #drop-zone, focus 2 = #file-input, whose getBoundingClientRect() is 1x1 px and clipped (nothing visible moves on screen). el.labels.length === 0 and it has no aria-label. The accessibility snapshot exposes it as a nested button ("Choose File") inside the drop zone's role="button".
+severity: minor
+category: a11y
+
+DEFECT 7
+what: The drop zone gives almost no keyboard focus indication — it sets outline:none and only shifts its dashed border colour, and the identical style is used for :hover, so focused and hovered look the same.
+where: upload.html:72-77 (.drop-zone:hover, .drop-zone:focus-visible { border-color:#4e6ee8; background:#f1f4ff; outline:none })
+repro: Tab to the drop zone and read computed styles after the 160 ms transition: outline-style "none"; border colour changes from rgb(159,172,204) to rgb(78,110,232) and background from #f8faff to #f1f4ff. Contrast between the focused and unfocused indicator colours is 1.96:1, below the 3:1 needed for a focus indicator.
+severity: minor
+category: a11y
+
+DEFECT 8
+what: The focus ring on the Upload, Clear all and Remove buttons is a 28%-opacity blue outline that is barely visible against the white card.
+where: upload.html:256-261 (.upload-button:focus-visible, .clear-button:focus-visible, .remove-button:focus-visible { outline: 3px solid rgb(64 95 216 / 28%); outline-offset: 2px })
+repro: Focus #upload-button — computed outline-color rgba(64,95,216,0.28) over the white card composites to rgb(202,210,244) = 1.50:1 against #ffffff, and 1.49:1 against the #fbfcfe file-item background for the Remove buttons (3:1 required). Confirmed on screenshots of the focused Upload and Remove buttons.
+severity: minor
+category: contrast
+
+DEFECT 9
+what: The drop zone's helper line "You can select multiple files" fails text contrast.
+where: upload.html:303 / CSS .drop-zone small at upload.html:102-104 (color #7a8499 on #f8faff)
+repro: Computed colour rgb(122,132,153) on background rgb(248,250,255) at 13.33 px / weight 400 = 3.60:1 (4.5:1 required for normal-size text).
+severity: minor
+category: contrast
+
+DEFECT 10
+what: The empty-state message "No files selected." fails text contrast.
+where: upload.html:312 / CSS .empty-state at upload.html:167-174 (color #7a8499 on #ffffff)
+repro: Computed colour rgb(122,132,153) on rgb(255,255,255) at 16 px / weight 400 = 3.76:1 (4.5:1 required).
+severity: minor
+category: contrast
+
+DEFECT 11
+what: Each file's size and status line ("11.7 KB", "Ready", the live "37%" during upload) fails text contrast.
+where: CSS .file-meta at upload.html:199-205 (color #747e92, font-size .85rem) on the .file-item background #fbfcfe
+repro: Computed colour rgb(116,126,146) on rgb(251,252,254) at 13.6 px / weight 400 = 3.98:1 (4.5:1 required). Same element carries the in-progress percentage text.
+severity: minor
+category: contrast
+
+DEFECT 12
+what: The drop zone's dashed border — the only visual boundary of the page's main interactive control — is too faint to meet non-text contrast.
+where: upload.html:63 (.drop-zone { border: 2px dashed #9faccc; background:#f8faff }) inside the #ffffff card
+repro: Computed border colour rgb(159,172,204): 2.17:1 against the zone's own #f8faff fill and 2.27:1 against the surrounding white card (3:1 required for the boundary of a UI control). The fill itself is only 1.04:1 against the card, so the border is the sole cue.
+severity: minor
+category: contrast
+
+DEFECT 13
+what: The "Remove" control is only 22 px tall — half the recommended minimum touch target, and it is the destructive action on the list.
+where: CSS .remove-button at upload.html:212-216 (padding: 2px 0 2px 8px; font-size: .875rem)
+repro: getBoundingClientRect() = 61.1 x 22.0 CSS px, identical at 375 px, 768 px and 1280 px viewports (44x44 recommended; the 24 px minimum dimension is met only via the WCAG 2.5.8 spacing exception).
+severity: minor
+category: touch-target
+
+DEFECT 14
+what: Dropping something that is not a file (a folder, a text/URL drag) lights the drop zone up as if it will be accepted and then does nothing at all — no file added, no message, no error state.
+where: upload.html:458-465 (drop handler calls addFiles(event.dataTransfer.files) with no check for an empty file list)
+repro: Dispatch a drop on #drop-zone with a DataTransfer carrying only text/plain: the zone gets the .is-dragging highlight on dragenter, and after the drop the list still has 0 items, the empty state is still shown, and the page contains no error or explanatory text.
+severity: minor
+category: state

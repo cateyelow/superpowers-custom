@@ -1,0 +1,20 @@
+REFERENCE_TOTAL: 5
+
+R1 | cand_1: HIT | cand_2: HIT | Empty-state message right-aligned instead of centred; at 375px pushed out of the visible table area so only "No employees" is readable
+R2 | cand_1: HIT | cand_2: MISS | Search input and department select: 1px border at 1.53:1 contrast on a white panel, below the 3:1 non-text minimum
+R3 | cand_1: HIT | cand_2: MISS | Previous/Next buttons: 1px border at 1.53:1 contrast against the white panel, below the 3:1 minimum
+R4 | cand_1: HIT | cand_2: MISS | Sortable column headers are operable (tabindex=0, Enter/Space sorts) but expose no interactive role to assistive tech
+R5 | cand_1: HIT | cand_2: HIT | Previous/Next buttons are only 94x38px, below the 44x44 touch-target minimum, at every viewport
+
+CAND_1_EXTRAS
+- CONFIRMED_REAL | Pagination indicator reads "Page 0 of 0" when no rows match — a page number that cannot exist | Isolated Chromium, filled #search with "zzzz": #page-status innerText === "Page 0 of 0". Source confirms `displayedPage = pageCount === 0 ? 0 : state.page` (page.html:370-371). Visible in the 375px screenshot alongside the empty state.
+- CONFIRMED_REAL | Keyboard paging drops focus: activating Next/Previous disables that button while focused, focus falls to <body>, and the next Tab restarts at the search input | Isolated Chromium at 375x800. Focused #next, Enter -> "Page 2 of 3", activeElement still "next". Enter again -> "Page 3 of 3", #next.disabled === true, activeElement === BODY; one Tab landed on #search. Mirror case reproduced: page 2, focus #previous, Enter -> "Page 1 of 3", #previous disabled, activeElement === BODY.
+
+CAND_2_EXTRAS
+- FALSE_ALARM | Disabled Previous/Next label contrast 2.34:1 said to violate the 4.5:1 text minimum | The measurement reproduces exactly (color rgb(152,162,179) on rgb(242,244,247) = 2.337:1 at 16px), but WCAG 1.4.3 explicitly exempts text that is part of an inactive/disabled user-interface component from any contrast requirement, so the cited 4.5:1 threshold does not apply. The element screenshot of .pagination shows "Previous" as a conventional, still-readable greyed-out label — the intended "unavailable" affordance, not a defect, and the "barely legible" characterisation is not supported by what renders.
+- CONFIRMED_REAL | Column widths visibly jump on every page change and re-sort because the table auto-sizes to the 10 currently rendered rows | Isolated Chromium at 1280x900, measured thead th widths: page1 [220.7, 220.9, 327.5, 187.3, 161.7], page2 [228.0, 208.4, 350.8, 178.3, 152.5], page3 [221.7, 221.6, 301.2, 211.3, 162.2] — Role column shifts 23.3px on a single Next click, Location 23-24px. Clicking the Location header on page 1 moves Name 220.7 -> 234.7px. getComputedStyle(table).tableLayout === "auto" and no column widths are set. thead screenshots of page 1 vs page 2 show the header labels visibly displaced.
+- CONFIRMED_REAL | Pagination indicator reads "Page 0 of 0" when nothing matches the filters | Same verification as above: isolated Chromium, non-matching query -> #page-status "Page 0 of 0"; reproduced with "zzzz", with "Singapore" (matched against name/role only), and with department=Design + "zzzz".
+
+TOTALS
+cand_1: hits=5/5  confirmed_extras=2  false_alarms=0
+cand_2: hits=2/5  confirmed_extras=2  false_alarms=1

@@ -1,0 +1,34 @@
+DEFECT 1
+what: At 375px the "No employees match the current filters." empty-state message is cut off at the right edge of the panel — the user only sees "No employees" and must scroll the table sideways to read the rest.
+where: td.empty (inside tbody#employee-rows), clipped by div.table-wrap {overflow-x:auto}; caused by table {white-space:nowrap} keeping the table 543.7px wide while the wrap is only 349px
+repro: Isolated Chromium at 375x800, fresh load, typed "zzzz" into #search. Measured with Range.getBoundingClientRect on the cell contents: text spans left=249.0 to right=538.7 (width 289.7) while div.table-wrap visible region is left=13.0 to right=362.0 and scrollLeft=0 — fullyVisible=false. Screenshot confirms the sentence is truncated mid-phrase.
+severity: minor
+category: responsive
+
+DEFECT 2
+what: The disabled Previous/Next buttons' labels are very faint — grey text on a grey fill measuring 2.34:1, well under the 4.5:1 threshold, and "Previous" is disabled on first load so this is visible immediately.
+where: .pagination button:disabled (#previous on page 1, #next on the last page, both in the empty state)
+repro: Isolated Chromium at 1280x900, fresh load. Computed styles: color rgb(152,162,179) on effective background rgb(242,244,247), font-size 16px → contrast ratio 2.34:1 (required 4.5:1 for normal text). Element-level screenshot of .pagination confirms "Previous" is barely legible.
+severity: minor
+category: contrast
+
+DEFECT 3
+what: The Previous/Next pagination buttons are only 38px tall on mobile, below the 44px minimum touch target (the search field and department select measure 42px).
+where: .pagination button (#previous, #next) — .pagination button {min-height:38px}; also input#search and select#department at min-height:42px
+repro: Isolated Chromium at 375x800, fresh load. getBoundingClientRect on every input/select/button: #previous 94.0x38.0, #next 94.0x38.0, #search 309.0x42.0, #department 309.0x42.0. Smallest interactive height on the page is 38.0px. (Same 38px at 768 and 1280.)
+severity: minor
+category: touch-target
+
+DEFECT 4
+what: Column widths visibly jump every time the user pages or re-sorts, because the table auto-sizes to whichever 10 rows are currently shown.
+where: table (no table-layout:fixed and no column widths set) inside div.table-wrap
+repro: Isolated Chromium at 1280x900. Measured thead th widths: page 1 = [220.7, 220.9, 327.5, 187.3, 161.7]; page 2 = [228.0, 208.4, 350.8, 178.3, 152.5]; page 3 = [221.7, 221.6, 301.2, 211.3, 162.2]. Max shift 23.3px clicking Next once, 26.3px page 1 to page 3. Clicking the Location header on page 1 shifts the Name column 220.7px to 234.7px.
+severity: minor
+category: responsive
+
+DEFECT 5
+what: When no rows match the filters the indicator reads "Page 0 of 0" — a page number that does not exist.
+where: span#page-status (rendered by the `Page ${displayedPage} of ${pageCount}` template in the inline script's render())
+repro: Isolated Chromium at 1280x900, fresh load. Typed "Singapore" into #search (no name/role match) — #page-status showed "Page 0 of 0". Same with department=Design plus search "zzzz", and with any non-matching query.
+severity: minor
+category: logic

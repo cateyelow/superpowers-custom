@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Employee Directory</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #182230;
+      background: #f4f7fb;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-width: 320px;
+      margin: 0;
+      padding: 40px 20px;
+    }
+
+    main {
+      width: min(1120px, 100%);
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 24px;
+      font-size: clamp(1.7rem, 4vw, 2.25rem);
+      line-height: 1.15;
+    }
+
+    .panel {
+      overflow: hidden;
+      border: 1px solid #d8e0ea;
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 10px 30px rgb(24 34 48 / 8%);
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: minmax(220px, 2fr) minmax(180px, 1fr);
+      gap: 16px;
+      padding: 20px;
+      border-bottom: 1px solid #e3e8ef;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      color: #344054;
+      font-size: 0.875rem;
+      font-weight: 650;
+    }
+
+    input,
+    select,
+    button {
+      font: inherit;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid #c9d2df;
+      border-radius: 8px;
+      padding: 9px 11px;
+      color: #182230;
+      background: #fff;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus,
+    button:focus-visible {
+      border-color: #356ae6;
+      box-shadow: 0 0 0 3px rgb(53 106 230 / 18%);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      white-space: nowrap;
+    }
+
+    th,
+    td {
+      padding: 14px 18px;
+      border-bottom: 1px solid #e8edf3;
+      text-align: left;
+    }
+
+    th {
+      color: #475467;
+      background: #f8fafc;
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      user-select: none;
+    }
+
+    th[data-column] {
+      cursor: pointer;
+    }
+
+    th[data-column]:hover {
+      color: #1f55c6;
+      background: #f0f4fb;
+    }
+
+    .sort-indicator {
+      display: inline-block;
+      width: 1em;
+      margin-left: 5px;
+      color: #356ae6;
+    }
+
+    tbody tr:hover {
+      background: #fbfcfe;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    td:last-child,
+    th:last-child {
+      text-align: right;
+    }
+
+    .empty {
+      height: 130px;
+      color: #667085;
+      text-align: center;
+    }
+
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 20px;
+      border-top: 1px solid #e3e8ef;
+    }
+
+    .pagination button {
+      min-width: 94px;
+      min-height: 38px;
+      border: 1px solid #c9d2df;
+      border-radius: 8px;
+      padding: 7px 14px;
+      color: #344054;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .pagination button:hover:not(:disabled) {
+      border-color: #98a6b8;
+      background: #f8fafc;
+    }
+
+    .pagination button:disabled {
+      color: #98a2b3;
+      background: #f2f4f7;
+      cursor: not-allowed;
+    }
+
+    #page-status {
+      color: #475467;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    @media (max-width: 620px) {
+      body {
+        padding: 24px 12px;
+      }
+
+      .filters {
+        grid-template-columns: 1fr;
+      }
+
+      .pagination {
+        padding-inline: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Employee Directory</h1>
+
+    <section class="panel" aria-label="Employee data table">
+      <div class="filters">
+        <label>
+          Search by name or role
+          <input id="search" type="search" placeholder="e.g. Engineer or Maya" autocomplete="off">
+        </label>
+
+        <label>
+          Department
+          <select id="department">
+            <option value="">All departments</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col" data-column="name" tabindex="0">Name<span class="sort-indicator" aria-hidden="true"></span></th>
+              <th scope="col" data-column="department" tabindex="0">Department<span class="sort-indicator" aria-hidden="true"></span></th>
+              <th scope="col" data-column="role" tabindex="0">Role<span class="sort-indicator" aria-hidden="true"></span></th>
+              <th scope="col" data-column="location" tabindex="0">Location<span class="sort-indicator" aria-hidden="true"></span></th>
+              <th scope="col" data-column="salary" tabindex="0">Salary<span class="sort-indicator" aria-hidden="true"></span></th>
+            </tr>
+          </thead>
+          <tbody id="employee-rows"></tbody>
+        </table>
+      </div>
+
+      <nav class="pagination" aria-label="Table pagination">
+        <button id="previous" type="button">Previous</button>
+        <span id="page-status" aria-live="polite">Page 1 of 1</span>
+        <button id="next" type="button">Next</button>
+      </nav>
+    </section>
+  </main>
+
+  <script>
+    const employees = [
+      { name: "Maya Chen", department: "Engineering", role: "Frontend Engineer", location: "Singapore", salary: 98000 },
+      { name: "Liam Brooks", department: "Engineering", role: "Backend Engineer", location: "Austin", salary: 106000 },
+      { name: "Sofia Patel", department: "Design", role: "Product Designer", location: "London", salary: 92000 },
+      { name: "Noah Williams", department: "Sales", role: "Account Executive", location: "Chicago", salary: 87000 },
+      { name: "Ava Martinez", department: "Marketing", role: "Content Strategist", location: "Madrid", salary: 76000 },
+      { name: "Ethan Kim", department: "Finance", role: "Financial Analyst", location: "Seoul", salary: 83000 },
+      { name: "Isabella Rossi", department: "People", role: "Recruiting Manager", location: "Milan", salary: 89000 },
+      { name: "Oliver Smith", department: "Engineering", role: "DevOps Engineer", location: "Toronto", salary: 104000 },
+      { name: "Amelia Davis", department: "Support", role: "Customer Support Lead", location: "Denver", salary: 72000 },
+      { name: "Lucas Nguyen", department: "Product", role: "Product Manager", location: "Sydney", salary: 112000 },
+      { name: "Harper Wilson", department: "Marketing", role: "Growth Marketing Manager", location: "New York", salary: 95000 },
+      { name: "Mateo Garcia", department: "Sales", role: "Sales Development Rep", location: "Mexico City", salary: 68000 },
+      { name: "Mia Johnson", department: "Finance", role: "Senior Accountant", location: "Boston", salary: 91000 },
+      { name: "Elijah Brown", department: "Engineering", role: "Data Engineer", location: "Berlin", salary: 108000 },
+      { name: "Charlotte Lee", department: "Design", role: "UX Researcher", location: "Vancouver", salary: 88000 },
+      { name: "James Anderson", department: "Product", role: "Product Operations Lead", location: "Dublin", salary: 101000 },
+      { name: "Evelyn Taylor", department: "People", role: "People Operations Partner", location: "Portland", salary: 84000 },
+      { name: "Benjamin Clark", department: "Support", role: "Technical Support Engineer", location: "Phoenix", salary: 78000 },
+      { name: "Luna Hernandez", department: "Engineering", role: "QA Engineer", location: "Barcelona", salary: 86000 },
+      { name: "Henry Lewis", department: "Sales", role: "Regional Sales Manager", location: "Atlanta", salary: 115000 },
+      { name: "Camila Walker", department: "Marketing", role: "Brand Designer", location: "Los Angeles", salary: 81000 },
+      { name: "Alexander Hall", department: "Finance", role: "Finance Director", location: "Zurich", salary: 132000 },
+      { name: "Scarlett Young", department: "Product", role: "Business Analyst", location: "Amsterdam", salary: 90000 },
+      { name: "Daniel King", department: "Engineering", role: "Engineering Manager", location: "San Francisco", salary: 142000 }
+    ];
+
+    const pageSize = 10;
+    const state = {
+      query: "",
+      department: "",
+      sortColumn: null,
+      sortDirection: "asc",
+      page: 1
+    };
+
+    const searchInput = document.querySelector("#search");
+    const departmentSelect = document.querySelector("#department");
+    const rows = document.querySelector("#employee-rows");
+    const previousButton = document.querySelector("#previous");
+    const nextButton = document.querySelector("#next");
+    const pageStatus = document.querySelector("#page-status");
+    const headers = [...document.querySelectorAll("th[data-column]")];
+    const salaryFormatter = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0
+    });
+
+    const departments = [...new Set(employees.map(employee => employee.department))]
+      .sort((a, b) => a.localeCompare(b));
+
+    departments.forEach(department => {
+      const option = document.createElement("option");
+      option.value = department;
+      option.textContent = department;
+      departmentSelect.append(option);
+    });
+
+    function getVisibleEmployees() {
+      const filtered = employees.filter(employee => {
+        const matchesText = employee.name.toLowerCase().includes(state.query) ||
+          employee.role.toLowerCase().includes(state.query);
+        const matchesDepartment = !state.department || employee.department === state.department;
+        return matchesText && matchesDepartment;
+      });
+
+      if (!state.sortColumn) {
+        return filtered;
+      }
+
+      return filtered.sort((a, b) => {
+        let comparison;
+        if (state.sortColumn === "salary") {
+          comparison = a.salary - b.salary;
+        } else {
+          comparison = a[state.sortColumn].localeCompare(b[state.sortColumn], undefined, {
+            sensitivity: "base"
+          });
+        }
+        return state.sortDirection === "asc" ? comparison : -comparison;
+      });
+    }
+
+    function render() {
+      const visibleEmployees = getVisibleEmployees();
+      const pageCount = Math.ceil(visibleEmployees.length / pageSize);
+
+      if (pageCount > 0) {
+        state.page = Math.min(state.page, pageCount);
+      } else {
+        state.page = 1;
+      }
+
+      const start = (state.page - 1) * pageSize;
+      const currentRows = visibleEmployees.slice(start, start + pageSize);
+      rows.replaceChildren();
+
+      if (currentRows.length === 0) {
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+        cell.className = "empty";
+        cell.colSpan = 5;
+        cell.textContent = "No employees match the current filters.";
+        row.append(cell);
+        rows.append(row);
+      } else {
+        currentRows.forEach(employee => {
+          const row = document.createElement("tr");
+          ["name", "department", "role", "location", "salary"].forEach(column => {
+            const cell = document.createElement("td");
+            cell.textContent = column === "salary"
+              ? salaryFormatter.format(employee[column])
+              : employee[column];
+            row.append(cell);
+          });
+          rows.append(row);
+        });
+      }
+
+      headers.forEach(header => {
+        const active = header.dataset.column === state.sortColumn;
+        const indicator = header.querySelector(".sort-indicator");
+        indicator.textContent = active ? (state.sortDirection === "asc" ? "▲" : "▼") : "";
+        header.setAttribute("aria-sort", active
+          ? (state.sortDirection === "asc" ? "ascending" : "descending")
+          : "none");
+      });
+
+      const displayedPage = pageCount === 0 ? 0 : state.page;
+      pageStatus.textContent = `Page ${displayedPage} of ${pageCount}`;
+      previousButton.disabled = state.page <= 1 || pageCount === 0;
+      nextButton.disabled = state.page >= pageCount || pageCount === 0;
+    }
+
+    function sortBy(column) {
+      if (state.sortColumn === column) {
+        state.sortDirection = state.sortDirection === "asc" ? "desc" : "asc";
+      } else {
+        state.sortColumn = column;
+        state.sortDirection = "asc";
+      }
+      state.page = 1;
+      render();
+    }
+
+    searchInput.addEventListener("input", event => {
+      state.query = event.target.value.trim().toLowerCase();
+      state.page = 1;
+      render();
+    });
+
+    departmentSelect.addEventListener("change", event => {
+      state.department = event.target.value;
+      state.page = 1;
+      render();
+    });
+
+    headers.forEach(header => {
+      header.addEventListener("click", () => sortBy(header.dataset.column));
+      header.addEventListener("keydown", event => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          sortBy(header.dataset.column);
+        }
+      });
+    });
+
+    previousButton.addEventListener("click", () => {
+      if (state.page > 1) {
+        state.page -= 1;
+        render();
+      }
+    });
+
+    nextButton.addEventListener("click", () => {
+      const pageCount = Math.ceil(getVisibleEmployees().length / pageSize);
+      if (state.page < pageCount) {
+        state.page += 1;
+        render();
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>

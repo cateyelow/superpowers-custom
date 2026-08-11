@@ -1,0 +1,83 @@
+DEFECT 1
+what: The step-indicator connector line is drawn on top of the step labels, striking through the words "Shipping" and "Payment".
+where: checkout.html:87-96 — .step-indicator li:not(:last-child)::after (position:absolute; z-index:0; top:16px; left:34px; width:calc(100% - 26px))
+repro: At 1280px and 768px the line box measures x 383->545.7, y 152.2->154.2 while the label "Shipping" box is x 389->447.9, y 141.7->162.7 — the line horizontally spans the whole label and sits vertically inside it. Because the ::after is positioned with z-index:0 it paints above the non-positioned label text, so a screenshot shows a grey line through the middle of "Shipping" and "Payment". Not present at 375px (labels are visually hidden there).
+severity: minor
+category: responsive
+
+DEFECT 2
+what: The keyboard focus ring on buttons is nearly invisible — 1.35:1 against the white card, below the 3:1 minimum.
+where: checkout.html:207-210 (button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px }) with --focus: rgba(49,87,213,0.2) at checkout.html:18
+repro: Tabbed from the Country select to "Next"; computed outline color rgba(49,87,213,0.2) over #fff flattens to rgb(214,221,247) = 1.35:1 contrast against the white card (WCAG 1.4.11 requires 3:1). The rule also replaces the browser's default high-contrast focus ring. Screenshot of the focused Next button shows only a faint halo.
+severity: minor
+category: contrast
+
+DEFECT 3
+what: Placeholder text in the card number, expiry and CVC fields is 2.58:1 against the field background, failing the 4.5:1 text minimum.
+where: checkout.html:170-172 — input::placeholder { color: #98a2b3 }; affects #card-number ("1234 5678 9012 3456"), #expiry ("MM/YY"), #cvc ("123")
+repro: Computed ::placeholder color is rgb(152,162,179) on a #ffffff field; measured contrast ratio 2.58:1 (WCAG 1.4.3 requires 4.5:1 for text under 18.66px bold / 24px).
+severity: minor
+category: contrast
+
+DEFECT 4
+what: Text input and select borders are 1.47:1 against the card, so the field boundaries fail the 3:1 non-text contrast minimum.
+where: checkout.html:157-168 — input, select { border: 1px solid var(--border) } with --border: #d0d5dd at checkout.html:14
+repro: Computed border color rgb(208,213,221) against the white (#ffffff) card surface = 1.47:1 measured. The fields are white-on-white apart from this border, so the boundary is the only cue identifying the control (WCAG 1.4.11 requires 3:1).
+severity: minor
+category: contrast
+
+DEFECT 5
+what: The "Back" button's border is 1.47:1 against the card, so the only thing marking it as a button rather than plain text fails the 3:1 minimum.
+where: checkout.html:225-229 — .button-secondary { border-color: var(--border); background: #fff }
+repro: Computed border rgb(208,213,221) on the #ffffff card = 1.47:1 measured. The button has a white background identical to the card, so the low-contrast border is the sole boundary identifying the control (WCAG 1.4.11 requires 3:1).
+severity: minor
+category: contrast
+
+DEFECT 6
+what: The card number field accepts 10- and 11-digit numbers even though its own hint states "12 to 19 digits".
+where: checkout.html:412 — pattern="[0-9 ]{12,23}" on #card-number, hint at checkout.html:413
+repro: On step 2 typed 10 digits (1234567890 -> value "1234 5678 90") and 11 digits ("1234 5678 912"); checkValidity() returned true for both and clicking Next advanced to the review step, which then displayed "•••• ••78 90". The pattern counts characters including the auto-inserted spaces, so 10 digits = 12 characters passes. 9 digits correctly fails.
+severity: minor
+category: logic
+
+DEFECT 7
+what: Editing the middle of an already-entered card number throws the caret to the end of the field, so the next keystroke lands in the wrong place.
+where: checkout.html:614-617 — the card-number "input" listener reassigns cardNumber.value on every keystroke
+repro: Typed "4111111111111111" (displayed "4111 1111 1111 1111"), set the caret to offset 2 and typed "9". Value became "4191 1111 1111 1111 1" and selectionStart jumped from 2 to 21 (end of field). Same happens when deleting a digit mid-string.
+severity: minor
+category: logic
+
+DEFECT 8
+what: Pressing Enter in any field on step 1 or step 2 does nothing at all — no advance to the next step and no feedback.
+where: checkout.html:628-633 — the submit handler calls preventDefault() then returns whenever currentStep !== 2; the Next buttons are type="button" (checkout.html:396, 429)
+repro: Filled every shipping field, focused #city and pressed Enter: still on step 0 (only .step[data-step="0"] visible), focus unchanged, no validation message. Repeated on step 2 with all payment fields valid and Enter in #cvc: still on step 1. Advancing requires clicking or tabbing to Next.
+severity: minor
+category: a11y
+
+DEFECT 9
+what: A field that fails validation is left with no persistent error state — once the native bubble closes there is nothing on screen or in the accessibility tree marking it invalid.
+where: checkout.html:569-580 — validateCurrentStep() uses only control.reportValidity(); no aria-invalid, no error text, no :invalid styling anywhere in the stylesheet
+repro: Clicked Next with an empty step 1: focus went to #full-name with the transient native bubble "Please fill out this field." After clicking into another field, #full-name's computed border is back to rgb(208,213,221), boxShadow "none", aria-invalid is null, there is no [role=alert]/[aria-live]/error element in the DOM, and the stylesheet contains no :invalid rule. The user has no lasting indication of which field was rejected or why.
+severity: minor
+category: a11y
+
+DEFECT 10
+what: The review step prints the CVC in clear text even though the CVC input itself is masked as a password field.
+where: checkout.html:598 (summary.cvc.textContent = fields.cvc.value) rendering into #summary-cvc at checkout.html:481
+repro: Entered CVC 123 on step 2 (input type="password", shown as dots) and advanced to step 3: the Payment summary shows "CVC 123" in plain text, while the card number beside it is correctly masked to "•••• •••• •••• 1111".
+severity: minor
+category: logic
+
+DEFECT 11
+what: An expiry date in the past is accepted as valid, so an expired card passes the payment step.
+where: checkout.html:418 — pattern="(0[1-9]|1[0-2])\/[0-9]{2}" on #expiry, no date comparison anywhere in the script
+repro: Typed 0120 in the expiry field (value "01/20", i.e. January 2020, over six years before today's date 2026-08-11); checkValidity() returned true and Next advanced to the review step, which displays "Expiry 01/20".
+severity: minor
+category: logic
+
+DEFECT 12
+what: After the order is placed the page is left with no h1 — the only top-level heading is removed together with the form.
+where: checkout.html:638 — form.replaceWith(confirmation); the <h1>Complete your order</h1> at checkout.html:338 is inside #checkout-form
+repro: Completed all three steps and clicked "Place order": document.querySelectorAll('h1').length is 0 afterwards, and the heading list becomes just ["H2:Order confirmed"], so the confirmation screen starts its heading hierarchy at level 2 with no h1 above it (document.title also stays "Checkout").
+severity: minor
+category: a11y

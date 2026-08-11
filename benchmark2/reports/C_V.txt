@@ -1,0 +1,34 @@
+DEFECT 1
+what: The "No employees match the current filters." empty-state message is jammed against the right edge of the table instead of being centred, so it reads as a stray value in the Salary column rather than a status message.
+where: table.html:140-144 (`.empty { text-align: center }`) is overridden by table.html:135-138 (`td:last-child, th:last-child { text-align: right }`), which has higher specificity; applies to the `td.empty[colspan="5"]` injected at table.html:341-344.
+repro: Typed "zzzz" into the search box (or any query with no matches) in Chromium at 1280x900. getComputedStyle on `#employee-rows td.empty` returns textAlign: "right" (author intent is "center"); the cell is 1118px wide x 130px tall and the text renders flush right, confirmed in a screenshot.
+severity: minor
+category: state
+
+DEFECT 2
+what: Keyboard focus is dumped to <body> the moment a pagination button disables itself — after paging to the last page with "Next" (or back to the first page with "Previous") the user's place is lost and they must Tab from the top of the document again.
+where: table.html:372-373 (`previousButton.disabled = ...` / `nextButton.disabled = ...` inside render()); elements `#next` / `#previous`.
+repro: Focused `#next`, pressed Enter twice. After the first Enter document.activeElement is still `#next` (Page 2 of 3); after the second Enter the status reads "Page 3 of 3", `#next` is disabled and document.activeElement is BODY. Same trace with `#previous`: Enter, Enter -> "Page 1 of 3", disabled, activeElement BODY. Mouse-clicking Next twice also leaves activeElement as BODY.
+severity: minor
+category: a11y
+
+DEFECT 3
+what: The sortable column headers are not exposed as operable controls to assistive tech — they are focusable and respond to Enter/Space, but a screen-reader user hears only "Name, column header" with no indication that activating them sorts the table.
+where: table.html:221-225 — `<th scope="col" data-column="..." tabindex="0">` with no `role="button"`, no nested `<button>`, and no accessible description; handlers at table.html:399-407.
+repro: Read the attributes on all five headers in the live page: role = null, tabindex = "0", aria-sort = "none". The Playwright accessibility snapshot renders each as `columnheader "Name"` with no button role or action hint, while Enter and Space (dispatched on the focused `th`) do re-sort the table.
+severity: minor
+category: a11y
+
+DEFECT 4
+what: When a filter matches nothing the pager reads "Page 0 of 0", showing a page number that cannot exist.
+where: table.html:370-371 (`const displayedPage = pageCount === 0 ? 0 : state.page;` then `Page ${displayedPage} of ${pageCount}`); element `#page-status`.
+repro: Typed "Singapore" (and separately "zzzz") into the search box; `#page-status` textContent becomes "Page 0 of 0" with both pagination buttons disabled. Visible in the empty-state screenshot at 1280x900.
+severity: minor
+category: spec
+
+DEFECT 5
+what: The Previous/Next pagination buttons are only 38px tall, below the 44x44px minimum touch target, on a layout that explicitly supports phone widths down to 320px.
+where: table.html:155-164 (`.pagination button { min-width: 94px; min-height: 38px; padding: 7px 14px }`); elements `#previous` and `#next`.
+repro: getBoundingClientRect on both buttons returns 94.0 x 38.0 CSS px, unchanged at viewport widths 1280, 768, 414, 375 and 320 (the `@media (max-width: 620px)` block at table.html:183-195 only changes padding, not button height).
+severity: minor
+category: touch-target

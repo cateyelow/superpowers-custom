@@ -1,0 +1,55 @@
+DEFECT 1
+what: In the step indicator, the connector line is drawn straight through the "Shipping" and "Payment" labels, so the first two steps look struck through / cancelled.
+where: checkout.html:87-96 — `.step-indicator li:not(:last-child)::after` (position:absolute; top:16px; left:34px; z-index:0) paints over the inline `.step-label` text inside `.step-indicator li`
+repro: Opened the page at 1280x900 and screenshotted the indicator: a 2px line runs horizontally across the middle of both labels. Measured geometry — line occupies y 193.5-195.5 while the "Shipping" label box is y 183.0-204.0, and the line spans x 383-545.7 while the label spans x 389-447.9, i.e. full vertical+horizontal overlap; the positioned ::after with z-index:0 paints above the non-positioned label text. Reproduced at viewport widths 1280, 900, 700, 620 and 561 px, in both the shared Chrome (Playwright MCP) and a separate Chromium. Not present at <=560px, where the media query at checkout.html:311-318 visually hides the labels.
+severity: minor
+category: a11y
+
+DEFECT 2
+what: The keyboard focus ring on the Next / Back / Place order buttons is practically invisible, so a keyboard user cannot tell which button is focused.
+where: checkout.html:207-210 — `button:focus-visible { outline: 3px solid var(--focus); }` with `--focus: rgba(49, 87, 213, 0.2)` (checkout.html:18)
+repro: Focused the "Next" button (:focus-visible true) and read the computed style: outline-color rgba(49,87,213,0.2), width 3px, offset 2px, no box-shadow. Composited over the white card that is rgb(214,221,247), a contrast ratio of 1.35:1 against the card background — below the 3:1 minimum for a focus indicator. A screenshot of the focused button shows only a barely perceptible pale halo. For comparison the text inputs get a solid rgb(49,87,213) border plus a 4px halo on focus, so only the buttons are affected.
+severity: minor
+category: a11y
+
+DEFECT 3
+what: Placeholder text in the payment fields is too light to read comfortably ("1234 5678 9012 3456", "MM/YY", "123").
+where: checkout.html:170-172 — `input::placeholder { color: #98a2b3; }`, affecting #card-number, #expiry, #cvc
+repro: Read the computed ::placeholder color (rgb(152,162,179)) against the white field background and computed the WCAG contrast ratio: 2.58:1 at 16px/400 weight, versus the 4.5:1 minimum for normal-size text.
+severity: minor
+category: contrast
+
+DEFECT 4
+what: The outline of every text field, the country select and the secondary "Back" button is so faint against the white card that the input boxes are hard to make out; the four step-1 fields have no placeholder, so this 1px border is the only thing that marks where the field is.
+where: checkout.html:157-168 (`input, select { border: 1px solid var(--border) }`) and checkout.html:225-229 (`.button-secondary`), with `--border: #d0d5dd` (checkout.html:14)
+repro: Measured border colour rgb(208,213,221) against the card background rgb(255,255,255) for #full-name, #address, #city, #postal-code, #country, #cardholder-name, #card-number, #expiry, #cvc and both `.button-secondary` buttons: 1.47:1 in every case, versus the 3:1 minimum for non-text UI component boundaries.
+severity: minor
+category: contrast
+
+DEFECT 5
+what: Pressing Enter in a form field does nothing at all — the step does not advance and no message is shown, so the form appears frozen to a keyboard user.
+where: checkout.html:628-641 — the submit handler, combined with the required fields of the hidden steps (checkout.html:407-423); implicit submission is triggered by the step-3 `button[type=submit]` at checkout.html:489
+repro: Filled step 1 completely, clicked into the "City" field and pressed Enter. The page stayed on step 1 (`.step` hidden flags unchanged: [false, true, true]), nothing was displayed to the user, and the console logged four errors: "An invalid form control with name='cardholderName' is not focusable.", likewise for cardNumber, expiry and cvc — implicit submission is being blocked by the required fields inside the still-hidden steps. Reproduced both over http:// in the shared Chrome and over file:// in a separate Chromium.
+severity: minor
+category: logic
+
+DEFECT 6
+what: The review step prints the CVC in clear text ("123") even though the same value is masked while it is being typed, exposing the card security code on screen.
+where: checkout.html:598 (`summary.cvc.textContent = fields.cvc.value;`), rendered into `dd#summary-cvc` (checkout.html:481); the input itself is `type="password"` at checkout.html:423
+repro: Completed steps 1-2 with CVC 123 (the field renders dots while typing), clicked Next, and read the review panel: the "CVC" row shows "123". Confirmed both in the DOM and in a screenshot of step 3 at 1280x900 and at 375px.
+severity: minor
+category: logic
+
+DEFECT 7
+what: The card number field accepts 10- and 11-digit numbers and lets the user proceed to the review step, contradicting the "12 to 19 digits" rule shown under the field.
+where: checkout.html:412 `pattern="[0-9 ]{12,23}"` (counts the auto-inserted spaces as characters) versus the hint at checkout.html:413
+repro: Typed 1234567890 (10 digits) into #card-number; the auto-formatter turned it into "1234 5678 90" — 12 characters, so checkValidity() returned true. Clicked Next and the page advanced to the review step, which showed "•••• ••78 90". Same result with 11 digits ("1234 5678 901"). A genuinely short number therefore passes the stated 12-digit minimum.
+severity: minor
+category: logic
+
+DEFECT 8
+what: On the review step the masked card number is regrouped in fixed blocks of four, which splits the last four digits across two groups for card lengths that are not a multiple of 4 — an Amex number ends up displayed as "•••• •••• •••0 005".
+where: checkout.html:582-587 — `maskCardNumber()`, `masked.replace(/(.{4})/g, "$1 ")` applied to the bullets+last-4 string; rendered into `dd#summary-card-number`
+repro: Entered the 15-digit Amex test number 378282246310005 and advanced to the review step: "Card number" reads "•••• •••• •••0 005". A 13-digit number renders as "•••• •••• •012 3" and a 19-digit one as "•••• •••• •••• •••2 424". Only 16-digit numbers group correctly ("•••• •••• •••• 4242").
+severity: minor
+category: logic

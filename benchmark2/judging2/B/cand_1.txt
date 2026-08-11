@@ -1,0 +1,55 @@
+DEFECT 1
+what: Keyboard focus ring on the Next / Back / Place order buttons is barely visible, so a keyboard user cannot tell which button is focused.
+where: button.button-primary and button.button-secondary in div.controls (:focus-visible outline)
+repro: Isolated Chromium via playwright.sync_api, viewport 1280x900. Tabbed with the real keyboard to each button (element.matches(':focus-visible') === true) and read computed styles after the transition settled: outline = "solid 3px rgba(49, 87, 213, 0.2)", outline-offset 2px; background-color, border-color and box-shadow are identical to the unfocused state. The ring is drawn outside the button on the white card, so rgba(49,87,213,0.2) composited over rgb(255,255,255) = rgb(214,221,247) -> 1.35:1 against the card (WCAG 2.4.11 requires >= 3:1). Pixel diff of the 102x70 region around the "Next" button, unfocused vs keyboard-focused: only 842 px changed with a maximum channel delta of 41/255.
+severity: minor
+category: a11y
+
+DEFECT 2
+what: The only visual boundary of every text field and of the country select is a 1px border at 1.47:1 contrast, so an empty field is hard to make out against the white card.
+where: input#full-name, input#address, input#city, input#postal-code, select#country, input#cardholder-name, input#card-number, input#expiry, input#cvc (unfocused border)
+repro: Computed border-top-color = rgb(208, 213, 221), border width 1px, field background rgb(255,255,255) on a card background of rgb(255,255,255). Contrast ratio computed in-page from the relative luminances = 1.47:1 (WCAG 1.4.11 non-text contrast requires >= 3:1). Measured at 375 / 768 / 1280 px, same value.
+severity: minor
+category: contrast
+
+DEFECT 3
+what: Placeholder text in the payment fields is too low-contrast to read comfortably.
+where: input#card-number, input#expiry, input#cvc — ::placeholder
+repro: getComputedStyle(el, '::placeholder').color = rgb(152, 162, 179) on field background rgb(255, 255, 255); computed contrast = 2.58:1 at font-size 16px (WCAG 1.4.3 requires >= 4.5:1). Affects the placeholders "1234 5678 9012 3456", "MM/YY" and "123".
+severity: minor
+category: contrast
+
+DEFECT 4
+what: Editing the card number anywhere except the end throws the caret to the end of the field, so the next character the user types lands in the wrong place.
+where: input#card-number (auto-format handler)
+repro: Step 2, typed 4111111111111111 -> field shows "4111 1111 1111 1111", selectionStart 19. Pressed Home then ArrowRight (selectionStart = 1) and typed "9": value became "4911 1111 1111 1111 1" but selectionStart jumped to 21 (end of value) instead of 2. Typing the next digit "8" then appended at the end -> "4911 1111 1111 1111 18". Same with deletion: caret set to position 3, Backspace -> value "4111 1111 1111 111" and selectionStart 18 instead of 2.
+severity: minor
+category: logic
+
+DEFECT 5
+what: A 10- or 11-digit card number is accepted and the order can be placed with it, even though the field's own hint says "12 to 19 digits".
+where: input#card-number (pattern="[0-9 ]{12,23}") vs p#card-number-hint "12 to 19 digits"
+repro: Step 2 with all other fields valid. Entered 10 digits -> field auto-formats to "4444 4444 44" (12 characters because the pattern counts the inserted spaces) and checkValidity() returns true; clicking Next advanced to step 3 (s3 visible) and the summary showed "•••• ••44 44". 11 digits -> "4444 4444 444", also valid. Only 9 digits or fewer are rejected. So the enforced minimum is 10 digits, not the 12 the hint states.
+severity: minor
+category: logic
+
+DEFECT 6
+what: Required fields accept whitespace-only input, so the review step shows blank shipping/payment rows and an order can be placed with an empty name and address.
+where: input#full-name, input#address, input#city, input#postal-code, input#cardholder-name; dd#summary-full-name etc.
+repro: Filled full name, address line, city, postal code and cardholder name with spaces only ("   "), selected a country, filled valid card details. Both Next buttons accepted the input (step 3 became visible). On the review step the summary values rendered empty: dd#summary-full-name, dd#summary-address, dd#summary-city, dd#summary-postal-code and dd#summary-cardholder-name all had textContent "" and a rendered height of 0px, leaving unlabelled blank rows next to their dt terms. "Place order" then produced a confirmation as normal.
+severity: minor
+category: logic
+
+DEFECT 7
+what: The security code is masked while it is typed but is then printed in clear text on the review step.
+where: input#cvc (type="password") vs dd#summary-cvc
+repro: Entered CVC 123 on step 2 — the input is type="password" so it renders as dots. Advanced to step 3: dd#summary-cvc textContent = "123", rendered as visible plain text (confirmed in a 375px screenshot of the review step, "CVC / 123"). The card number on the same panel is masked to "•••• •••• •••• 1111", so the masking is inconsistent.
+severity: minor
+category: logic
+
+DEFECT 8
+what: Pressing Enter inside a step 1 or step 2 field does nothing at all — no advance to the next step and no validation feedback.
+where: form#checkout-form — text inputs on section.step[data-step="0"] and section.step[data-step="1"]
+repro: Filled every step 1 field with valid values, clicked into input#full-name and pressed Enter, then waited 500ms: still s1=true / s2=false / s3=false, document.activeElement still INPUT#full-name, no message shown. Same on step 2 with all payment fields valid (still s2 visible, order-number span empty). The user has to reach the Next button with Tab or the mouse; clicking Next in the same state advances immediately.
+severity: minor
+category: a11y

@@ -1,0 +1,41 @@
+DEFECT 1
+what: Keyboard focus is silently thrown away when a pagination button becomes disabled — paging to the last page with Next (or back to page 1 with Previous) drops focus to <body>, so the next Tab restarts at the top of the page instead of continuing from the pagination controls.
+where: table.html:372-373 (`previousButton.disabled = ...` / `nextButton.disabled = ...` inside render()); buttons #previous and #next
+repro: Playwright, 1280x900, file:// load. focus('#next') -> Enter (Page 2 of 3, activeElement still BUTTON#next) -> Enter (Page 3 of 3, activeElement becomes BODY). One further Tab lands on INPUT#search, i.e. the start of the document. Same with focus('#previous') -> Enter on page 2: status "Page 1 of 3", activeElement BODY.
+severity: minor
+category: a11y
+
+DEFECT 2
+what: At 375px the empty-state message "No employees match the current filters." is mostly cut off — it is centred across the full (544px) table width while only 349px is visible, so the user sees "No employees ma…" clipped at the right edge with no wrap.
+where: table.html:140-144 (`.empty { text-align: center }`) + table.html:92 (`table { white-space: nowrap }`); element `td.empty[colspan="5"]` inside #employee-rows
+repro: Viewport 375x800, type "zzzz" in #search. Measured with a Range over the cell's text: text box spans x=249..539 while the scroll container .table-wrap is only visible from x=13..362 — 177px of the 290px-wide message is off-screen (screenshot confirms "No employees" trailing off the panel edge). Visible and correct at 768px and 1280px.
+severity: minor
+category: responsive
+
+DEFECT 3
+what: The horizontally scrolling table region cannot be scrolled by keyboard — at 375px 366px of the table (Location and Salary columns) is off-screen, and the scroll container is not focusable, so arrow keys do nothing.
+where: table.html:85-87 (`.table-wrap { overflow-x: auto }`) and the `div.table-wrap` element at table.html:217 — no tabindex, no role, no accessible name
+repro: Viewport 375x800. `.table-wrap` scrollWidth 715 vs clientWidth 349 (366px hidden); element.tabIndex === -1. Tabbed through the whole page 12 times — the container never receives focus. With focus on <body>, pressing ArrowRight twice leaves wrap.scrollLeft at 0. (Content is only reachable indirectly, as a side effect of tabbing onto the off-screen column headers.)
+severity: minor
+category: a11y
+
+DEFECT 4
+what: The empty-state result is not announced to screen readers — when a filter yields no rows, the "No employees match the current filters." message is injected into the table body with no live region, so a non-sighted user only hears "Page 0 of 0".
+where: table.html:339-346 (empty row is appended to `#employee-rows`, table.html:228, which has no aria-live/role=status); the only live region on the page is #page-status (table.html:234)
+repro: Enumerated all live regions on the page: exactly one — `#page-status` with aria-live="polite". `document.querySelector('.empty').closest('[aria-live]')` returns null after typing "zzzz" in #search. The number of matching rows is likewise never announced when filtering (e.g. 24 -> 7 rows for "engineer" only announces "Page 1 of 1").
+severity: minor
+category: a11y
+
+DEFECT 5
+what: The sortable column headers are operable controls but are not exposed as such — they are plain `columnheader` elements with tabindex="0" and no role="button" and no nested <button>, so a screen-reader user is given no indication that a header can be activated to sort.
+where: table.html:221-225, `th[data-column][tabindex="0"]` (all five headers)
+repro: Inspected all five headers: role=null, no aria-label, no title, no child <button>; only aria-sort ("none"/"ascending"/"descending") is present. Accessibility snapshot renders them as `columnheader "Name"` with no button/interactive role, while click and Enter/Space handlers are attached (table.html:399-407). There is also no non-hover visual affordance: `cursor: pointer` and the hover colour are the only cues (`.sort-indicator` is empty until a column is sorted).
+severity: minor
+category: a11y
+
+DEFECT 6
+what: The borders of the search field and the department dropdown are too low-contrast to identify them as form controls — 1.53:1 against both the white card behind them and their own white fill, below the 3:1 required for non-text UI contrast.
+where: table.html:66-76 (`input, select { border: 1px solid #c9d2df; background: #fff }`); elements #search and #department
+repro: Computed styles at 1280px: border-top-color rgb(201,210,223) = #c9d2df, 1px; effective adjacent background rgb(255,255,255) both inside and outside. Contrast ratio measured 1.53:1 (needs >= 3:1). Same value at 768px and 375px.
+severity: minor
+category: contrast

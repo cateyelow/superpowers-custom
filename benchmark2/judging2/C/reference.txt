@@ -1,0 +1,34 @@
+DEFECT 1
+what: The "No employees match the current filters." empty-state message is right-aligned instead of centred, and at 375px width it is pushed outside the visible area of the horizontally-scrolling table so the user only sees the fragment "No employees" and cannot read the rest without scrolling the table sideways.
+where: table.html:140-144 (`.empty { text-align: center }`) is overridden by table.html:135-138 (`td:last-child, th:last-child { text-align: right }`) — the empty-state cell `#employee-rows td.empty[colspan="5"]` is its row's only (therefore last) child, and `td:last-child` (specificity 0-1-1) beats `.empty` (0-1-0).
+repro: Chromium via Python Playwright, `pg.fill('#search','zzzz')`. getComputedStyle on `#employee-rows .empty` returns textAlign="right" (the rule dump on that element returns `th, td -> left`, `td:last-child, th:last-child -> right`, `.empty -> center`, last-wins by specificity = right). At 1280px the cell box is x=81..1199 but the text range box is x=891..1181, i.e. hard against the right edge, not centred. At 375px the cell is 544px wide (x=13..557) inside a `.table-wrap` whose visible box is only x=13..362 (clientWidth 349, scrollWidth 544), so the right-aligned text runs to x≈539 and is clipped; the screenshot at 375px shows only "No employees " before the cut.
+severity: minor
+category: state
+
+DEFECT 2
+what: The search input and the department dropdown are white boxes on a white panel whose only boundary is a 1px border at 1.53:1 contrast — well under the 3:1 required for control boundaries, so the controls' edges are hard to make out.
+where: table.html:66-76 — `input, select { border: 1px solid #c9d2df; background: #fff }`, i.e. `#search` and `#department` inside `.filters` (panel background #fff)
+repro: Measured in Chromium at 1280px with a WCAG relative-luminance contrast function evaluated in the page: borderTopColor of `#search` and `#department` = rgb(201,210,223), effective backdrop = rgb(255,255,255), ratio = 1.53:1 (WCAG 1.4.11 Non-text Contrast requires >= 3:1). Both controls also have `background: #fff` identical to the panel, so the border is the only visual delimiter.
+severity: minor
+category: contrast
+
+DEFECT 3
+what: The Previous/Next pagination buttons have a 1px border at 1.53:1 contrast against the white panel, below the 3:1 minimum for the visual boundary of an interactive control.
+where: table.html:155-164 — `.pagination button { border: 1px solid #c9d2df; background: #fff }`, elements `#previous` and `#next`
+repro: Measured in Chromium at 1280px: borderTopColor of `#previous` and `#next` = rgb(201,210,223) against effective background rgb(255,255,255) => 1.53:1 (WCAG 1.4.11 requires >= 3:1). Same measurement holds at 768px and 375px.
+severity: minor
+category: contrast
+
+DEFECT 4
+what: The sortable column headers are operable (tabbable, click and Enter/Space activate sorting) but expose no interactive role to assistive tech — a screen-reader user who tabs onto them hears only "Name, column header" with nothing indicating the element can be activated to sort.
+where: table.html:221-225 — `th[scope="col"][data-column][tabindex="0"]` (Name, Department, Role, Location, Salary); click/keydown handlers at table.html:399-407
+repro: `pg.accessibility.snapshot()` in Chromium reports these nodes as `{'role': 'columnheader', 'name': 'NAME'}` … `{'role': 'columnheader', 'name': 'SALARY'}` — no button role. Attribute dump of every `th[data-column]` returns role=None, aria-label=None, aria-describedby=None, title=None, and no nested `<button>`, while tabIndex=0 and pressing Enter/Space on a focused header does re-sort (verified: Enter on Salary -> first row $68,000 / aria-sort=ascending; Space -> $142,000 / aria-sort=descending). WCAG 4.1.2 Name, Role, Value.
+severity: minor
+category: a11y
+
+DEFECT 5
+what: The Previous and Next pagination buttons are only 38px tall, below the 44x44 CSS px touch-target size, making them small targets on touch devices — this is the page's primary navigation control at mobile width.
+where: table.html:155-164 — `.pagination button { min-width: 94px; min-height: 38px; padding: 7px 14px }`, elements `#previous` and `#next`
+repro: getBoundingClientRect() in Chromium measured `#previous` and `#next` at 94 x 38 px at all three tested viewports (375px, 768px, 1280px). 38px < the 44x44 minimum in WCAG 2.5.5 / iOS HIG (44pt) / Android (48dp). Every other interactive target on the page measures >= 42px (inputs 42px, headers 45.5-46px).
+severity: minor
+category: touch-target

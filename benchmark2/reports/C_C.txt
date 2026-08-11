@@ -1,0 +1,13 @@
+DEFECT 1
+what: When a filter matches no employees, the pagination indicator reads "Page 0 of 0" instead of a valid page number.
+where: nav[aria-label="Table pagination"] > span (the aria-live="polite" "Page X of Y" indicator)
+repro: At 1280x900 typed "qqqq" into #search (also reproduced with "zzz", "(", ".*", and "Singapore"). The table body shows "No employees match the current filters." and the indicator renders "Page 0 of 0" while #previous and #next are both disabled. Any filter that does match renders correctly (e.g. department=Engineering -> "Page 1 of 1", unfiltered -> "Page 1 of 3"), so only the zero-result case produces the invalid "0 of 0". The same string is what the aria-live region announces to screen readers.
+severity: minor
+category: state
+
+DEFECT 2
+what: The "No employees match the current filters." empty-state message is right-aligned, and at 375px width it is clipped at the right edge so only "No employees" is readable without scrolling the table sideways.
+where: tbody td[colspan="5"] (empty-state cell) - computed text-align resolves to "right", inherited from the last-column/salary right-alignment rule, since the empty-state cell is also the last cell in its row
+repro: Filter #search to "qqqq". At 1280x900, getComputedStyle(td).textAlign === "right"; the message text box measures left=600.3 right=890.0 inside a cell spanning left=21 right=908 (579px of empty space on the left, 18px on the right), so the text floats at the far right instead of centered/left like every other empty state. Resized to 375x760 and repeated: the .table-wrap scroll viewport is 349px wide (clientWidth 349, scrollWidth 544) while the message runs x=249.0 to x=538.7, i.e. it extends 177px past the visible right edge at x=362. Screenshot at 375px shows only "No employees" before the text is cut off; the remainder requires horizontal scrolling of the table to read.
+severity: minor
+category: responsive

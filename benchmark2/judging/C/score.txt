@@ -1,0 +1,19 @@
+REFERENCE_TOTAL: 6
+
+R1 | cand_1: HIT | cand_2: MISS | Keyboard focus dropped to <body> when a pagination button disables itself on reaching the last/first page
+R2 | cand_1: HIT | cand_2: HIT | Empty-state message "No employees match the current filters." is mispositioned in the last-column-aligned cell and is clipped off the right edge at 375px
+R3 | cand_1: MISS | cand_2: MISS | Horizontally scrolling .table-wrap is not focusable/keyboard-scrollable, so 364px of hidden columns are unreachable by keyboard
+R4 | cand_1: MISS | cand_2: MISS | Empty-state result is never announced (no aria-live/role=status on #employee-rows); only #page-status is a live region
+R5 | cand_1: HIT | cand_2: MISS | Sortable th[data-column] headers have tabindex=0 and Enter/Space handlers but no role=button or nested button, so AT gives no hint they are operable
+R6 | cand_1: MISS | cand_2: MISS | #search / #department border #c9d2df measures 1.53:1 against the white fill and white card, below the 3:1 non-text contrast minimum
+
+CAND_1_EXTRAS
+- CONFIRMED_REAL | Pager shows the impossible value "Page 0 of 0" whenever a filter matches nothing | Reproduced at 1280x900 with searches "qqqq", "zzzz", "Singapore" and ".*": #page-status textContent is "Page 0 of 0" every time (vs "Page 1 of 3" unfiltered, "Page 1 of 1" for department=Engineering), and page.html:370 deliberately emits 0. A page index of 0 cannot exist; the code path is real and user-visible, and REFERENCE only mentions the string in passing under R4 rather than flagging it.
+- FALSE_ALARM | Previous/Next buttons are 38px tall, under a 44x44px touch-target minimum | Measurement is accurate (getBoundingClientRect returns exactly 94x38 at 1280/768/620/414/375/320), but 94x38 comfortably passes the applicable WCAG 2.2 AA criterion 2.5.8 Target Size (Minimum, 24x24 CSS px). 44x44 is the AAA criterion 2.5.5 / vendor guidance, not a conformance failure, and the two buttons sit at opposite ends of the pager with no crowding. This is a guideline preference, not a user-visible defect.
+
+CAND_2_EXTRAS
+- CONFIRMED_REAL | Pager shows the impossible value "Page 0 of 0" whenever a filter matches nothing | Same verification as above: #page-status reads "Page 0 of 0" for "qqqq"/"zzzz"/"Singapore"/".*" while valid filters render "Page 1 of 1" / "Page 1 of 3"; page.html:370 special-cases pageCount===0 to print 0. Reproducible, visible to every user, and announced by the polite live region.
+
+TOTALS
+cand_1: hits=3/6  confirmed_extras=1  false_alarms=1
+cand_2: hits=1/6  confirmed_extras=1  false_alarms=0

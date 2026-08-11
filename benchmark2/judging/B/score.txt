@@ -1,0 +1,25 @@
+REFERENCE_TOTAL: 12
+
+R1 | cand_1: HIT | cand_2: HIT | Step-indicator connector line paints over the "Shipping"/"Payment" labels, striking them through
+R2 | cand_1: HIT | cand_2: HIT | Button focus ring rgba(49,87,213,0.2) is 1.35:1 on the white card, below the 3:1 focus-indicator minimum
+R3 | cand_1: HIT | cand_2: HIT | ::placeholder #98a2b3 in card number / expiry / CVC is 2.58:1, below the 4.5:1 text minimum
+R4 | cand_1: MISS | cand_2: HIT | Input and select borders (#d0d5dd) are 1.47:1 on the white card, below the 3:1 non-text minimum
+R5 | cand_1: MISS | cand_2: HIT | "Back" button border is 1.47:1 and is the only cue marking it as a control
+R6 | cand_1: MISS | cand_2: HIT | pattern="[0-9 ]{12,23}" counts auto-inserted spaces, so 10- and 11-digit cards pass the "12 to 19 digits" rule
+R7 | cand_1: HIT | cand_2: MISS | Editing mid-string in the card number throws the caret to the end of the field
+R8 | cand_1: MISS | cand_2: HIT | Pressing Enter in any step 1 / step 2 field does nothing — no advance, no feedback
+R9 | cand_1: MISS | cand_2: MISS | Invalid fields get no persistent error state (no aria-invalid, no error text, no :invalid styling)
+R10 | cand_1: MISS | cand_2: HIT | Review step prints the CVC in clear text although the CVC input is a password field
+R11 | cand_1: MISS | cand_2: MISS | A past expiry date (e.g. 01/20) is accepted as valid
+R12 | cand_1: MISS | cand_2: MISS | After "Place order" the page has no h1 — the form (containing it) is replaced
+
+CAND_1_EXTRAS
+- CONFIRMED_REAL | Review-step card mask regroups in fixed blocks of 4, splitting the visible last four digits for non-multiple-of-4 lengths | Drove the page in an isolated Chromium: 15-digit 378282246310005 -> #summary-card-number "•••• •••• •••0 005", 13-digit 4222222222222 -> "•••• •••• •222 2", 19-digit -> "•••• •••• •••• •••2 424", 16-digit -> "•••• •••• •••• 1111". Source maskCardNumber() (page.html:582-587) applies replace(/(.{4})/g,"$1 ") to bullets+last4, so a real digit is glued to the bullet run and the last-4 group reads as fewer digits.
+- CONFIRMED_REAL | Whitespace-only values satisfy the required-field check, so the order can be placed with blank name/address/city/postal code/cardholder | Typed a single space into #full-name, #address, #city, #postal-code (+ country selected): all checkValidity() true, Next advanced (steps [False,True,False]); space in #cardholder-name plus a valid card advanced to review, where #summary-full-name/-address/-city/-postal-code/-cardholder-name all had textContent "" (updateSummary trims, page.html:590-595); "Place order" then produced a confirmation with order number ORD-MSO7S9EM-T6Z6.
+
+CAND_2_EXTRAS
+- CONFIRMED_REAL | Review-step card mask regroups in fixed blocks of 4, splitting the last four digits (Amex shows "•••• •••• •••0 005") | Same isolated-Chromium run as above reproduced every quoted case: 15-digit -> "•••• •••• •••0 005", 19-digit -> "•••• •••• •••• •••2 424", 16-digit correct ("•••• •••• •••• 1111"); confirmed against maskCardNumber() at page.html:582-587.
+
+TOTALS
+cand_1: hits=4/12  confirmed_extras=2  false_alarms=0
+cand_2: hits=8/12  confirmed_extras=1  false_alarms=0

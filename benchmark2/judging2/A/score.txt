@@ -1,0 +1,33 @@
+REFERENCE_TOTAL: 18
+
+R1 | cand_1: MISS | cand_2: HIT | "Remove" is dead for the whole 2 s upload — the per-frame re-render destroys the <li> between mousedown and mouseup so no click fires
+R2 | cand_1: MISS | cand_2: HIT | Focus held inside the file list is destroyed the instant an upload starts (replaceChildren) and never restored
+R3 | cand_1: HIT | cand_2: HIT | The whole file list is aria-live="polite" and is rebuilt ~60x/s during an upload, flooding screen readers
+R4 | cand_1: MISS | cand_2: MISS | A file dropped anywhere outside the drop zone navigates the browser away — no document/window drop guard
+R5 | cand_1: HIT | cand_2: HIT | "Clear all" during an upload empties the list but leaves Upload stuck disabled/"Uploading…" until the phantom timer expires
+R6 | cand_1: HIT | cand_2: MISS | Removing a file (idle) discards keyboard focus to <body> instead of a neighbouring control
+R7 | cand_1: HIT | cand_2: MISS | Activating "Clear all" discards focus to <body> because the button disables itself as its own side effect
+R8 | cand_1: HIT | cand_2: HIT | Phantom tab stop: the 1x1 clipped #file-input is a real tab stop with no perceivable focus indicator
+R9 | cand_1: HIT | cand_2: MISS | Focusable <input type=file> nested inside div[role=button] → button inside a button in the a11y tree
+R10 | cand_1: MISS | cand_2: MISS | Emptying the list is silent — #empty-state is a sibling of, not inside, the live region
+R11 | cand_1: HIT | cand_2: HIT | Drop-zone helper text "You can select multiple files" fails AA text contrast (~3.4-3.6:1)
+R12 | cand_1: HIT | cand_2: HIT | Empty-state "No files selected." fails AA text contrast (3.76:1)
+R13 | cand_1: HIT | cand_2: HIT | .file-meta size/status/percentage text fails AA text contrast (3.98:1)
+R14 | cand_1: MISS | cand_2: MISS | Button focus ring outline rgb(64 95 216 / 28%) is ~1.5:1 — effectively invisible (WCAG 1.4.11 needs 3:1)
+R15 | cand_1: MISS | cand_2: MISS | Drop zone's dashed boundary (2px #9faccc on #f8faff) fails non-text contrast at 2.17:1
+R16 | cand_1: HIT | cand_2: MISS | Disabled Upload button label (#fff on #aeb8d5, 1.98:1) — the page's default state and the "Uploading…" message
+R17 | cand_1: HIT | cand_2: HIT | Remove buttons are 61.1 x 22.0 px, under the 24x24 WCAG 2.2 minimum
+R18 | cand_1: MISS | cand_2: MISS | The same file can be added repeatedly and the duplicate rows are indistinguishable
+
+CAND_1_EXTRAS
+- CONFIRMED_REAL | Drop zone's accessible name omits its visible label (WCAG 2.5.3 Label in Name) | Read both in my own headless Chromium: #drop-zone aria-label = "Choose files or drop files here", innerText = "↑ / Drop files here or click to browse / You can select multiple files". The visible label string "Drop files here or click to browse" is not contained in the accessible name, and "click to browse" appears nowhere in it, so speech-input activation by the printed words fails. Level A failure, real functional impact.
+- CONFIRMED_REAL | Activating Upload by keyboard drops focus to <body> and never restores it (reported inside the same item whose "Clear all" half matched R7) | Focused #upload-button, pressed Enter: activeElement went upload-button → BODY at +120 ms, still BODY 2.6 s after the upload finished (button then reads "Upload", disabled). The user must Tab from the top of the document again. Distinct from R2 (focus in the list) and from R7 (Clear all).
+- FALSE_ALARM | Drop zone focus ring "so faint it is nearly indistinguishable from the unfocused state", identical to hover | Mechanism reproduces (outline "none 0px", :focus-visible shares a block with :hover, unfocused border rgb(159,172,204) → focused rgb(78,110,232), change contrast 1.959:1), but the severity claim does not hold. Screenshots at Tab-1 vs unfocused show an obviously different saturated-blue dashed border plus a fill shift; the focused indicator colour measures 4.05:1 against its own fill and 4.45:1 against the card, i.e. it satisfies the AA non-text-contrast requirement for an indicator against adjacent colours. Only the AAA change-of-contrast metric (2.4.13 Focus Appearance) is below 3:1. Focus and hover rendering alike is not itself a user-visible defect (a keyboard user is not hovering). Preference/AAA-level, judged the same way as cand_2's 44 px claim.
+
+CAND_2_EXTRAS
+- CONFIRMED_REAL | Activating Upload by keyboard drops focus to <body> and never restores it | Same verification as above: activeElement upload-button → BODY at +120 ms, still BODY 2.6 s after completion. Reproducible, distinct from R2 and R7.
+- FALSE_ALARM | "Clear all" is 33 px tall, under the 44 px mobile touch guidance | Measurement is right (61.5 x 33.0 px at 375, 768 and 1280 viewports), but 33 px clears the normative WCAG 2.2 SC 2.5.8 minimum of 24x24 that the reference applies to R17; 44x44 is SC 2.5.5 (AAA) guidance only, and the control is well isolated (nearest targets far away). Guideline-preference finding, not a defect.
+
+TOTALS
+cand_1: hits=11/18  confirmed_extras=2  false_alarms=1
+cand_2: hits=9/18  confirmed_extras=1  false_alarms=1
