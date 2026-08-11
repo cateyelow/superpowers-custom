@@ -1,0 +1,195 @@
+{
+  "target": "file:///artifacts/B/checkout.html",
+  "viewports": {
+    "375": {
+      "contrast": [
+        {
+          "sel": "#full-name",
+          "ratio": 1.47,
+          "need": 3,
+          "text": "",
+          "kind": "boundary"
+        },
+        {
+          "sel": "#address",
+          "ratio": 1.47,
+          "need": 3,
+          "text": "",
+          "kind": "boundary"
+        },
+        {
+          "sel": "#city",
+          "ratio": 1.47,
+          "need": 3,
+          "text": "",
+          "kind": "boundary"
+        },
+        {
+          "sel": "#postal-code",
+          "ratio": 1.47,
+          "need": 3,
+          "text": "",
+          "kind": "boundary"
+        },
+        {
+          "sel": "#country",
+          "ratio": 1.47,
+          "need": 3,
+          "text": "Select a country\n              Australia",
+          "kind": "boundary"
+        }
+      ],
+      "targets": [
+        {
+          "sel": "#shipping-heading",
+          "w": 293,
+          "h": 32.4,
+          "text": "Shipping details",
+          "severity": "under-44"
+        }
+      ],
+      "roles": [],
+      "overflow": {
+        "docWidth": 375,
+        "viewWidth": 375,
+        "overflows": false
+      },
+      "focusable": [
+        "#shipping-heading",
+        "#full-name",
+        "#address",
+        "#city",
+        "#postal-code",
+        "#country",
+        "button.button-primary"
+      ]
+    },
+    "768": {
+      "contrast": [
+        {
+          "sel": "#full-name",
+          "ratio": 1.47,
+          "need": 3,
+          "text": "",
+          "kind": "boundary"
+        },
+        {
+          "sel": "#address",
+          "ratio": 1.47,
+          "need": 3,
+          "text": "",
+          "kind": "boundary"
+        },
+        {
+          "sel": "#city",
+          "ratio": 1.47,
+          "need": 3,
+          "text": "",
+          "kind": "boundary"
+        },
+        {
+          "sel": "#postal-code",
+          "ratio": 1.47,
+          "need": 3,
+          "text": "",
+          "kind": "boundary"
+        },
+        {
+          "sel": "#country",
+          "ratio": 1.47,
+          "need": 3,
+          "text": "Select a country\n              Australia",
+          "kind": "boundary"
+        }
+      ],
+      "targets": [
+        {
+          "sel": "#shipping-heading",
+          "w": 601.2,
+          "h": 32.4,
+          "text": "Shipping details",
+          "severity": "under-44"
+        }
+      ],
+      "roles": [],
+      "overflow": {
+        "docWidth": 768,
+        "viewWidth": 768,
+        "overflows": false
+      },
+      "focusable": [
+        "#shipping-heading",
+        "#full-name",
+        "#address",
+        "#city",
+        "#postal-code",
+        "#country",
+        "button.button-primary"
+      ]
+    },
+    "1280": {
+      "contrast": [
+        {
+          "sel": "#full-name",
+          "ratio": 1.47,
+          "need": 3,
+          "text": "",
+          "kind": "boundary"
+        },
+        {
+          "sel": "#address",
+          "ratio": 1.47,
+          "need": 3,
+          "text": "",
+          "kind": "boundary"
+        },
+        {
+          "sel": "#city",
+          "ratio": 1.47,
+          "need": 3,
+          "text": "",
+          "kind": "boundary"
+        },
+        {
+          "sel": "#postal-code",
+          "ratio": 1.47,
+          "need": 3,
+          "text": "",
+          "kind": "boundary"
+        },
+        {
+          "sel": "#country",
+          "ratio": 1.47,
+          "need": 3,
+          "text": "Select a country\n              Australia",
+          "kind": "boundary"
+        }
+      ],
+      "targets": [
+        {
+          "sel": "#shipping-heading",
+          "w": 582,
+          "h": 32.4,
+          "text": "Shipping details",
+          "severity": "under-44"
+        }
+      ],
+      "roles": [],
+      "overflow": {
+        "docWidth": 1280,
+        "viewWidth": 1280,
+        "overflows": false
+      },
+      "focusable": [
+        "#shipping-heading",
+        "#full-name",
+        "#address",
+        "#city",
+        "#postal-code",
+        "#country",
+        "button.button-primary"
+      ]
+    }
+  },
+  "focus_loss": []
+}

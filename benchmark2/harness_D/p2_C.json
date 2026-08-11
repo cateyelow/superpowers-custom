@@ -1,0 +1,1625 @@
+{
+  "target": "file:///artifacts/C/table.html",
+  "states": {
+    "load": {
+      "375": {
+        "contrast": [
+          {
+            "sel": "#previous",
+            "ratio": 2.34,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#search",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#department",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "All departments\n          DesignEngineeringFinan"
+          },
+          {
+            "sel": "#previous",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#next",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "Next"
+          }
+        ],
+        "targets": [
+          {
+            "sel": "#search",
+            "w": 309,
+            "h": 42,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#department",
+            "w": 309,
+            "h": 42,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": false,
+            "text": "All departments\n          DesignEngineeringFinan"
+          },
+          {
+            "sel": "#previous",
+            "w": 94,
+            "h": 38,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#next",
+            "w": 94,
+            "h": 38,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": false,
+            "text": "Next"
+          }
+        ],
+        "roles": [
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Name"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Department"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Role"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Location"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Salary"
+          }
+        ],
+        "overflow": {
+          "docWidth": 375,
+          "viewWidth": 375,
+          "overflows": false
+        },
+        "controls": [
+          "#search",
+          "#department",
+          "th",
+          "th",
+          "th",
+          "th",
+          "th",
+          "#previous",
+          "#next"
+        ],
+        "clipped": [
+          {
+            "sel": "div.table-wrap",
+            "scrollWidth": 715,
+            "clientWidth": 349
+          }
+        ]
+      },
+      "768": {
+        "contrast": [
+          {
+            "sel": "#previous",
+            "ratio": 2.34,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#search",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#department",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "All departments\n          DesignEngineeringFinan"
+          },
+          {
+            "sel": "#previous",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#next",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "Next"
+          }
+        ],
+        "targets": [
+          {
+            "sel": "#search",
+            "w": 446.7,
+            "h": 42,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#department",
+            "w": 223.3,
+            "h": 42,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": false,
+            "text": "All departments\n          DesignEngineeringFinan"
+          },
+          {
+            "sel": "#previous",
+            "w": 94,
+            "h": 38,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#next",
+            "w": 94,
+            "h": 38,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": false,
+            "text": "Next"
+          }
+        ],
+        "roles": [
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Name"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Department"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Role"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Location"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Salary"
+          }
+        ],
+        "overflow": {
+          "docWidth": 768,
+          "viewWidth": 768,
+          "overflows": false
+        },
+        "controls": [
+          "#search",
+          "#department",
+          "th",
+          "th",
+          "th",
+          "th",
+          "th",
+          "#previous",
+          "#next"
+        ],
+        "clipped": []
+      },
+      "1280": {
+        "contrast": [
+          {
+            "sel": "#previous",
+            "ratio": 2.34,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#search",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#department",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "All departments\n          DesignEngineeringFinan"
+          },
+          {
+            "sel": "#previous",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#next",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "Next"
+          }
+        ],
+        "targets": [
+          {
+            "sel": "#search",
+            "w": 708,
+            "h": 42,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#department",
+            "w": 354,
+            "h": 42,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": false,
+            "text": "All departments\n          DesignEngineeringFinan"
+          },
+          {
+            "sel": "#previous",
+            "w": 94,
+            "h": 38,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#next",
+            "w": 94,
+            "h": 38,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": false,
+            "text": "Next"
+          }
+        ],
+        "roles": [
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Name"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Department"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Role"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Location"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Salary"
+          }
+        ],
+        "overflow": {
+          "docWidth": 1280,
+          "viewWidth": 1280,
+          "overflows": false
+        },
+        "controls": [
+          "#search",
+          "#department",
+          "th",
+          "th",
+          "th",
+          "th",
+          "th",
+          "#previous",
+          "#next"
+        ],
+        "clipped": []
+      },
+      "pseudo": [
+        {
+          "selector": "input:focus",
+          "prop": "box-shadow",
+          "declared": "rgba(53, 106, 230, 0.18) 0px 0px 0px 3px",
+          "resolved": "rgba(53, 106, 230, 0.18) 0px 0px 0px 3px",
+          "composited": "rgb(219,228,251)",
+          "ratio": 1.27,
+          "need": 3,
+          "sample": "#search",
+          "count": 1,
+          "note": "non-text contrast of the :focus indicator"
+        },
+        {
+          "selector": "select:focus",
+          "prop": "box-shadow",
+          "declared": "rgba(53, 106, 230, 0.18) 0px 0px 0px 3px",
+          "resolved": "rgba(53, 106, 230, 0.18) 0px 0px 0px 3px",
+          "composited": "rgb(219,228,251)",
+          "ratio": 1.27,
+          "need": 3,
+          "sample": "#department",
+          "count": 1,
+          "note": "non-text contrast of the :focus indicator"
+        },
+        {
+          "selector": "button:focus-visible",
+          "prop": "box-shadow",
+          "declared": "rgba(53, 106, 230, 0.18) 0px 0px 0px 3px",
+          "resolved": "rgba(53, 106, 230, 0.18) 0px 0px 0px 3px",
+          "composited": "rgb(219,228,251)",
+          "ratio": 1.27,
+          "need": 3,
+          "sample": "#previous",
+          "count": 2,
+          "note": "non-text contrast of the :focus-visible indicator"
+        },
+        {
+          "selector": ".pagination button:hover:not(:disabled)",
+          "prop": "border-color",
+          "declared": "rgb(152, 166, 184)",
+          "resolved": "rgb(152, 166, 184)",
+          "composited": "rgb(152,166,184)",
+          "ratio": 2.25,
+          "need": 3,
+          "sample": "#previous",
+          "count": 2,
+          "note": "non-text contrast of the :hover indicator"
+        },
+        {
+          "selector": ".pagination button:disabled",
+          "prop": "color",
+          "declared": "rgb(152, 162, 179)",
+          "resolved": "rgb(152, 162, 179)",
+          "ratio": 2.34,
+          "need": 4.5,
+          "sample": "#previous",
+          "count": 2,
+          "note": "disabled label \u2014 WCAG-exempt but often unreadable"
+        }
+      ]
+    },
+    "filled": {
+      "375": {
+        "contrast": [
+          {
+            "sel": "#previous",
+            "ratio": 2.34,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#next",
+            "ratio": 2.34,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": true,
+            "text": "Next"
+          },
+          {
+            "sel": "#search",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#department",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "All departments\n          DesignEngineeringFinan"
+          },
+          {
+            "sel": "#previous",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#next",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": true,
+            "text": "Next"
+          }
+        ],
+        "targets": [
+          {
+            "sel": "#search",
+            "w": 309,
+            "h": 42,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#department",
+            "w": 309,
+            "h": 42,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": false,
+            "text": "All departments\n          DesignEngineeringFinan"
+          },
+          {
+            "sel": "#previous",
+            "w": 94,
+            "h": 38,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#next",
+            "w": 94,
+            "h": 38,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": true,
+            "text": "Next"
+          }
+        ],
+        "roles": [
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Name"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Department"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Role"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Location"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Salary"
+          }
+        ],
+        "overflow": {
+          "docWidth": 375,
+          "viewWidth": 375,
+          "overflows": false
+        },
+        "controls": [
+          "#search",
+          "#department",
+          "th",
+          "th",
+          "th",
+          "th",
+          "th",
+          "#previous",
+          "#next"
+        ],
+        "clipped": [
+          {
+            "sel": "div.table-wrap",
+            "scrollWidth": 544,
+            "clientWidth": 349
+          }
+        ]
+      },
+      "768": {
+        "contrast": [
+          {
+            "sel": "#previous",
+            "ratio": 2.34,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#next",
+            "ratio": 2.34,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": true,
+            "text": "Next"
+          },
+          {
+            "sel": "#search",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#department",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "All departments\n          DesignEngineeringFinan"
+          },
+          {
+            "sel": "#previous",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#next",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": true,
+            "text": "Next"
+          }
+        ],
+        "targets": [
+          {
+            "sel": "#search",
+            "w": 446.7,
+            "h": 42,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#department",
+            "w": 223.3,
+            "h": 42,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": false,
+            "text": "All departments\n          DesignEngineeringFinan"
+          },
+          {
+            "sel": "#previous",
+            "w": 94,
+            "h": 38,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#next",
+            "w": 94,
+            "h": 38,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": true,
+            "text": "Next"
+          }
+        ],
+        "roles": [
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Name"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Department"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Role"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Location"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Salary"
+          }
+        ],
+        "overflow": {
+          "docWidth": 768,
+          "viewWidth": 768,
+          "overflows": false
+        },
+        "controls": [
+          "#search",
+          "#department",
+          "th",
+          "th",
+          "th",
+          "th",
+          "th",
+          "#previous",
+          "#next"
+        ],
+        "clipped": []
+      },
+      "1280": {
+        "contrast": [
+          {
+            "sel": "#previous",
+            "ratio": 2.34,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#next",
+            "ratio": 2.34,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": true,
+            "text": "Next"
+          },
+          {
+            "sel": "#search",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#department",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "All departments\n          DesignEngineeringFinan"
+          },
+          {
+            "sel": "#previous",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#next",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": true,
+            "text": "Next"
+          }
+        ],
+        "targets": [
+          {
+            "sel": "#search",
+            "w": 708,
+            "h": 42,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#department",
+            "w": 354,
+            "h": 42,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": false,
+            "text": "All departments\n          DesignEngineeringFinan"
+          },
+          {
+            "sel": "#previous",
+            "w": 94,
+            "h": 38,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#next",
+            "w": 94,
+            "h": 38,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": true,
+            "text": "Next"
+          }
+        ],
+        "roles": [
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Name"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Department"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Role"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Location"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Salary"
+          }
+        ],
+        "overflow": {
+          "docWidth": 1280,
+          "viewWidth": 1280,
+          "overflows": false
+        },
+        "controls": [
+          "#search",
+          "#department",
+          "th",
+          "th",
+          "th",
+          "th",
+          "th",
+          "#previous",
+          "#next"
+        ],
+        "clipped": []
+      },
+      "pseudo": [
+        {
+          "selector": "input:focus",
+          "prop": "box-shadow",
+          "declared": "rgba(53, 106, 230, 0.18) 0px 0px 0px 3px",
+          "resolved": "rgba(53, 106, 230, 0.18) 0px 0px 0px 3px",
+          "composited": "rgb(219,228,251)",
+          "ratio": 1.27,
+          "need": 3,
+          "sample": "#search",
+          "count": 1,
+          "note": "non-text contrast of the :focus indicator"
+        },
+        {
+          "selector": "select:focus",
+          "prop": "box-shadow",
+          "declared": "rgba(53, 106, 230, 0.18) 0px 0px 0px 3px",
+          "resolved": "rgba(53, 106, 230, 0.18) 0px 0px 0px 3px",
+          "composited": "rgb(219,228,251)",
+          "ratio": 1.27,
+          "need": 3,
+          "sample": "#department",
+          "count": 1,
+          "note": "non-text contrast of the :focus indicator"
+        },
+        {
+          "selector": "button:focus-visible",
+          "prop": "box-shadow",
+          "declared": "rgba(53, 106, 230, 0.18) 0px 0px 0px 3px",
+          "resolved": "rgba(53, 106, 230, 0.18) 0px 0px 0px 3px",
+          "composited": "rgb(219,228,251)",
+          "ratio": 1.27,
+          "need": 3,
+          "sample": "#previous",
+          "count": 2,
+          "note": "non-text contrast of the :focus-visible indicator"
+        },
+        {
+          "selector": ".pagination button:hover:not(:disabled)",
+          "prop": "border-color",
+          "declared": "rgb(152, 166, 184)",
+          "resolved": "rgb(152, 166, 184)",
+          "composited": "rgb(152,166,184)",
+          "ratio": 2.25,
+          "need": 3,
+          "sample": "#previous",
+          "count": 2,
+          "note": "non-text contrast of the :hover indicator"
+        },
+        {
+          "selector": ".pagination button:disabled",
+          "prop": "color",
+          "declared": "rgb(152, 162, 179)",
+          "resolved": "rgb(152, 162, 179)",
+          "ratio": 2.34,
+          "need": 4.5,
+          "sample": "#previous",
+          "count": 2,
+          "note": "disabled label \u2014 WCAG-exempt but often unreadable"
+        }
+      ]
+    },
+    "no-results": {
+      "375": {
+        "contrast": [
+          {
+            "sel": "#previous",
+            "ratio": 2.34,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#next",
+            "ratio": 2.34,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": true,
+            "text": "Next"
+          },
+          {
+            "sel": "#department",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "All departments\n          DesignEngineeringFinan"
+          },
+          {
+            "sel": "#previous",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#next",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": true,
+            "text": "Next"
+          }
+        ],
+        "targets": [
+          {
+            "sel": "#search",
+            "w": 309,
+            "h": 42,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#department",
+            "w": 309,
+            "h": 42,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": false,
+            "text": "All departments\n          DesignEngineeringFinan"
+          },
+          {
+            "sel": "#previous",
+            "w": 94,
+            "h": 38,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#next",
+            "w": 94,
+            "h": 38,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": true,
+            "text": "Next"
+          }
+        ],
+        "roles": [
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Name"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Department"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Role"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Location"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Salary"
+          }
+        ],
+        "overflow": {
+          "docWidth": 375,
+          "viewWidth": 375,
+          "overflows": false
+        },
+        "controls": [
+          "#search",
+          "#department",
+          "th",
+          "th",
+          "th",
+          "th",
+          "th",
+          "#previous",
+          "#next"
+        ],
+        "clipped": [
+          {
+            "sel": "div.table-wrap",
+            "scrollWidth": 544,
+            "clientWidth": 349
+          }
+        ]
+      },
+      "768": {
+        "contrast": [
+          {
+            "sel": "#previous",
+            "ratio": 2.34,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#next",
+            "ratio": 2.34,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": true,
+            "text": "Next"
+          },
+          {
+            "sel": "#department",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "All departments\n          DesignEngineeringFinan"
+          },
+          {
+            "sel": "#previous",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#next",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": true,
+            "text": "Next"
+          }
+        ],
+        "targets": [
+          {
+            "sel": "#search",
+            "w": 446.7,
+            "h": 42,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#department",
+            "w": 223.3,
+            "h": 42,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": false,
+            "text": "All departments\n          DesignEngineeringFinan"
+          },
+          {
+            "sel": "#previous",
+            "w": 94,
+            "h": 38,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#next",
+            "w": 94,
+            "h": 38,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": true,
+            "text": "Next"
+          }
+        ],
+        "roles": [
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Name"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Department"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Role"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Location"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Salary"
+          }
+        ],
+        "overflow": {
+          "docWidth": 768,
+          "viewWidth": 768,
+          "overflows": false
+        },
+        "controls": [
+          "#search",
+          "#department",
+          "th",
+          "th",
+          "th",
+          "th",
+          "th",
+          "#previous",
+          "#next"
+        ],
+        "clipped": []
+      },
+      "1280": {
+        "contrast": [
+          {
+            "sel": "#previous",
+            "ratio": 2.34,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#next",
+            "ratio": 2.34,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": true,
+            "text": "Next"
+          },
+          {
+            "sel": "#department",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "All departments\n          DesignEngineeringFinan"
+          },
+          {
+            "sel": "#previous",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#next",
+            "ratio": 1.53,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": true,
+            "text": "Next"
+          }
+        ],
+        "targets": [
+          {
+            "sel": "#search",
+            "w": 708,
+            "h": 42,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#department",
+            "w": 354,
+            "h": 42,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": false,
+            "text": "All departments\n          DesignEngineeringFinan"
+          },
+          {
+            "sel": "#previous",
+            "w": 94,
+            "h": 38,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": true,
+            "text": "Previous"
+          },
+          {
+            "sel": "#next",
+            "w": 94,
+            "h": 38,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": true,
+            "text": "Next"
+          }
+        ],
+        "roles": [
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Name"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Department"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Role"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Location"
+          },
+          {
+            "sel": "th",
+            "tag": "th",
+            "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+            "text": "Salary"
+          }
+        ],
+        "overflow": {
+          "docWidth": 1280,
+          "viewWidth": 1280,
+          "overflows": false
+        },
+        "controls": [
+          "#search",
+          "#department",
+          "th",
+          "th",
+          "th",
+          "th",
+          "th",
+          "#previous",
+          "#next"
+        ],
+        "clipped": []
+      },
+      "pseudo": [
+        {
+          "selector": "input:focus",
+          "prop": "box-shadow",
+          "declared": "rgba(53, 106, 230, 0.18) 0px 0px 0px 3px",
+          "resolved": "rgba(53, 106, 230, 0.18) 0px 0px 0px 3px",
+          "composited": "rgb(219,228,251)",
+          "ratio": 1.27,
+          "need": 3,
+          "sample": "#search",
+          "count": 1,
+          "note": "non-text contrast of the :focus indicator"
+        },
+        {
+          "selector": "select:focus",
+          "prop": "box-shadow",
+          "declared": "rgba(53, 106, 230, 0.18) 0px 0px 0px 3px",
+          "resolved": "rgba(53, 106, 230, 0.18) 0px 0px 0px 3px",
+          "composited": "rgb(219,228,251)",
+          "ratio": 1.27,
+          "need": 3,
+          "sample": "#department",
+          "count": 1,
+          "note": "non-text contrast of the :focus indicator"
+        },
+        {
+          "selector": "button:focus-visible",
+          "prop": "box-shadow",
+          "declared": "rgba(53, 106, 230, 0.18) 0px 0px 0px 3px",
+          "resolved": "rgba(53, 106, 230, 0.18) 0px 0px 0px 3px",
+          "composited": "rgb(219,228,251)",
+          "ratio": 1.27,
+          "need": 3,
+          "sample": "#previous",
+          "count": 2,
+          "note": "non-text contrast of the :focus-visible indicator"
+        },
+        {
+          "selector": ".pagination button:hover:not(:disabled)",
+          "prop": "border-color",
+          "declared": "rgb(152, 166, 184)",
+          "resolved": "rgb(152, 166, 184)",
+          "composited": "rgb(152,166,184)",
+          "ratio": 2.25,
+          "need": 3,
+          "sample": "#previous",
+          "count": 2,
+          "note": "non-text contrast of the :hover indicator"
+        },
+        {
+          "selector": ".pagination button:disabled",
+          "prop": "color",
+          "declared": "rgb(152, 162, 179)",
+          "resolved": "rgb(152, 162, 179)",
+          "ratio": 2.34,
+          "need": 4.5,
+          "sample": "#previous",
+          "count": 2,
+          "note": "disabled label \u2014 WCAG-exempt but often unreadable"
+        }
+      ]
+    }
+  },
+  "notes": [
+    "seeded 2 field(s)",
+    "searched for a no-match term"
+  ],
+  "findings": [
+    {
+      "type": "contrast",
+      "state": "load",
+      "viewport": "375",
+      "sel": "#previous",
+      "ratio": 2.34,
+      "need": 4.5,
+      "kind": "text",
+      "disabled": true,
+      "text": "Previous"
+    },
+    {
+      "type": "contrast",
+      "state": "load",
+      "viewport": "375",
+      "sel": "#search",
+      "ratio": 1.53,
+      "need": 3,
+      "kind": "boundary",
+      "disabled": false,
+      "text": ""
+    },
+    {
+      "type": "contrast",
+      "state": "load",
+      "viewport": "375",
+      "sel": "#department",
+      "ratio": 1.53,
+      "need": 3,
+      "kind": "boundary",
+      "disabled": false,
+      "text": "All departments\n          DesignEngineeringFinan"
+    },
+    {
+      "type": "contrast",
+      "state": "load",
+      "viewport": "375",
+      "sel": "#previous",
+      "ratio": 1.53,
+      "need": 3,
+      "kind": "boundary",
+      "disabled": true,
+      "text": "Previous"
+    },
+    {
+      "type": "contrast",
+      "state": "load",
+      "viewport": "375",
+      "sel": "#next",
+      "ratio": 1.53,
+      "need": 3,
+      "kind": "boundary",
+      "disabled": false,
+      "text": "Next"
+    },
+    {
+      "type": "touch-target",
+      "state": "load",
+      "viewport": "375",
+      "sel": "#search",
+      "w": 309,
+      "h": 42,
+      "severity": "under-44-below-touch-guidance",
+      "disabled": false,
+      "text": ""
+    },
+    {
+      "type": "touch-target",
+      "state": "load",
+      "viewport": "375",
+      "sel": "#department",
+      "w": 309,
+      "h": 42,
+      "severity": "under-44-below-touch-guidance",
+      "disabled": false,
+      "text": "All departments\n          DesignEngineeringFinan"
+    },
+    {
+      "type": "touch-target",
+      "state": "load",
+      "viewport": "375",
+      "sel": "#previous",
+      "w": 94,
+      "h": 38,
+      "severity": "under-44-below-touch-guidance",
+      "disabled": true,
+      "text": "Previous"
+    },
+    {
+      "type": "touch-target",
+      "state": "load",
+      "viewport": "375",
+      "sel": "#next",
+      "w": 94,
+      "h": 38,
+      "severity": "under-44-below-touch-guidance",
+      "disabled": false,
+      "text": "Next"
+    },
+    {
+      "type": "name-role",
+      "state": "load",
+      "viewport": "375",
+      "sel": "th",
+      "tag": "th",
+      "issue": "operable (tabindex=0 + handlers) but exposes no interactive role",
+      "text": "Name"
+    },
+    {
+      "type": "clipped-overflow",
+      "state": "load",
+      "viewport": "375",
+      "sel": "div.table-wrap",
+      "scrollWidth": 715,
+      "clientWidth": 349
+    },
+    {
+      "type": "touch-target",
+      "state": "load",
+      "viewport": "768",
+      "sel": "#search",
+      "w": 446.7,
+      "h": 42,
+      "severity": "under-44-below-touch-guidance",
+      "disabled": false,
+      "text": ""
+    },
+    {
+      "type": "touch-target",
+      "state": "load",
+      "viewport": "768",
+      "sel": "#department",
+      "w": 223.3,
+      "h": 42,
+      "severity": "under-44-below-touch-guidance",
+      "disabled": false,
+      "text": "All departments\n          DesignEngineeringFinan"
+    },
+    {
+      "type": "touch-target",
+      "state": "load",
+      "viewport": "1280",
+      "sel": "#search",
+      "w": 708,
+      "h": 42,
+      "severity": "under-44-below-touch-guidance",
+      "disabled": false,
+      "text": ""
+    },
+    {
+      "type": "touch-target",
+      "state": "load",
+      "viewport": "1280",
+      "sel": "#department",
+      "w": 354,
+      "h": 42,
+      "severity": "under-44-below-touch-guidance",
+      "disabled": false,
+      "text": "All departments\n          DesignEngineeringFinan"
+    },
+    {
+      "type": "contrast-state",
+      "state": "load",
+      "selector": "input:focus",
+      "prop": "box-shadow",
+      "declared": "rgba(53, 106, 230, 0.18) 0px 0px 0px 3px",
+      "resolved": "rgba(53, 106, 230, 0.18) 0px 0px 0px 3px",
+      "composited": "rgb(219,228,251)",
+      "ratio": 1.27,
+      "need": 3,
+      "sample": "#search",
+      "count": 1,
+      "note": "non-text contrast of the :focus indicator"
+    },
+    {
+      "type": "contrast-state",
+      "state": "load",
+      "selector": "select:focus",
+      "prop": "box-shadow",
+      "declared": "rgba(53, 106, 230, 0.18) 0px 0px 0px 3px",
+      "resolved": "rgba(53, 106, 230, 0.18) 0px 0px 0px 3px",
+      "composited": "rgb(219,228,251)",
+      "ratio": 1.27,
+      "need": 3,
+      "sample": "#department",
+      "count": 1,
+      "note": "non-text contrast of the :focus indicator"
+    },
+    {
+      "type": "contrast-state",
+      "state": "load",
+      "selector": "button:focus-visible",
+      "prop": "box-shadow",
+      "declared": "rgba(53, 106, 230, 0.18) 0px 0px 0px 3px",
+      "resolved": "rgba(53, 106, 230, 0.18) 0px 0px 0px 3px",
+      "composited": "rgb(219,228,251)",
+      "ratio": 1.27,
+      "need": 3,
+      "sample": "#previous",
+      "count": 2,
+      "note": "non-text contrast of the :focus-visible indicator"
+    },
+    {
+      "type": "contrast-state",
+      "state": "load",
+      "selector": ".pagination button:hover:not(:disabled)",
+      "prop": "border-color",
+      "declared": "rgb(152, 166, 184)",
+      "resolved": "rgb(152, 166, 184)",
+      "composited": "rgb(152,166,184)",
+      "ratio": 2.25,
+      "need": 3,
+      "sample": "#previous",
+      "count": 2,
+      "note": "non-text contrast of the :hover indicator"
+    },
+    {
+      "type": "contrast-state",
+      "state": "load",
+      "selector": ".pagination button:disabled",
+      "prop": "color",
+      "declared": "rgb(152, 162, 179)",
+      "resolved": "rgb(152, 162, 179)",
+      "ratio": 2.34,
+      "need": 4.5,
+      "sample": "#previous",
+      "count": 2,
+      "note": "disabled label \u2014 WCAG-exempt but often unreadable"
+    },
+    {
+      "type": "contrast",
+      "state": "filled",
+      "viewport": "375",
+      "sel": "#next",
+      "ratio": 2.34,
+      "need": 4.5,
+      "kind": "text",
+      "disabled": true,
+      "text": "Next"
+    }
+  ]
+}

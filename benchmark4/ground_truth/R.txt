@@ -1,0 +1,67 @@
+DEFECT 1
+what: Running csvq with its standard output closed kills it with a raw Python traceback and exit 1 instead of a clean "csvq: " message; the same happens for --help and --count, and with stderr closed a missing input file exits 1 instead of the documented 2.
+where: csvq.py:430 (write_output, `sys.stdout.write(text)`) and csvq.py:514 (main, `sys.stdout.write(USAGE)`): when fd 1 is closed at start-up sys.stdout is None, and the guard at csvq.py:426-428 catches AttributeError only around `reconfigure`, not around the write. Same omission in fail() at csvq.py:500 for sys.stderr. Note the stdin equivalent IS handled cleanly (csvq.py:210-211).
+repro: $ python E:/GitHub/superpowers-custom/benchmark4/artifacts/R/csvq.py -c name people.csv >&-
+       Traceback (most recent call last):
+         File "E:\GitHub\superpowers-custom\benchmark4\artifacts\R\csvq.py", line 529, in <module>
+           sys.exit(main())
+         File "E:\GitHub\superpowers-custom\benchmark4\artifacts\R\csvq.py", line 519, in main
+           write_output(text, opts["output"])
+         File "E:\GitHub\superpowers-custom\benchmark4\artifacts\R\csvq.py", line 430, in write_output
+           sys.stdout.write(text)
+       AttributeError: 'NoneType' object has no attribute 'write'
+       exit code 1
+       ($ ... csvq.py --help >&-  and  $ ... csvq.py --count people.csv >&-  crash identically.
+        $ ... csvq.py missing.csv 2>&- >/dev/null  -> exit code 1, where the spec requires 2.
+        For contrast, $ ... csvq.py <&-  is clean: "csvq: cannot read standard input: 'NoneType' object has no attribute 'buffer'", exit code 2.)
+severity: blocking
+category: robustness
+
+DEFECT 2
+what: A blank line in the input is thrown away instead of being treated as a short row and padded, so in a single-column file every empty value is silently deleted: the tool prints, and --count reports, fewer rows than the file contains.
+where: csvq.py:232-233 (read_table, `if not record: continue`). The spec says "A row with fewer fields than the header is padded with empty strings"; a blank line is a record of zero fields and should be padded to the header width, as the padding branch at csvq.py:253-254 does for every other short row.
+repro: $ printf 'note\nfirst\n\nthird\n' > notes.csv        # 3 data rows, the second one empty
+       $ python E:/GitHub/superpowers-custom/benchmark4/artifacts/R/csvq.py notes.csv
+       note
+       first
+       third
+       exit code 0                                          # the empty row is gone
+       $ python E:/GitHub/superpowers-custom/benchmark4/artifacts/R/csvq.py --count notes.csv
+       2
+       exit code 0                                          # should be 3
+       ($ printf 'a,b\n1,2\n\n3,4\n' > gap.csv ; ... --count gap.csv  ->  2, should be 3.)
+severity: minor
+category: correctness
+
+DEFECT 3
+what: A row with more fields than the header exits 2, the code the spec reserves for an input file that cannot be read; the file was read perfectly well, and this failure class belongs with the other bad-input errors that exit 1.
+where: csvq.py:242-252 (read_table raises FileError for a long row) plus csvq.py:522-523 (main maps every FileError to EXIT_IO). Compare csvq.py:66-67: FileError is documented as "the input could not be read or the output could not be written".
+repro: $ printf 'name,age,city\nAlice,30\nBob,25,Busan,extra\n' > ragged.csv
+       $ python E:/GitHub/superpowers-custom/benchmark4/artifacts/R/csvq.py ragged.csv
+       csvq: ragged.csv: line 3: expected 3 fields, got 4       (stderr)
+       exit code 2                                              (expected 1)
+severity: minor
+category: exit-code
+
+DEFECT 4
+what: An empty input file makes the tool print a stray blank line on stdout, so a run that has no data to report still emits a byte of output (and --output writes a one-byte file); the spec says nothing but the requested data goes to stdout.
+where: csvq.py:415-416 (render: with no header the `headings` list is empty and `writer.writerow([])` emits a bare line terminator). Affects csv and tsv output; -f json correctly prints "[]" and -H correctly prints nothing.
+repro: $ : > empty.csv
+       $ python E:/GitHub/superpowers-custom/benchmark4/artifacts/R/csvq.py empty.csv | od -c
+       0000000  \n
+       0000001
+       exit code 0
+       ($ ... -f tsv empty.csv | od -c  ->  the same lone \n. A file of only blank lines behaves the same.)
+severity: minor
+category: stream
+
+DEFECT 5
+what: A valid CSV file containing a field longer than 131072 characters cannot be read at all: the tool refuses the whole file with "field larger than field limit", although nothing in the spec puts a ceiling on field size.
+where: csvq.py:226 (read_table, `csv.reader(...)`); the csv module's default field size limit is never raised, csv.field_size_limit appears nowhere in the file, and the resulting csv.Error is turned into a fatal FileError at csvq.py:256-257.
+repro: $ python -c "open('bigfield.csv','w',newline='').write('id,blob\n1,'+'x'*200000+'\n')"
+       $ python E:/GitHub/superpowers-custom/benchmark4/artifacts/R/csvq.py -c id bigfield.csv
+       csvq: bigfield.csv: line 2: field larger than field limit (131072)      (stderr)
+       exit code 2
+       (Nothing is written to stdout; even projecting only the small "id" column fails.)
+severity: minor
+category: robustness

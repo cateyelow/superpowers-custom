@@ -1,0 +1,162 @@
+{
+  "target": "file:///artifacts/A/upload.html",
+  "viewports": {
+    "375": {
+      "contrast": [
+        {
+          "sel": "small",
+          "ratio": 3.6,
+          "need": 4.5,
+          "text": "You can select multiple files",
+          "kind": "text"
+        },
+        {
+          "sel": "#empty-state",
+          "ratio": 3.76,
+          "need": 4.5,
+          "text": "No files selected.",
+          "kind": "text"
+        },
+        {
+          "sel": "#drop-zone",
+          "ratio": 2.27,
+          "need": 3,
+          "text": "\u2191\n      Drop files here or click to brow",
+          "kind": "boundary"
+        }
+      ],
+      "targets": [
+        {
+          "sel": "#file-input",
+          "w": 1,
+          "h": 1,
+          "text": "",
+          "severity": "under-24"
+        }
+      ],
+      "roles": [
+        {
+          "sel": "#file-input",
+          "issue": "no accessible name",
+          "text": ""
+        }
+      ],
+      "overflow": {
+        "docWidth": 375,
+        "viewWidth": 375,
+        "overflows": false
+      },
+      "focusable": [
+        "#drop-zone",
+        "#file-input",
+        "#clear-all",
+        "#upload-button"
+      ]
+    },
+    "768": {
+      "contrast": [
+        {
+          "sel": "small",
+          "ratio": 3.6,
+          "need": 4.5,
+          "text": "You can select multiple files",
+          "kind": "text"
+        },
+        {
+          "sel": "#empty-state",
+          "ratio": 3.76,
+          "need": 4.5,
+          "text": "No files selected.",
+          "kind": "text"
+        },
+        {
+          "sel": "#drop-zone",
+          "ratio": 2.27,
+          "need": 3,
+          "text": "\u2191\n      Drop files here or click to brow",
+          "kind": "boundary"
+        }
+      ],
+      "targets": [
+        {
+          "sel": "#file-input",
+          "w": 1,
+          "h": 1,
+          "text": "",
+          "severity": "under-24"
+        }
+      ],
+      "roles": [
+        {
+          "sel": "#file-input",
+          "issue": "no accessible name",
+          "text": ""
+        }
+      ],
+      "overflow": {
+        "docWidth": 768,
+        "viewWidth": 768,
+        "overflows": false
+      },
+      "focusable": [
+        "#drop-zone",
+        "#file-input",
+        "#clear-all",
+        "#upload-button"
+      ]
+    },
+    "1280": {
+      "contrast": [
+        {
+          "sel": "small",
+          "ratio": 3.6,
+          "need": 4.5,
+          "text": "You can select multiple files",
+          "kind": "text"
+        },
+        {
+          "sel": "#empty-state",
+          "ratio": 3.76,
+          "need": 4.5,
+          "text": "No files selected.",
+          "kind": "text"
+        },
+        {
+          "sel": "#drop-zone",
+          "ratio": 2.27,
+          "need": 3,
+          "text": "\u2191\n      Drop files here or click to brow",
+          "kind": "boundary"
+        }
+      ],
+      "targets": [
+        {
+          "sel": "#file-input",
+          "w": 1,
+          "h": 1,
+          "text": "",
+          "severity": "under-24"
+        }
+      ],
+      "roles": [
+        {
+          "sel": "#file-input",
+          "issue": "no accessible name",
+          "text": ""
+        }
+      ],
+      "overflow": {
+        "docWidth": 1280,
+        "viewWidth": 1280,
+        "overflows": false
+      },
+      "focusable": [
+        "#drop-zone",
+        "#file-input",
+        "#clear-all",
+        "#upload-button"
+      ]
+    }
+  },
+  "focus_loss": []
+}

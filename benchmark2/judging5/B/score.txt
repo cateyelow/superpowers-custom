@@ -1,0 +1,27 @@
+REFERENCE_TOTAL: 11
+
+R1 | cand_1: HIT | cand_2: HIT | Enter key never advances the step and gives no feedback (hidden step-2 controls block implicit submission)
+R2 | cand_1: HIT | cand_2: HIT | Card number accepts 10-11 digits despite "12 to 19 digits" hint (pattern counts auto-inserted spaces)
+R3 | cand_1: MISS | cand_2: MISS | Backspace over an auto-inserted space is a no-op - the character is not removed
+R4 | cand_1: HIT | cand_2: HIT | Typing into the middle of the card number jumps the caret to the end of the field
+R5 | cand_1: HIT | cand_2: HIT | Whitespace-only entries satisfy required, review step then shows blank values
+R6 | cand_1: HIT | cand_2: HIT | Review step prints the CVC in clear text although entered in a masked field
+R7 | cand_1: HIT | cand_2: HIT | Button focus ring is near-invisible (1.35:1) - keyboard user cannot see focus
+R8 | cand_1: HIT | cand_2: HIT | Placeholder text in payment fields is 2.58:1, below 4.5:1
+R9 | cand_1: MISS | cand_2: HIT | Control boundaries fail non-text contrast: inputs, country select and Back button borders at 1.47:1
+R10 | cand_1: MISS | cand_2: MISS | Expiry date in the past is accepted and the order is placed with it
+R11 | cand_1: MISS | cand_2: MISS | Rejected payment fields only give generic "Please match the requested format."; no format stated, no aria-invalid / live region
+
+Notes on non-matches:
+- R3: both candidates' DEFECT 5 covers caret displacement on deletion (caret set to 6, backspace deleted a DIGIT and the value did change), which is the R4 root cause applied to deletion. Neither reports the distinct R3 symptom that backspacing over a SPACE leaves the value unchanged; restoring the caret as they propose would not fix it. Not a match.
+- R9: cand_1 explicitly reports only the placeholder colour as a contrast issue and states "Every other text colour on the page measured >= 4.76:1"; it never raises the 1.47:1 non-text border contrast of the inputs/select/Back button. cand_2 DEFECT 9 covers all three surfaces with the 1.47:1 measurement - match.
+
+CAND_1_EXTRAS
+- CONFIRMED_REAL | Step-indicator connector line paints over the "Shipping" and "Payment" labels, making them look struck through | Isolated headless Chromium at file:///.../page.html, 1280x900: li[0] rect x=349 y=177.52 w=188.66; its ::after resolves to top:16px left:34px width:162.66px height:2px background rgb(208,213,221) z-index:0 position:absolute -> box x=383.0-545.66, y=193.52-195.52. The "Shipping" label rect is x=389.0-447.94, y=183.02-204.02 (position:static, z-index:auto), so the 2px bar crosses the full width of the word at mid-height; "Payment" label x=585.66-643.50 vs li[1] ::after box x=579.66-742.33 - same overlap. A positioned pseudo-element with z-index:0 paints above the non-positioned inline text, and the element screenshot of .step-indicator at 1280 and again at 768 shows a grey line running through the middle of both words (visually a strikethrough). Third label "Review" has no ::after (content:none) and is unaffected, matching the report.
+
+CAND_2_EXTRAS
+- CONFIRMED_REAL | Step-indicator connector line paints over the "Shipping" and "Payment" labels, making them look struck through | Identical claim to cand_1's DEFECT 3 and verified by the same measurement/screenshot run described above: ::after box y=193.52-195.52 crossing label boxes y=183.02-204.02 at x=389.0-447.94 ("Shipping") and x=585.66-643.50 ("Payment"); .step-indicator screenshots at 1280 and 768 show the line drawn through both words.
+
+TOTALS
+cand_1: hits=7/11  confirmed_extras=1  false_alarms=0
+cand_2: hits=8/11  confirmed_extras=1  false_alarms=0

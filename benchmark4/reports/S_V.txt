@@ -1,0 +1,49 @@
+DEFECT 1
+what: A corrupt (non-UTF-8) snapshot makes the tool crash with a raw Python traceback instead of reporting what is wrong; `verify`, whose whole job is to detect a damaged snapshot, never gets to run its checks.
+where: snap.py:305 (`read_snapshot`, `raw = handle.read()`); the UnicodeDecodeError is not a ValueError so the `json.loads` guard at snap.py:307-309 misses it, and both callers (`command_verify` snap.py:416-417, `command_diff` snap.py:380-381) catch only OSError.
+repro: $ python -c "open('corrupt.snap','wb').write(b'\xff\xfe{')"
+       $ python E:/GitHub/superpowers-custom/benchmark4/artifacts/S/snap.py verify corrupt.snap
+       Traceback (most recent call last):
+         File "...\snap.py", line 484, in <module>
+           sys.exit(main())
+         File "...\snap.py", line 477, in main
+           return args.func(args)
+         File "...\snap.py", line 416, in command_verify
+           document, problems = read_snapshot(args.snapshot)
+         File "...\snap.py", line 305, in read_snapshot
+           raw = handle.read()
+       UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte
+       exit code 1
+       (`snap.py diff corrupt.snap d` crashes identically. A deeply nested JSON file, `open('deep.json','w').write('['*3000+']'*3000)`, crashes the same call with RecursionError.)
+severity: blocking
+category: robustness
+
+DEFECT 2
+what: `take` walks into Windows directory junctions, so a directory containing a junction to one of its own ancestors is recorded 64 times over: the snapshot is filled with fabricated paths like `loop/loop/loop/f.txt`, and the command can never succeed (always exit 3). `verify` then declares that garbage snapshot intact.
+where: snap.py:151-164 (`Scanner._record`): `item.is_symlink()` is False for a junction on Python 3.8+, so the junction falls through to `item.is_dir(follow_symlinks=False)` at snap.py:162 and is pushed onto the walk stack at snap.py:164. Real symlinks are handled correctly; junctions are not.
+repro: $ mkdir j && printf x > j/f.txt
+       $ cmd /c "mklink /J <abs>\j\loop <abs>\j"
+       Junction created for ...\j\loop <<===>> ...\j
+       $ python E:/GitHub/superpowers-custom/benchmark4/artifacts/S/snap.py take j -o j.snap
+       snap: j/loop/loop/loop/... (64 levels) ...: the system cannot resolve the file name
+       exit code 3
+       $ python -c "import json;d=json.load(open('j.snap'));print(len(d['entries']),[e['path'] for e in d['entries']][:3])"
+       65 ['f.txt', 'loop/f.txt', 'loop/loop/f.txt']
+       $ python E:/GitHub/superpowers-custom/benchmark4/artifacts/S/snap.py verify j.snap
+       snapshot ok: 65 entries, format version 1
+       exit code 0
+severity: blocking
+category: correctness
+
+DEFECT 3
+what: A file that exists but cannot be read is reported on stdout as deleted (`- path`). The report actively states something false about the tree rather than saying the file could not be checked. Symmetrically, `take` silently omits such a file from the snapshot, so a later diff against a readable tree reports it as newly added (`+ path`).
+where: snap.py:183-194 (`Scanner._digest` returns None on OSError) -> snap.py:172-174 (`_record` returns None, so the path is dropped from `entries`) -> snap.py:361 (`compare` sees it only in `old` and emits the "removed" marker).
+repro: $ mkdir u && printf aaa > u/keep.txt && printf bbb > u/locked.txt
+       $ python E:/GitHub/superpowers-custom/benchmark4/artifacts/S/snap.py take u -o u.snap        # exit 0
+       $ icacls <abs>\u\locked.txt /deny "%USERNAME%:(R)"
+       $ python E:/GitHub/superpowers-custom/benchmark4/artifacts/S/snap.py diff u.snap u
+       snap: u/locked.txt: Permission denied          (stderr)
+       - locked.txt                                   (stdout, but the file is still there)
+       exit code 3
+severity: minor
+category: correctness

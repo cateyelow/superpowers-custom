@@ -1,0 +1,957 @@
+{
+  "target": "file:///artifacts/A/upload.html",
+  "states": {
+    "load": {
+      "375": {
+        "contrast": [
+          {
+            "sel": "small",
+            "ratio": 3.6,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": false,
+            "text": "You can select multiple files"
+          },
+          {
+            "sel": "#clear-all",
+            "ratio": 2.06,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": true,
+            "text": "Clear all"
+          },
+          {
+            "sel": "#empty-state",
+            "ratio": 3.76,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": false,
+            "text": "No files selected."
+          },
+          {
+            "sel": "#upload-button",
+            "ratio": 1.98,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": true,
+            "text": "Upload"
+          },
+          {
+            "sel": "#drop-zone",
+            "ratio": 2.27,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "\u2191\n      Drop files here or click to browse\n     "
+          }
+        ],
+        "targets": [
+          {
+            "sel": "#file-input",
+            "w": 1,
+            "h": 1,
+            "severity": "under-24-FAILS-WCAG-2.5.8",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#clear-all",
+            "w": 61.5,
+            "h": 33,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": true,
+            "text": "Clear all"
+          }
+        ],
+        "roles": [
+          {
+            "sel": "#file-input",
+            "tag": "input",
+            "issue": "no accessible name",
+            "text": ""
+          },
+          {
+            "sel": "#file-input",
+            "tag": "input",
+            "issue": "focusable control nested inside another control (#drop-zone)",
+            "text": ""
+          }
+        ],
+        "overflow": {
+          "docWidth": 375,
+          "viewWidth": 375,
+          "overflows": false
+        },
+        "controls": [
+          "#drop-zone",
+          "#file-input",
+          "#clear-all",
+          "#upload-button"
+        ],
+        "clipped": []
+      },
+      "768": {
+        "contrast": [
+          {
+            "sel": "small",
+            "ratio": 3.6,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": false,
+            "text": "You can select multiple files"
+          },
+          {
+            "sel": "#clear-all",
+            "ratio": 2.06,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": true,
+            "text": "Clear all"
+          },
+          {
+            "sel": "#empty-state",
+            "ratio": 3.76,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": false,
+            "text": "No files selected."
+          },
+          {
+            "sel": "#upload-button",
+            "ratio": 1.98,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": true,
+            "text": "Upload"
+          },
+          {
+            "sel": "#drop-zone",
+            "ratio": 2.27,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "\u2191\n      Drop files here or click to browse\n     "
+          }
+        ],
+        "targets": [
+          {
+            "sel": "#file-input",
+            "w": 1,
+            "h": 1,
+            "severity": "under-24-FAILS-WCAG-2.5.8",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#clear-all",
+            "w": 61.5,
+            "h": 33,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": true,
+            "text": "Clear all"
+          }
+        ],
+        "roles": [
+          {
+            "sel": "#file-input",
+            "tag": "input",
+            "issue": "no accessible name",
+            "text": ""
+          },
+          {
+            "sel": "#file-input",
+            "tag": "input",
+            "issue": "focusable control nested inside another control (#drop-zone)",
+            "text": ""
+          }
+        ],
+        "overflow": {
+          "docWidth": 768,
+          "viewWidth": 768,
+          "overflows": false
+        },
+        "controls": [
+          "#drop-zone",
+          "#file-input",
+          "#clear-all",
+          "#upload-button"
+        ],
+        "clipped": []
+      },
+      "1280": {
+        "contrast": [
+          {
+            "sel": "small",
+            "ratio": 3.6,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": false,
+            "text": "You can select multiple files"
+          },
+          {
+            "sel": "#clear-all",
+            "ratio": 2.06,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": true,
+            "text": "Clear all"
+          },
+          {
+            "sel": "#empty-state",
+            "ratio": 3.76,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": false,
+            "text": "No files selected."
+          },
+          {
+            "sel": "#upload-button",
+            "ratio": 1.98,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": true,
+            "text": "Upload"
+          },
+          {
+            "sel": "#drop-zone",
+            "ratio": 2.27,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "\u2191\n      Drop files here or click to browse\n     "
+          }
+        ],
+        "targets": [
+          {
+            "sel": "#file-input",
+            "w": 1,
+            "h": 1,
+            "severity": "under-24-FAILS-WCAG-2.5.8",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#clear-all",
+            "w": 61.5,
+            "h": 33,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": true,
+            "text": "Clear all"
+          }
+        ],
+        "roles": [
+          {
+            "sel": "#file-input",
+            "tag": "input",
+            "issue": "no accessible name",
+            "text": ""
+          },
+          {
+            "sel": "#file-input",
+            "tag": "input",
+            "issue": "focusable control nested inside another control (#drop-zone)",
+            "text": ""
+          }
+        ],
+        "overflow": {
+          "docWidth": 1280,
+          "viewWidth": 1280,
+          "overflows": false
+        },
+        "controls": [
+          "#drop-zone",
+          "#file-input",
+          "#clear-all",
+          "#upload-button"
+        ],
+        "clipped": []
+      },
+      "pseudo": [
+        {
+          "selector": ".clear-button:disabled",
+          "prop": "color",
+          "declared": "rgb(174, 181, 194)",
+          "resolved": "rgb(174, 181, 194)",
+          "ratio": 2.06,
+          "need": 4.5,
+          "sample": "#clear-all",
+          "count": 1,
+          "note": "disabled label \u2014 WCAG-exempt but often unreadable"
+        },
+        {
+          "selector": ".upload-button:hover:not(:disabled)",
+          "prop": "box-shadow",
+          "declared": "rgba(64, 95, 216, 0.28) 0px 10px 22px",
+          "resolved": "rgba(64, 95, 216, 0.28) 0px 10px 22px",
+          "composited": "rgb(202,210,244)",
+          "ratio": 1.5,
+          "need": 3,
+          "sample": "#upload-button",
+          "count": 1,
+          "note": "non-text contrast of the :hover indicator"
+        },
+        {
+          "selector": ".upload-button:focus-visible",
+          "prop": "outline",
+          "declared": "rgba(64, 95, 216, 0.28) solid 3px",
+          "resolved": "rgba(64, 95, 216, 0.28) solid 3px",
+          "composited": "rgb(202,210,244)",
+          "ratio": 1.5,
+          "need": 3,
+          "sample": "#upload-button",
+          "count": 1,
+          "note": "non-text contrast of the :focus-visible indicator"
+        },
+        {
+          "selector": ".upload-button:focus-visible",
+          "prop": "outline-color",
+          "declared": "rgba(64, 95, 216, 0.28)",
+          "resolved": "rgba(64, 95, 216, 0.28)",
+          "composited": "rgb(202,210,244)",
+          "ratio": 1.5,
+          "need": 3,
+          "sample": "#upload-button",
+          "count": 1,
+          "note": "non-text contrast of the :focus-visible indicator"
+        },
+        {
+          "selector": ".clear-button:focus-visible",
+          "prop": "outline",
+          "declared": "rgba(64, 95, 216, 0.28) solid 3px",
+          "resolved": "rgba(64, 95, 216, 0.28) solid 3px",
+          "composited": "rgb(202,210,244)",
+          "ratio": 1.5,
+          "need": 3,
+          "sample": "#clear-all",
+          "count": 1,
+          "note": "non-text contrast of the :focus-visible indicator"
+        },
+        {
+          "selector": ".clear-button:focus-visible",
+          "prop": "outline-color",
+          "declared": "rgba(64, 95, 216, 0.28)",
+          "resolved": "rgba(64, 95, 216, 0.28)",
+          "composited": "rgb(202,210,244)",
+          "ratio": 1.5,
+          "need": 3,
+          "sample": "#clear-all",
+          "count": 1,
+          "note": "non-text contrast of the :focus-visible indicator"
+        }
+      ]
+    },
+    "files-selected": {
+      "375": {
+        "contrast": [
+          {
+            "sel": "small",
+            "ratio": 3.6,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": false,
+            "text": "You can select multiple files"
+          },
+          {
+            "sel": "span",
+            "ratio": 3.98,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": false,
+            "text": "2.8 KB"
+          },
+          {
+            "sel": "span.file-status",
+            "ratio": 3.98,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": false,
+            "text": "Ready"
+          },
+          {
+            "sel": "#drop-zone",
+            "ratio": 2.27,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "\u2191\n      Drop files here or click to browse\n     "
+          }
+        ],
+        "targets": [
+          {
+            "sel": "#file-input",
+            "w": 1,
+            "h": 1,
+            "severity": "under-24-FAILS-WCAG-2.5.8",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#clear-all",
+            "w": 61.5,
+            "h": 33,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": false,
+            "text": "Clear all"
+          },
+          {
+            "sel": "button.remove-button",
+            "w": 61.1,
+            "h": 22,
+            "severity": "under-24-FAILS-WCAG-2.5.8",
+            "disabled": false,
+            "text": "Remove"
+          }
+        ],
+        "roles": [
+          {
+            "sel": "#file-input",
+            "tag": "input",
+            "issue": "no accessible name",
+            "text": ""
+          },
+          {
+            "sel": "#file-input",
+            "tag": "input",
+            "issue": "focusable control nested inside another control (#drop-zone)",
+            "text": ""
+          }
+        ],
+        "overflow": {
+          "docWidth": 375,
+          "viewWidth": 375,
+          "overflows": false
+        },
+        "controls": [
+          "#drop-zone",
+          "#file-input",
+          "#clear-all",
+          "button.remove-button",
+          "button.remove-button",
+          "#upload-button"
+        ],
+        "clipped": []
+      },
+      "768": {
+        "contrast": [
+          {
+            "sel": "small",
+            "ratio": 3.6,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": false,
+            "text": "You can select multiple files"
+          },
+          {
+            "sel": "span",
+            "ratio": 3.98,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": false,
+            "text": "2.8 KB"
+          },
+          {
+            "sel": "span.file-status",
+            "ratio": 3.98,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": false,
+            "text": "Ready"
+          },
+          {
+            "sel": "#drop-zone",
+            "ratio": 2.27,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "\u2191\n      Drop files here or click to browse\n     "
+          }
+        ],
+        "targets": [
+          {
+            "sel": "#file-input",
+            "w": 1,
+            "h": 1,
+            "severity": "under-24-FAILS-WCAG-2.5.8",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#clear-all",
+            "w": 61.5,
+            "h": 33,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": false,
+            "text": "Clear all"
+          },
+          {
+            "sel": "button.remove-button",
+            "w": 61.1,
+            "h": 22,
+            "severity": "under-24-FAILS-WCAG-2.5.8",
+            "disabled": false,
+            "text": "Remove"
+          }
+        ],
+        "roles": [
+          {
+            "sel": "#file-input",
+            "tag": "input",
+            "issue": "no accessible name",
+            "text": ""
+          },
+          {
+            "sel": "#file-input",
+            "tag": "input",
+            "issue": "focusable control nested inside another control (#drop-zone)",
+            "text": ""
+          }
+        ],
+        "overflow": {
+          "docWidth": 768,
+          "viewWidth": 768,
+          "overflows": false
+        },
+        "controls": [
+          "#drop-zone",
+          "#file-input",
+          "#clear-all",
+          "button.remove-button",
+          "button.remove-button",
+          "#upload-button"
+        ],
+        "clipped": []
+      },
+      "1280": {
+        "contrast": [
+          {
+            "sel": "small",
+            "ratio": 3.6,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": false,
+            "text": "You can select multiple files"
+          },
+          {
+            "sel": "span",
+            "ratio": 3.98,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": false,
+            "text": "2.8 KB"
+          },
+          {
+            "sel": "span.file-status",
+            "ratio": 3.98,
+            "need": 4.5,
+            "kind": "text",
+            "disabled": false,
+            "text": "Ready"
+          },
+          {
+            "sel": "#drop-zone",
+            "ratio": 2.27,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "\u2191\n      Drop files here or click to browse\n     "
+          }
+        ],
+        "targets": [
+          {
+            "sel": "#file-input",
+            "w": 1,
+            "h": 1,
+            "severity": "under-24-FAILS-WCAG-2.5.8",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#clear-all",
+            "w": 61.5,
+            "h": 33,
+            "severity": "under-44-below-touch-guidance",
+            "disabled": false,
+            "text": "Clear all"
+          },
+          {
+            "sel": "button.remove-button",
+            "w": 61.1,
+            "h": 22,
+            "severity": "under-24-FAILS-WCAG-2.5.8",
+            "disabled": false,
+            "text": "Remove"
+          }
+        ],
+        "roles": [
+          {
+            "sel": "#file-input",
+            "tag": "input",
+            "issue": "no accessible name",
+            "text": ""
+          },
+          {
+            "sel": "#file-input",
+            "tag": "input",
+            "issue": "focusable control nested inside another control (#drop-zone)",
+            "text": ""
+          }
+        ],
+        "overflow": {
+          "docWidth": 1280,
+          "viewWidth": 1280,
+          "overflows": false
+        },
+        "controls": [
+          "#drop-zone",
+          "#file-input",
+          "#clear-all",
+          "button.remove-button",
+          "button.remove-button",
+          "#upload-button"
+        ],
+        "clipped": []
+      },
+      "pseudo": [
+        {
+          "selector": ".clear-button:disabled",
+          "prop": "color",
+          "declared": "rgb(174, 181, 194)",
+          "resolved": "rgb(174, 181, 194)",
+          "ratio": 2.06,
+          "need": 4.5,
+          "sample": "#clear-all",
+          "count": 1,
+          "note": "disabled label \u2014 WCAG-exempt but often unreadable"
+        },
+        {
+          "selector": ".upload-button:hover:not(:disabled)",
+          "prop": "box-shadow",
+          "declared": "rgba(64, 95, 216, 0.28) 0px 10px 22px",
+          "resolved": "rgba(64, 95, 216, 0.28) 0px 10px 22px",
+          "composited": "rgb(202,210,244)",
+          "ratio": 1.5,
+          "need": 3,
+          "sample": "#upload-button",
+          "count": 1,
+          "note": "non-text contrast of the :hover indicator"
+        },
+        {
+          "selector": ".upload-button:focus-visible",
+          "prop": "outline",
+          "declared": "rgba(64, 95, 216, 0.28) solid 3px",
+          "resolved": "rgba(64, 95, 216, 0.28) solid 3px",
+          "composited": "rgb(202,210,244)",
+          "ratio": 1.5,
+          "need": 3,
+          "sample": "#upload-button",
+          "count": 1,
+          "note": "non-text contrast of the :focus-visible indicator"
+        },
+        {
+          "selector": ".upload-button:focus-visible",
+          "prop": "outline-color",
+          "declared": "rgba(64, 95, 216, 0.28)",
+          "resolved": "rgba(64, 95, 216, 0.28)",
+          "composited": "rgb(202,210,244)",
+          "ratio": 1.5,
+          "need": 3,
+          "sample": "#upload-button",
+          "count": 1,
+          "note": "non-text contrast of the :focus-visible indicator"
+        },
+        {
+          "selector": ".clear-button:focus-visible",
+          "prop": "outline",
+          "declared": "rgba(64, 95, 216, 0.28) solid 3px",
+          "resolved": "rgba(64, 95, 216, 0.28) solid 3px",
+          "composited": "rgb(202,210,244)",
+          "ratio": 1.5,
+          "need": 3,
+          "sample": "#clear-all",
+          "count": 1,
+          "note": "non-text contrast of the :focus-visible indicator"
+        },
+        {
+          "selector": ".clear-button:focus-visible",
+          "prop": "outline-color",
+          "declared": "rgba(64, 95, 216, 0.28)",
+          "resolved": "rgba(64, 95, 216, 0.28)",
+          "composited": "rgb(202,210,244)",
+          "ratio": 1.5,
+          "need": 3,
+          "sample": "#clear-all",
+          "count": 1,
+          "note": "non-text contrast of the :focus-visible indicator"
+        },
+        {
+          "selector": ".remove-button:focus-visible",
+          "prop": "outline",
+          "declared": "rgba(64, 95, 216, 0.28) solid 3px",
+          "resolved": "rgba(64, 95, 216, 0.28) solid 3px",
+          "composited": "rgb(199,208,243)",
+          "ratio": 1.49,
+          "need": 3,
+          "sample": "button.remove-button",
+          "count": 2,
+          "note": "non-text contrast of the :focus-visible indicator"
+        },
+        {
+          "selector": ".remove-button:focus-visible",
+          "prop": "outline-color",
+          "declared": "rgba(64, 95, 216, 0.28)",
+          "resolved": "rgba(64, 95, 216, 0.28)",
+          "composited": "rgb(199,208,243)",
+          "ratio": 1.49,
+          "need": 3,
+          "sample": "button.remove-button",
+          "count": 2,
+          "note": "non-text contrast of the :focus-visible indicator"
+        }
+      ]
+    }
+  },
+  "notes": [
+    "selected 2 files"
+  ],
+  "findings": [
+    {
+      "type": "contrast",
+      "state": "load",
+      "viewport": "375",
+      "sel": "small",
+      "ratio": 3.6,
+      "need": 4.5,
+      "kind": "text",
+      "disabled": false,
+      "text": "You can select multiple files"
+    },
+    {
+      "type": "contrast",
+      "state": "load",
+      "viewport": "375",
+      "sel": "#clear-all",
+      "ratio": 2.06,
+      "need": 4.5,
+      "kind": "text",
+      "disabled": true,
+      "text": "Clear all"
+    },
+    {
+      "type": "contrast",
+      "state": "load",
+      "viewport": "375",
+      "sel": "#empty-state",
+      "ratio": 3.76,
+      "need": 4.5,
+      "kind": "text",
+      "disabled": false,
+      "text": "No files selected."
+    },
+    {
+      "type": "contrast",
+      "state": "load",
+      "viewport": "375",
+      "sel": "#upload-button",
+      "ratio": 1.98,
+      "need": 4.5,
+      "kind": "text",
+      "disabled": true,
+      "text": "Upload"
+    },
+    {
+      "type": "contrast",
+      "state": "load",
+      "viewport": "375",
+      "sel": "#drop-zone",
+      "ratio": 2.27,
+      "need": 3,
+      "kind": "boundary",
+      "disabled": false,
+      "text": "\u2191\n      Drop files here or click to browse\n     "
+    },
+    {
+      "type": "touch-target",
+      "state": "load",
+      "viewport": "375",
+      "sel": "#file-input",
+      "w": 1,
+      "h": 1,
+      "severity": "under-24-FAILS-WCAG-2.5.8",
+      "disabled": false,
+      "text": ""
+    },
+    {
+      "type": "touch-target",
+      "state": "load",
+      "viewport": "375",
+      "sel": "#clear-all",
+      "w": 61.5,
+      "h": 33,
+      "severity": "under-44-below-touch-guidance",
+      "disabled": true,
+      "text": "Clear all"
+    },
+    {
+      "type": "name-role",
+      "state": "load",
+      "viewport": "375",
+      "sel": "#file-input",
+      "tag": "input",
+      "issue": "no accessible name",
+      "text": ""
+    },
+    {
+      "type": "name-role",
+      "state": "load",
+      "viewport": "375",
+      "sel": "#file-input",
+      "tag": "input",
+      "issue": "focusable control nested inside another control (#drop-zone)",
+      "text": ""
+    },
+    {
+      "type": "contrast-state",
+      "state": "load",
+      "selector": ".clear-button:disabled",
+      "prop": "color",
+      "declared": "rgb(174, 181, 194)",
+      "resolved": "rgb(174, 181, 194)",
+      "ratio": 2.06,
+      "need": 4.5,
+      "sample": "#clear-all",
+      "count": 1,
+      "note": "disabled label \u2014 WCAG-exempt but often unreadable"
+    },
+    {
+      "type": "contrast-state",
+      "state": "load",
+      "selector": ".upload-button:hover:not(:disabled)",
+      "prop": "box-shadow",
+      "declared": "rgba(64, 95, 216, 0.28) 0px 10px 22px",
+      "resolved": "rgba(64, 95, 216, 0.28) 0px 10px 22px",
+      "composited": "rgb(202,210,244)",
+      "ratio": 1.5,
+      "need": 3,
+      "sample": "#upload-button",
+      "count": 1,
+      "note": "non-text contrast of the :hover indicator"
+    },
+    {
+      "type": "contrast-state",
+      "state": "load",
+      "selector": ".upload-button:focus-visible",
+      "prop": "outline",
+      "declared": "rgba(64, 95, 216, 0.28) solid 3px",
+      "resolved": "rgba(64, 95, 216, 0.28) solid 3px",
+      "composited": "rgb(202,210,244)",
+      "ratio": 1.5,
+      "need": 3,
+      "sample": "#upload-button",
+      "count": 1,
+      "note": "non-text contrast of the :focus-visible indicator"
+    },
+    {
+      "type": "contrast-state",
+      "state": "load",
+      "selector": ".upload-button:focus-visible",
+      "prop": "outline-color",
+      "declared": "rgba(64, 95, 216, 0.28)",
+      "resolved": "rgba(64, 95, 216, 0.28)",
+      "composited": "rgb(202,210,244)",
+      "ratio": 1.5,
+      "need": 3,
+      "sample": "#upload-button",
+      "count": 1,
+      "note": "non-text contrast of the :focus-visible indicator"
+    },
+    {
+      "type": "contrast-state",
+      "state": "load",
+      "selector": ".clear-button:focus-visible",
+      "prop": "outline",
+      "declared": "rgba(64, 95, 216, 0.28) solid 3px",
+      "resolved": "rgba(64, 95, 216, 0.28) solid 3px",
+      "composited": "rgb(202,210,244)",
+      "ratio": 1.5,
+      "need": 3,
+      "sample": "#clear-all",
+      "count": 1,
+      "note": "non-text contrast of the :focus-visible indicator"
+    },
+    {
+      "type": "contrast-state",
+      "state": "load",
+      "selector": ".clear-button:focus-visible",
+      "prop": "outline-color",
+      "declared": "rgba(64, 95, 216, 0.28)",
+      "resolved": "rgba(64, 95, 216, 0.28)",
+      "composited": "rgb(202,210,244)",
+      "ratio": 1.5,
+      "need": 3,
+      "sample": "#clear-all",
+      "count": 1,
+      "note": "non-text contrast of the :focus-visible indicator"
+    },
+    {
+      "type": "contrast",
+      "state": "files-selected",
+      "viewport": "375",
+      "sel": "span",
+      "ratio": 3.98,
+      "need": 4.5,
+      "kind": "text",
+      "disabled": false,
+      "text": "2.8 KB"
+    },
+    {
+      "type": "contrast",
+      "state": "files-selected",
+      "viewport": "375",
+      "sel": "span.file-status",
+      "ratio": 3.98,
+      "need": 4.5,
+      "kind": "text",
+      "disabled": false,
+      "text": "Ready"
+    },
+    {
+      "type": "touch-target",
+      "state": "files-selected",
+      "viewport": "375",
+      "sel": "button.remove-button",
+      "w": 61.1,
+      "h": 22,
+      "severity": "under-24-FAILS-WCAG-2.5.8",
+      "disabled": false,
+      "text": "Remove"
+    },
+    {
+      "type": "contrast-state",
+      "state": "files-selected",
+      "selector": ".remove-button:focus-visible",
+      "prop": "outline",
+      "declared": "rgba(64, 95, 216, 0.28) solid 3px",
+      "resolved": "rgba(64, 95, 216, 0.28) solid 3px",
+      "composited": "rgb(199,208,243)",
+      "ratio": 1.49,
+      "need": 3,
+      "sample": "button.remove-button",
+      "count": 2,
+      "note": "non-text contrast of the :focus-visible indicator"
+    },
+    {
+      "type": "contrast-state",
+      "state": "files-selected",
+      "selector": ".remove-button:focus-visible",
+      "prop": "outline-color",
+      "declared": "rgba(64, 95, 216, 0.28)",
+      "resolved": "rgba(64, 95, 216, 0.28)",
+      "composited": "rgb(199,208,243)",
+      "ratio": 1.49,
+      "need": 3,
+      "sample": "button.remove-button",
+      "count": 2,
+      "note": "non-text contrast of the :focus-visible indicator"
+    }
+  ]
+}

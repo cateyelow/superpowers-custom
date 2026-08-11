@@ -1,0 +1,65 @@
+DEFECT 1
+what: A malformed JSON body makes POST /reservations return 500 "internal_error" instead of the 400 the spec requires ("A malformed or non-JSON body is 400, never a 500").
+where: app.py:228-230 (parse_json_object) - json.loads() is guarded by `except json.JSONDecodeError` only, so any other exception the decoder raises escapes to the catch-all at app.py:507-509 and becomes a 500. Endpoint: POST /reservations.
+repro: Two triggers on a freshly seeded DB (PORT=8901 DB=/tmp/audit_8901.db python app.py).
+  (a) deeply nested JSON -> RecursionError
+      $ python -c "open('nested.json','w').write('['*100000 + ']'*100000)"
+      $ curl -s -i -X POST http://127.0.0.1:8901/reservations --data-binary @nested.json
+      HTTP/1.1 500 Internal Server Error
+      {"error": {"code": "internal_error", "message": "An unexpected error occurred."}}
+      server stderr: unhandled error: RecursionError('maximum recursion depth exceeded while decoding a JSON array from a unicode string')
+      (a 100-deep body is fine and returns 400; the 500 starts at ~1000 deep)
+  (b) an integer literal longer than sys.get_int_max_str_digits() (4300) -> ValueError
+      $ python -c "open('bigint.json','w').write('{\"sku\":\"WIDGET-1\",\"qty\":' + '1'*5000 + '}')"
+      $ curl -s -i -X POST http://127.0.0.1:8901/reservations --data-binary @bigint.json
+      HTTP/1.1 500 Internal Server Error
+      {"error": {"code": "internal_error", "message": "An unexpected error occurred."}}
+      server stderr: unhandled error: ValueError('Exceeds the limit (4300 digits) for integer string conversion: value has 5000 digits')
+severity: blocking
+category: spec
+
+DEFECT 2
+what: A JSON body whose "sku" string contains an unpaired UTF-16 surrogate escape returns 500 - the value is accepted by validation and only blows up when SQLite tries to encode it.
+where: app.py:239-241 (parse_reservation_request accepts any non-empty str) then app.py:281-283 (create_reservation binds it into the SELECT), raising UnicodeEncodeError which lands in the catch-all at app.py:507-509. Endpoint: POST /reservations.
+repro: $ curl -s -i -X POST http://127.0.0.1:8901/reservations -H 'Content-Type: application/json' -d '{"sku":"\ud800","qty":1}'
+      HTTP/1.1 500 Internal Server Error
+      Content-Type: application/json; charset=utf-8
+      {"error": {"code": "internal_error", "message": "An unexpected error occurred."}}
+      server stderr: unhandled error: UnicodeEncodeError('utf-8', '\ud800', 0, 1, 'surrogates not allowed')
+      Same 500 for '{"sku":"\udc00","qty":1}' and '{"sku":"WIDGET-1\udfff","qty":1}'; a correctly paired escape ('{"sku":"😀","qty":1}') correctly returns 404. The body is well-formed JSON that json.loads accepts, so this is a validation gap, not a parse failure. State is not corrupted (the SELECT raises before any UPDATE), but the client gets a 5xx.
+severity: blocking
+category: validation
+
+DEFECT 3
+what: For a request line the stdlib rejects before it records the HTTP version, the error "response" is written with no status line and no headers at all - just a bare JSON body - so the client never receives the 4xx/5xx status the spec requires on every error response.
+where: app.py:471-486 (send_error override) -> app.py:453-466 (_send_json -> self.send_response). When http.server's parse_request() fails early, self.request_version is still 'HTTP/0.9', and send_response_only()/end_headers() emit nothing in that state, so only the JSON body is written to the socket.
+repro: Raw sockets to 127.0.0.1:8901, full bytes on the wire.
+      REQUEST : b'GARBAGE\r\n\r\n'
+      RESPONSE: b'{\n  "error": {\n    "code": "bad_request",\n    "message": "Bad request syntax (\'GARBAGE\')"\n  }\n}\n'
+      REQUEST : b'PRI * HTTP/2.0\r\n\r\n'
+      RESPONSE: b'{\n  "error": {\n    "code": "http_version_not_supported",\n    "message": "Invalid HTTP version (2.0)"\n  }\n}\n'
+      REQUEST : b'GET /items HTTP/9.9\r\nHost: x\r\n\r\n'
+      RESPONSE: b'{\n  "error": {\n    "code": "http_version_not_supported",\n    "message": "Invalid HTTP version (9.9)"\n  }\n}\n'
+      Control - a request line that fails validation *after* the version is parsed does emit a status line:
+      REQUEST : b'GET /it ems HTTP/1.1\r\nHost: x\r\n\r\n'
+      RESPONSE: b'HTTP/1.1 400 Bad Request\r\nServer: InventoryReservation/1.0 Python/3.11.9\r\n...Content-Length: 109\r\n\r\n{...}'
+      The service's own log confirms it believes it sent a status ("GARBAGE" 400 -, "PRI * HTTP/2.0" 505 -) that never reached the wire.
+severity: minor
+category: error-shape
+
+DEFECT 4
+what: The service sets no read timeout anywhere, so a client that opens a connection and stalls (or promises a body it never sends) pins one server thread forever; a single client can grow the thread count without bound at no cost to itself.
+where: app.py:420 (InventoryHandler defines no `timeout` attribute, so BaseHTTPRequestHandler.timeout stays None) and app.py:447 (self.rfile.read(length) in _read_body blocks indefinitely); app.py:539-540 (ThreadingHTTPServer with daemon_threads and no connection/thread cap).
+repro: Send only the headers of a POST and never the body, then wait.
+      >>> s = socket.create_connection(("127.0.0.1", 8901)); s.settimeout(40)
+      >>> s.sendall(b"POST /reservations HTTP/1.1\r\nHost: x\r\nContent-Length: 100\r\n\r\n")
+      >>> s.recv(200)
+      socket.timeout  -> NO response, NO close after 40s (a plain GET on another connection still returns HTTP/1.1 200 OK, so the process is alive and that one thread is simply parked in rfile.read). A connection on which nothing at all is sent behaves the same way.
+      Scaling it, measured against the server process with Get-Process:
+      conns=250   server threads=251   GET /items -> HTTP/1.1 200 OK
+      conns=500   server threads=501   GET /items -> HTTP/1.1 200 OK
+      conns=1000  server threads=1001  GET /items -> HTTP/1.1 200 OK
+      conns=1750  server threads=1751  GET /items -> HTTP/1.1 200 OK
+      Threads track half-open connections 1:1 and are never reclaimed while the client holds the socket. The service kept answering at 1751 threads, so this is unbounded resource growth rather than an observed outage.
+severity: minor
+category: robustness

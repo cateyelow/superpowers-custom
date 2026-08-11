@@ -1,0 +1,83 @@
+DEFECT 1
+what: Keyboard focus on the Next / Back / Place order buttons is all but invisible — the focus ring measures 1.35:1 against the card behind it, so a keyboard user cannot tell which button is focused.
+where: checkout.html:207-210 `button:focus-visible { outline: 3px solid var(--focus) }`, with `--focus: rgba(49, 87, 213, 0.2)` at checkout.html:18
+repro: Clicked #postal-code, pressed Tab twice to land on the step-1 "Next" button (activeElement.matches(':focus-visible') === true). Computed outlineColor = rgba(49,87,213,0.2), outlineWidth 3px, outlineOffset 2px; composited over the card background rgb(255,255,255) that is rgb(213.8,221.4,246.6) = 1.35:1, versus the 3:1 minimum for a focus indicator. Same measurement on the step-2 "Back" button. Focused inputs by comparison get border-color rgb(49,87,213) = 6.08:1 plus a 4px halo, so the buttons are the only controls with no perceivable focus state (screenshots of the focused button vs focused input confirm it).
+severity: minor
+category: a11y
+
+DEFECT 2
+what: Pressing Enter in a text field never advances the form and produces no feedback of any kind — the form appears dead to that key.
+where: checkout.html:628-641 (submit handler returns early when currentStep !== 2) combined with the `required` inputs inside the hidden steps
+repro: Filled every step-1 field, focused #postal-code, pressed Enter: still on step 1, no visible message, and the console logged 4 errors — "An invalid form control with name='cardholderName' is not focusable" plus the same for cardNumber, expiry, cvc. Repeated on step 2 after filling every field (verified all 9 inputs/selects checkValidity() === true): pressed Enter, still on step 2, confirmation stayed hidden, nothing logged. Clicking the Next button in the same state works.
+severity: minor
+category: a11y
+
+DEFECT 3
+what: The step-indicator connector line is painted on top of the step labels, so "Shipping" and "Payment" look struck through.
+where: checkout.html:87-96 `.step-indicator li:not(:last-child)::after` (position:absolute; top:16px; left:34px; width:calc(100% - 26px); z-index:0) overlapping `.step-label`
+repro: At 1280x900 the ::after box resolves to x=383.0-545.7, y=193.5-195.5 while the "Shipping" label box is x=389.0-447.9, y=183.0-204.0 — a 58.9px x 2.0px overlap; the "Payment" label overlaps by 57.8px x 2.0px. Because the pseudo-element is positioned with z-index:0 it paints above the label text. Screenshot of `.step-indicator` at 1280 shows a line running through the middle of both words, and the same at 768. Not present at 375 where `.step-label` is clipped to 1x1.
+severity: minor
+category: responsive
+
+DEFECT 4
+what: Placeholder text in the payment fields is too faint to read reliably (2.58:1).
+where: checkout.html:170-172 `input::placeholder { color: #98a2b3 }` — affects #card-number ("1234 5678 9012 3456"), #expiry ("MM/YY"), #cvc ("123")
+repro: getComputedStyle(document.querySelector('#card-number'), '::placeholder').color = rgb(152,162,179) on the input background rgb(255,255,255), font-size 16px, weight 400 → measured contrast 2.58:1, below the 4.5:1 AA threshold for normal-size text. Every other text colour on the page measured >= 4.76:1.
+severity: minor
+category: contrast
+
+DEFECT 5
+what: Editing the middle of the card number jumps the caret to the end of the field, so the following keystroke lands in the wrong position.
+where: checkout.html:614-617 `cardNumber.addEventListener("input", ...)` reassigns cardNumber.value without restoring the selection; element #card-number
+repro: Typed 4111111111111111 → "4111 1111 1111 1111". Then setSelectionRange(2,2) and typed "9": value became "4191 1111 1111 1111 1" and selectionStart jumped from 3 to 21 (end of value). Same with deletion: caret set to 6, pressed Backspace → value "4111 1111 1111 111" and selectionStart = 18 (end) instead of 5.
+severity: minor
+category: state
+
+DEFECT 6
+what: The card number field accepts a 10-digit number even though the hint directly beneath it says "12 to 19 digits", and the review step then presents it as a normal masked card.
+where: checkout.html:412 `pattern="[0-9 ]{12,23}"` on #card-number vs the hint text at checkout.html:413
+repro: Typed 1234567890 into #card-number → field shows "1234 5678 90", which is 12 characters only because the formatter inserted 2 spaces; document.getElementById('card-number').checkValidity() returned true. Clicking Next advanced to step 3, where the summary rendered "•••• ••78 90". The pattern counts the auto-inserted spaces, so anything from 10 digits upward satisfies it.
+severity: minor
+category: logic
+
+DEFECT 7
+what: A name and address typed as spaces only pass validation, and the review step then shows both fields completely blank while the order can still be placed.
+where: checkout.html:362 and 367 (`required` on #full-name / #address) with the `.trim()` in updateSummary(), checkout.html:590-591; rendered into dd#summary-full-name / dd#summary-address
+repro: Entered "   " (three spaces) in Full name and in Address line, with a real city, postal code and country; clicked Next → advanced to step 2 with no complaint. Completed payment and clicked Next → step 3 summary shows the FULL NAME and ADDRESS LINE labels with empty values (verified textContent === '' for both, and captured in a screenshot of `.summary`). "Place order" then produced a confirmation with an order number for an order that has no name or address.
+severity: minor
+category: logic
+
+DEFECT 8
+what: The CVC is printed in clear text on the review step even though the field masks it while the user types it.
+where: dd#summary-cvc at checkout.html:481, populated at checkout.html:598; the source input #cvc is type="password" (checkout.html:423)
+repro: Entered 123 into the CVC field (rendered as dots, get_attribute('#cvc','type') === 'password'), clicked Next → the Payment panel of the review step displays "CVC 123" as readable text (textContent === '123'), confirmed in screenshots at both 1280 and 375. The card number immediately above it is masked to "•••• •••• •••• 1111", so the same screen hides the card but exposes the security code.
+severity: minor
+category: spec
+
+DEFECT 9
+what: Every text field and the country select is a white box on a white card whose only boundary is a 1.47:1 hairline, so at a glance the form reads as a list of labels with no visible input areas.
+where: checkout.html:158-168 `input, select { border: 1px solid var(--border); background: #fff }` with `--border: #d0d5dd` (checkout.html:14), inside `.checkout-card` whose background is `var(--surface)` = #ffffff (checkout.html:13, 40-42)
+repro: Isolated headless Chromium at 1280x900, resting state, no focus/hover. getComputedStyle on all four sides of #full-name returned borderColor rgb(208,213,221), borderWidth 1px, borderStyle solid, backgroundColor rgb(255,255,255), boxShadow 'none', outlineStyle 'none'; the nearest painted ancestor background is MAIN.checkout-card rgb(255,255,255). Computed contrast border vs both the field fill and the card behind it = 1.47:1, against the 3:1 WCAG 1.4.11 minimum for the boundary of a control. Identical measurement on #address, #city, #postal-code and #country on step 1, and on #cardholder-name, #card-number, #expiry and #cvc after advancing to step 2 (nine controls, all 1.47:1); unchanged at 375px width (field 293x48, border still rgb(208,213,221)). Screenshot of the step-1 form shows the field outlines as faint grey ghosts. The same token also draws the secondary "Back" button (white fill on the white card, border 1.47:1). This is the resting state, not the focused one: after the 140ms transition settles a focused input does turn its border rgb(49,87,213) = 6.08:1, which is why I am not reporting the faint 4px focus halo.
+severity: minor
+category: contrast
+
+DEFECT 10
+what: An expiry date that has already passed — or that never existed — is accepted, and the order is placed against an expired card with no warning.
+where: checkout.html:418 `pattern="(0[1-9]|1[0-2])\/[0-9]{2}"` on #expiry; the pattern constrains the shape only and nothing in the script (checkout.html:619-622 formats, checkout.html:569-580 validates) ever compares the value to the current date
+repro: Filled step 1, advanced, typed 0120 into #expiry → field shows "01/20" (January 2020, more than six years before today's date of 2026-08-11). document.getElementById('expiry').checkValidity() returned true with validity.patternMismatch false and validationMessage ''. Clicked Next: step 3 opened and dd#summary-expiry read "01/20"; clicked "Place order" and got a confirmation with order number ORD-MSOOXBX9-Y5WB. Repeated the same typed-in sequence for 01/00, 01/25 and 01/99 — checkValidity() true for all four, so any two-digit year at all is accepted while the month alone is range-checked.
+severity: minor
+category: logic
+
+DEFECT 11
+what: In the card number field, Backspace pressed immediately after one of the auto-inserted group separators deletes nothing at all — the key looks broken, and the caret is dumped at the end of the field so the next Backspace destroys the last digit instead of the intended one.
+where: checkout.html:614-617 `cardNumber.addEventListener("input", ...)` — it strips non-digits and re-inserts the separator the keystroke just removed, then reassigns cardNumber.value; element #card-number
+repro: Typed 4111111111111111 into #card-number → "4111 1111 1111 1111" (length 19). Placed the caret just after a separator with setSelectionRange(5,5) and pressed Backspace: value was still "4111 1111 1111 1111" (unchanged, verified by string comparison) and selectionStart went 5 → 19. Identical no-op at the other two separator boundaries, offsets 10 and 15 (value unchanged, caret 19 both times). Control at a non-boundary position: caret 6, Backspace → value "4111 1111 1111 111", so deletion does work everywhere else. Pressing Backspace a second time after the no-op at offset 5 removed the LAST digit ("4111 1111 1111 111"), four groups away from where the user was working.
+severity: minor
+category: state
+
+DEFECT 12
+what: When a field is rejected the page exposes no error state a screen reader or a returning user can find — no aria-invalid, no live region, no error text, and no error styling; the only signal is the browser's own bubble, which vanishes.
+where: no `aria-invalid` is ever set and no `[aria-live]` / `[role=alert]` / `[role=status]` element exists in checkout.html; validateCurrentStep() at checkout.html:569-580 relies entirely on `control.reportValidity()`, and the stylesheet (checkout.html:157-179) has no `:invalid` or `[aria-invalid]` rule
+repro: Loaded the page and clicked "Next" with step 1 empty. It stayed on step 1 and all five controls were invalid (#full-name, #address, #city, #postal-code: "Please fill out this field."; #country: "Please select an item in the list."). document.querySelectorAll('[aria-invalid]').length === 0 and '[aria-live],[role=alert],[role=status]'.length === 0, before and after the click; the innerHTML of the step-1 section was byte-identical before and after the rejection. The rejected #full-name got only the ordinary focus styling — border rgb(49,87,213) and the same 4px halo any valid focused field gets — so it is visually indistinguishable from a field the user simply tabbed into. Waited 6s for the native bubble to time out and re-checked: still zero aria-invalid, zero live regions, and document.body.innerText matched no /fill out|invalid|error|required/i. Same result on step 2 with genuinely malformed values (card "411", expiry "13/99", cvc "12" — all three checkValidity() false, "Please match the requested format."): zero aria-invalid, zero live regions.
+severity: minor
+category: a11y

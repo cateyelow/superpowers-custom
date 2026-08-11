@@ -1,0 +1,32 @@
+REFERENCE_TOTAL: 18
+
+R1 | cand_1: HIT | cand_2: MISS | "Remove" is dead for the whole upload — list rebuilt between mousedown and mouseup so no click fires (cand_1 DEFECT 15 reproduces it exactly, incl. sameNodeAsMousedown=false and no click event)
+R2 | cand_1: HIT | cand_2: HIT | Keyboard focus thrown to <body> the instant an upload starts and never restored (both DEFECT 4: Enter on #upload-button → activeElement BODY at +80 ms, still BODY when the upload ends 2.5 s later)
+R3 | cand_1: HIT | cand_2: HIT | Whole file list is inside aria-live="polite" and rebuilt ~60x/s during upload, flooding screen readers (both DEFECT 5, 123 mutations measured)
+R4 | cand_1: HIT | cand_2: MISS | File dropped outside the drop zone navigates the browser away, destroying the selection — no document/window drop guard (cand_1 DEFECT 16, defaultPrevented=false on body/h1/#file-list)
+R5 | cand_1: HIT | cand_2: HIT | "Clear all" mid-upload empties the list but leaves Upload stuck "Uploading…"/disabled; new files cannot be uploaded (both DEFECT 7)
+R6 | cand_1: HIT | cand_2: HIT | Removing a file discards focus to <body> instead of a neighbouring control (both DEFECT 3)
+R7 | cand_1: HIT | cand_2: HIT | "Clear all" discards focus to <body> because the button disables itself (both DEFECT 4, second half — same element, same cause)
+R8 | cand_1: HIT | cand_2: HIT | Phantom tab stop on the 1x1 clipped #file-input with nothing visible receiving focus (both DEFECT 1)
+R9 | cand_1: HIT | cand_2: HIT | Focusable file input nested inside role="button" → button inside a button in the a11y tree (both DEFECT 1 explicitly names the nested `button "Choose Files"` inside the drop zone's button node; confirmed in my own a11y snapshot)
+R10 | cand_1: MISS | cand_2: MISS | Emptying the list gives no screen-reader feedback — #empty-state is a sibling of, not inside, the live region (neither report mentions announcement of the empty state; both only discuss its contrast)
+R11 | cand_1: HIT | cand_2: HIT | Drop-zone helper text "You can select multiple files" fails AA text contrast (both DEFECT 8)
+R12 | cand_1: HIT | cand_2: HIT | "No files selected." empty state fails AA text contrast, 3.76:1 (both DEFECT 9)
+R13 | cand_1: HIT | cand_2: HIT | .file-meta size/status/percentage text fails AA text contrast, 3.98:1 (both DEFECT 10)
+R14 | cand_1: HIT | cand_2: HIT | 28%-alpha focus ring on Upload/Clear all/Remove is ~1.5:1, far below 3:1 (both DEFECT 14)
+R15 | cand_1: HIT | cand_2: HIT | Drop zone's dashed boundary fails non-text contrast, 2.27:1 / 2.17:1 (both DEFECT 13)
+R16 | cand_1: HIT | cand_2: HIT | Disabled Upload button label (incl. "Uploading…") is 1.98:1 white-on-#aeb8d5 (both DEFECT 11)
+R17 | cand_1: HIT | cand_2: HIT | Remove buttons are 61x22 px, below the 24x24 minimum target size (both DEFECT 6)
+R18 | cand_1: HIT | cand_2: MISS | The same file can be added twice producing indistinguishable rows with no warning (cand_1 DEFECT 17)
+
+CAND_1_EXTRAS
+- CONFIRMED_REAL | DEFECT 2: drop zone's aria-label "Choose files or drop files here" does not contain its visible label "Drop files here or click to browse" (WCAG 2.5.3 Label in Name, Level A) | Opened the page in an isolated headless Chromium; page.accessibility.snapshot() gives the drop zone as button name "Choose files or drop files here" while inner_text('#drop-zone') is "↑ / Drop files here or click to browse / You can select multiple files". The visible string is not contained in the accessible name, so a speech-input user reading the control aloud cannot target it. Not present anywhere in REFERENCE.
+- FALSE_ALARM | DEFECT 12: drop zone focus style claimed "so faint it is nearly indistinguishable from the unfocused state" | Verified the mechanism (outline:none, :focus-visible shares the :hover block, border rgb(159,172,204) → rgb(78,110,232), background rgb(248,250,255) → rgb(241,244,255)) but the conclusion does not hold. Screenshots of the unfocused and Tab-focused drop zone show the dashed boundary changing from pale grey-blue to a plainly saturated blue — obviously perceivable in isolation. The focused indicator measures 4.09:1 against its own fill and 4.45:1 against the white card, i.e. it passes the 3:1 of WCAG 1.4.11; the only failing number is the focused-vs-unfocused change of contrast (1.96:1), which belongs to SC 2.4.13 Focus Appearance (AAA). Focus and hover sharing a style is a common, non-defective pattern. Overstated/stylistic, not a user-visible defect.
+
+CAND_2_EXTRAS
+- CONFIRMED_REAL | DEFECT 2: drop zone's aria-label does not contain its visible label (WCAG 2.5.3 Label in Name, Level A) | Same verification as above — identical claim, identical wording; accessible name "Choose files or drop files here" vs visible "Drop files here or click to browse". Confirmed in my own browser run.
+- FALSE_ALARM | DEFECT 12: drop zone focus style claimed "nearly indistinguishable" from unfocused | Same verification as above — identical claim, identical wording. The Tab-focused border is plainly blue in the screenshot and clears 3:1 against both adjacent colours; only the AAA change-of-contrast metric fails. Judged the same way as for cand_1.
+
+TOTALS
+cand_1: hits=17/18  confirmed_extras=1  false_alarms=1
+cand_2: hits=14/18  confirmed_extras=1  false_alarms=1

@@ -1,0 +1,41 @@
+DEFECT 1
+what: If stdout is closed, the tool dies with a raw Python traceback instead of a "csvq: ..." message, and exits 1 (the usage-error code) rather than reporting an I/O failure.
+where: csvq.py:430 in write_output (stdout branch). Line 426 already guards sys.stdout being None for reconfigure() via "except (AttributeError, ...)", but the sys.stdout.write(text) on line 430 is only wrapped in "except BrokenPipeError" / "except OSError", so AttributeError escapes to top level.
+repro: `python E:/GitHub/superpowers-custom/benchmark4/artifacts/R/csvq.py people.csv >&-` (bash, stdout fd closed). stderr: "Traceback (most recent call last): ... File \"E:\\GitHub\\superpowers-custom\\benchmark4\\artifacts\\R\\csvq.py\", line 430, in write_output / sys.stdout.write(text) / AttributeError: 'NoneType' object has no attribute 'write'". exit code 1.
+severity: blocking
+category: robustness
+
+DEFECT 2
+what: An empty input prints a stray blank line to stdout instead of printing nothing, so a downstream consumer of a zero-row result sees one line of output.
+where: csvq.py:415-416 in render() - the header row is written unconditionally for csv/tsv, and when the input is empty `headings` is [] so csv.writer emits a bare line terminator.
+repro: `python E:/GitHub/superpowers-custom/benchmark4/artifacts/R/csvq.py empty.csv | od -c` where empty.csv is a zero-byte file. Output: "0000000  \n" (one byte of stdout). exit code 0. Same with `printf '' | python .../csvq.py` and with a file containing only blank lines. Contradicts the spec line "nothing but the requested data goes to stdout". (`-f json` correctly prints "[]", and `-H` correctly prints nothing, so only the default csv/tsv path is affected.)
+severity: minor
+category: stream
+
+DEFECT 3
+what: `--count` prints the truncated row count when `--limit` is also given, not the number of rows matching the filter, so `csvq --count -n 3` can never report more than 3 no matter how many rows match.
+where: `--count` + `--limit`; csvq.py:493-494 applies the limit to `rows`, then csvq.py:398-399 returns len(rows) of the already-truncated list.
+repro: `python E:/GitHub/superpowers-custom/benchmark4/artifacts/R/csvq.py --count people.csv` -> "5", exit 0. `python E:/GitHub/superpowers-custom/benchmark4/artifacts/R/csvq.py --count -n 3 people.csv` -> "3", exit 0, although 5 rows match. Likewise `--count -w 'age > 8'` -> "3" but `--count -w 'age > 8' -n 1` -> "1". Spec says `--count` prints "the number of matching rows".
+severity: minor
+category: spec
+
+DEFECT 4
+what: A valid CSV file containing a field longer than 128 KB is rejected as unreadable, so the file simply cannot be queried.
+where: csvq.py:226 (csv.reader is created without ever raising csv.field_size_limit()), surfacing at csvq.py:256-257 where csv.Error is converted into a FileError.
+repro: build the file with `python -c "import io; io.open('bigfield.csv','w',encoding='utf-8',newline='').write('a,b\n' + 'z'*200000 + ',2\n')"`, then `python E:/GitHub/superpowers-custom/benchmark4/artifacts/R/csvq.py bigfield.csv`. stderr: "csvq: bigfield.csv: line 2: field larger than field limit (131072)". exit code 2.
+severity: minor
+category: robustness
+
+DEFECT 5
+what: When the input header repeats a column name, JSON output silently drops one of those columns and reports the other column's value under that name, disagreeing with what `--columns` returns for the same name.
+where: csvq.py:404-406 in render() builds each record with dict(zip(headings, ...)) so a repeated heading keeps the last value, while make_resolver at csvq.py:276-277 uses setdefault and therefore resolves the same name to the first column.
+repro: dup.csv contains "a,a,b\n1,2,3\n". `python E:/GitHub/superpowers-custom/benchmark4/artifacts/R/csvq.py -f json dup.csv` -> `[ { "a": "2", "b": "3" } ]`, exit 0 (the value "1" is lost and key "a" holds column 2). The csv output of the same file is "a,a,b" / "1,2,3" (both columns kept) and `-c a dup.csv` returns "1", i.e. column 1.
+severity: minor
+category: correctness
+
+DEFECT 6
+what: Filtering or sorting on a column of long integer IDs silently returns the wrong rows: an exact-match query on a unique 20-digit id returns every neighbouring id as well, `>` drops a row that really is larger, and `--sort` leaves such a column in its original unsorted order. The run exits 0 with no warning, so the wrong answer looks like a right one.
+where: csvq.py:290-301, as_number() puts every candidate value through float(), so any integer past 2**53 is rounded to the nearest representable double and distinct ids collapse onto one key. Consumed by Condition.matches (csvq.py:362-365, the numeric branch of `=`/`!=`/`<`/`<=`/`>`/`>=`) and by sort_rows (csvq.py:382-387, which selects the numeric key when every value "parses as a number").
+repro: ids2.csv contains "id,who\n10000000000000000003,carol\n10000000000000000001,alice\n10000000000000000002,bob\n" (three distinct ids, deliberately out of order). (1) `python E:/GitHub/superpowers-custom/benchmark4/artifacts/R/csvq.py -w 'id = 10000000000000000001' ids2.csv` prints all three data rows (carol, alice, bob), exit 0, although only one row has that id. (2) `python E:/GitHub/superpowers-custom/benchmark4/artifacts/R/csvq.py -w 'id > 10000000000000000002' ids2.csv` prints only the header, exit 0, although 10000000000000000003 is greater. (3) `python E:/GitHub/superpowers-custom/benchmark4/artifacts/R/csvq.py -s id -c id ids2.csv` prints 10000000000000000003 / 10000000000000000001 / 10000000000000000002, exit 0 - i.e. unchanged input order, because all three sort keys are equal floats. It starts at the 2**53 boundary, not only at 20 digits: with ids3.csv = "id\n9007199254740993\n9007199254740992\n", `... -w 'id = 9007199254740992' ids3.csv` prints both rows, exit 0. String comparison would have been correct in every one of these cases; the tool only reaches float() because both sides "parse as numbers".
+severity: minor
+category: correctness

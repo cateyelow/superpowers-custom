@@ -1,0 +1,32 @@
+REFERENCE_TOTAL: 18
+
+R1 | cand_1: MISS | cand_2: MISS | "Remove" button is dead for the whole 2s upload (li destroyed between mousedown/mouseup, no click fires)
+R2 | cand_1: HIT | cand_2: HIT | Keyboard focus thrown to BODY the instant an upload starts and never restored (cand D4: focused #upload-button, Enter, activeElement BODY at +80ms and still BODY when upload finished; cause named is self-disabling rather than replaceChildren, but the same lost-focus-on-upload-start defect is reported and measured)
+R3 | cand_1: HIT | cand_2: HIT | File list is aria-live="polite" and rebuilt ~60x/s during upload, flooding screen readers (cand D5, 123 mutations in 2554ms)
+R4 | cand_1: MISS | cand_2: MISS | File dropped outside the drop zone navigates the browser away, destroying the selection (no document/window dragover-drop guard)
+R5 | cand_1: HIT | cand_2: HIT | "Clear all" during upload leaves widget stuck: Upload stays "Uploading…"/disabled, new files cannot be uploaded (cand D7)
+R6 | cand_1: HIT | cand_2: HIT | Removing a file discards focus to <body> instead of a neighbouring control (cand D3)
+R7 | cand_1: HIT | cand_2: HIT | "Clear all" discards focus to <body> because the button disables itself (cand D4, second half)
+R8 | cand_1: HIT | cand_2: HIT | Phantom tab stop on the 1x1 clipped #file-input between drop zone and "Clear all" (cand D1)
+R9 | cand_1: HIT | cand_2: HIT | Focusable file input nested inside role="button" => button inside button in the a11y tree (cand D1 explicitly reports the nested `button "Choose Files"` inside the drop zone's button node)
+R10 | cand_1: MISS | cand_2: MISS | Emptying the list gives no screen-reader feedback; #empty-state is a sibling of, not inside, the live region
+R11 | cand_1: HIT | cand_2: HIT | Drop zone helper text "You can select multiple files" fails text contrast (cand D8)
+R12 | cand_1: HIT | cand_2: HIT | Empty-state "No files selected." fails text contrast 3.76:1 (cand D9)
+R13 | cand_1: HIT | cand_2: HIT | .file-meta size/status/percentage text fails text contrast 3.98:1 (cand D10)
+R14 | cand_1: HIT | cand_2: MISS | Button focus ring (3px rgb(64 95 216 / 28%)) is almost invisible, ~1.50:1 (cand_1 D14; absent from cand_2)
+R15 | cand_1: HIT | cand_2: MISS | Drop zone dashed boundary fails non-text contrast (2.17:1 / 2.27:1) (cand_1 D13; absent from cand_2)
+R16 | cand_1: HIT | cand_2: HIT | Disabled Upload button label unreadable at 1.98:1, incl. the "Uploading…" state (cand D11)
+R17 | cand_1: HIT | cand_2: HIT | Remove buttons only 61x22 px, below the 24x24 minimum target size (cand D6)
+R18 | cand_1: MISS | cand_2: MISS | Same file can be added repeatedly, producing indistinguishable duplicate rows
+
+CAND_1_EXTRAS
+- CONFIRMED_REAL | D2: drop zone's accessible name ("Choose files or drop files here") does not contain its visible label ("Drop files here or click to browse") — WCAG 2.5.3 Label in Name | Verified in isolated headless Chromium: page.accessibility.snapshot() returns the drop zone as button "Choose files or drop files here"; inner_text('#drop-zone') = "↑\nDrop files here or click to browse\nYou can select multiple files"; markup at page.html:300 sets aria-label which suppresses the visible strings, so the visible label text is not contained in the accessible name.
+- CONFIRMED_REAL | D12: drop zone's own focus indicator is outline:none plus a border tint that only changes 1.96:1 from the unfocused state, and it is the same declaration block as :hover so focus is indistinguishable from hover | Verified: unfocused #drop-zone computed border-top-color rgb(159,172,204), bg rgb(248,250,255), outline none; after Tab (:focus-visible true) border rgb(78,110,232), bg rgb(241,244,255), outline still "none 0px", box-shadow none; hovering with nothing focused produces the identical rgb(78,110,232)/rgb(241,244,255). Recomputed change-of-contrast on the border pixels = 1.96:1 and on the fill = 1.05:1, both under the 3:1 WCAG 2.2 Focus Appearance requirement. Screenshots of the focused vs unfocused crops confirm the only change is a faint hue shift in the dashes.
+
+CAND_2_EXTRAS
+- CONFIRMED_REAL | D2: drop zone's accessible name does not contain its visible label — WCAG 2.5.3 Label in Name | Same item as cand_1's D2, verified identically (a11y snapshot name "Choose files or drop files here" vs visible "Drop files here or click to browse").
+- CONFIRMED_REAL | D12: drop zone focus indicator is outline:none + a 1.96:1 border tint shared with :hover | Same item as cand_1's D12, verified identically (computed styles focused vs unfocused vs hover, screenshots of both states).
+
+TOTALS
+cand_1: hits=14/18  confirmed_extras=2  false_alarms=0
+cand_2: hits=12/18  confirmed_extras=2  false_alarms=0

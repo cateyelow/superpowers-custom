@@ -1,0 +1,22 @@
+REFERENCE_TOTAL: 9
+
+R1 | cand_1: HIT | cand_2: HIT | Deeply nested JSON body -> RecursionError -> 500 instead of 400 (POST /appointments)
+R2 | cand_1: HIT | cand_2: HIT | Unbounded duration_minutes -> timedelta OverflowError -> 500 instead of 4xx
+R3 | cand_1: HIT | cand_2: HIT | date/starts_at 9999-12-31 -> day + timedelta(days=1) overflow -> 500 on three endpoints
+R4 | cand_1: HIT | cand_2: HIT | Unpaired UTF-16 surrogate in a string field -> sqlite UnicodeEncodeError -> 500 instead of 400
+R5 | cand_1: HIT | cand_2: HIT | Pre-dispatch errors emit stock HTML (501 TRACE/OPTIONS, 400 bad request line, 505 bad version) instead of the JSON envelope
+R6 | cand_1: MISS | cand_2: HIT | Body of a GET/DELETE is never drained -> parsed as a pipelined second request (request smuggling / desync)
+R7 | cand_1: HIT | cand_2: HIT | Over-declared Content-Length blocks in rfile.read forever with no timeout -> thread/connection exhaustion
+R8 | cand_1: MISS | cand_2: HIT | Path is unquoted before routing, so %2F becomes a separator and /appointments/{id}%2Fcancel executes cancel
+R9 | cand_1: HIT | cand_2: HIT | HEAD returns 405 on every GET route (ROUTES registers GET only); HEAD body suppression is dead code
+
+CAND_1_EXTRAS
+- FALSE_ALARM | D6: availability for today lists already-past slots that POST rejects with 400 starts_at_in_past | Reproduced the behaviour (availability?date=2026-08-11 at 14:33Z returned 09:00-16:30; booking 09:00 -> 400 starts_at_in_past), but the spec defines a free slot exactly as "no booked appointment overlaps it" and separately requires starts_at to be in the future. Both rules are implemented as written; wanting availability to also filter past slots is a design preference / spec gap, not a deviation. Unlike the HEAD case there is no evidence of contrary intent in the code.
+
+CAND_2_EXTRAS
+- FALSE_ALARM | D6: availability for today lists already-past slots that POST rejects with 400 starts_at_in_past | Same item as CAND_1 D6, judged identically: reproduced, but spec-conformant (free = no overlapping booked appointment), so a preference rather than a defect.
+- CONFIRMED_REAL | D10: Content-Length is neither validated nor de-duplicated, so conflicting/illegal Content-Length values frame the body wrongly and the surplus bytes execute as a second request | Reproduced on a raw socket against 127.0.0.1:8942. (a) POST /appointments with two headers "Content-Length: 115" and "Content-Length: 184", 115-byte booking JSON followed by 69 bytes 'GET /SMUGGLED-SECOND-REQUEST HTTP/1.1...' -> TWO responses on one connection: 201 Created (id 597a1b025fb0455eb975b48608e62755) then 404 {"code": "not_found", "message": "no route for GET /SMUGGLED-SECOND-REQUEST"}. (b) POST /appointments with "Content-Length: 1_22" and a 122-byte body + the same 69 bytes -> 201 Created (id 818c7d7f13904542b8bc924f2723a507) then the same 404, i.e. int("1_22") == 122 was accepted from a header no HTTP parser should accept. Mechanism is distinct from R6 (which is the undrained body of a bodyless-method request): here the request is a legitimate POST and the fault is Content-Length parsing at app.py:565-573.
+
+TOTALS
+cand_1: hits=7/9  confirmed_extras=0  false_alarms=1
+cand_2: hits=9/9  confirmed_extras=1  false_alarms=1

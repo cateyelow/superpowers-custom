@@ -1,0 +1,28 @@
+REFERENCE_TOTAL: 5
+
+R1 | cand_1: HIT | cand_2: HIT | stdout closed -> raw AttributeError traceback at csvq.py:430, exit 1, no "csvq: " message
+R2 | cand_1: MISS | cand_2: MISS | a blank line inside the input is dropped instead of padded, so rows/--count undercount
+R3 | cand_1: MISS | cand_2: MISS | a row with more fields than the header exits 2 (I/O code) instead of the documented 1
+R4 | cand_1: HIT | cand_2: HIT | empty input emits a stray blank line on stdout (csv/tsv) instead of nothing
+R5 | cand_1: HIT | cand_2: HIT | csv.field_size_limit never raised, so a field >131072 chars makes the whole file unreadable
+
+Notes on the two MISSes (both candidates identical here):
+- R2: both candidates mention "a file containing only blank lines" but only as another way to
+  reach the empty-output case of R4. Neither states that a blank line among real data is
+  discarded, nor that --count undercounts (verified: gap.csv "a,b/1,2//3,4" -> --count prints 2,
+  should be 3). That would not lead a developer to the padding fix at csvq.py:232-233. Not a match.
+- R3: neither report mentions the long-row exit code at all (verified: ragged.csv -> exit 2,
+  spec requires 1).
+
+CAND_1_EXTRAS
+- FALSE_ALARM | `--count` counts after `--limit`, so `--count -n 3` never reports more than 3 | Reproduced (people.csv 5 rows: `--count` -> 5, `--count -n 3` -> 3, `--count -w 'age > 8' -n 1` -> 1). But the spec never defines how --count and --limit compose, and the tool's own USAGE (csvq.py:57-58) states the chosen semantics explicitly: "--count reports how many rows would have been written, that is after --where and --limit have been applied." Counting what would have been output is a coherent reading of "the number of matching rows" once a limit is in play; this is a documented flag-composition choice, i.e. a preference, not a demonstrable spec violation.
+- CONFIRMED_REAL | a duplicated header name makes JSON output silently drop a column and report the other column's value under that name, contradicting how the same name resolves elsewhere | Reproduced with dup.csv = "a,a,b\n1,2,3\n": `-f json` -> [{"a": "2", "b": "3"}] (the value "1" is gone), while `-c a dup.csv` -> "1" and plain csv output keeps both columns ("a,a,b" / "1,2,3"). Same column name means column 1 in make_resolver (setdefault, csvq.py:276-277) but column 2 in render's dict(zip(...)) (csvq.py:404-406). Silent data loss with exit 0 and an internal contradiction between two code paths; the tool neither rejects nor warns about duplicate headers.
+- CONFIRMED_REAL | as_number() routes every value through float(), so integers past 2**53 collapse and --where/--sort silently return wrong rows | Reproduced with ids2.csv = "id,who\n10000000000000000003,carol\n10000000000000000001,alice\n10000000000000000002,bob\n": `-w 'id = 10000000000000000001'` printed ALL THREE data rows (exit 0); `-w 'id > 10000000000000000002'` printed only the header, exit 0, although ...003 is larger; `-s id -c id` returned the input order 003/001/002 unsorted. Boundary case also reproduced: ids3.csv = "id\n9007199254740993\n9007199254740992\n", `-w 'id = 9007199254740992'` printed both rows. Wrong answers delivered silently with exit 0; string comparison would have been correct in each case.
+
+CAND_2_EXTRAS
+- FALSE_ALARM | `--count` counts after `--limit`, so `--count -n 3` never reports more than 3 | Identical claim to CAND_1's; judged identically. Reproduced, but the spec does not define the --count/--limit interaction and csvq.py:57-58 documents the chosen semantics ("after --where and --limit have been applied"). A documented composition choice, not a spec violation.
+- CONFIRMED_REAL | a duplicated header name makes JSON output silently drop a column and report the other column's value under that name, contradicting how the same name resolves elsewhere | Identical claim to CAND_1's; judged identically. Reproduced with dup.csv = "a,a,b\n1,2,3\n": `-f json` -> [{"a": "2", "b": "3"}], `-c a` -> "1", csv output keeps both columns. Silent data loss plus a first-vs-last inconsistency between make_resolver and render.
+
+TOTALS
+cand_1: hits=3/5  confirmed_extras=2  false_alarms=1
+cand_2: hits=3/5  confirmed_extras=1  false_alarms=1

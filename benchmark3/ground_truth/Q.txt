@@ -1,0 +1,106 @@
+DEFECT 1
+what: A malformed JSON body of deeply nested arrays gets 500 "internal_error" instead of the 400 the spec mandates for any malformed body.
+where: app.py:289-298 parse_json_object - json.loads raises RecursionError, which is not one of the caught (UnicodeDecodeError, ValueError) exceptions, so it reaches the generic handler at app.py:529 and is rendered as 500. Endpoint POST /appointments.
+repro: POST /appointments with body = ("[" * 2000 + "]" * 2000), Content-Type application/json, Content-Length 4000
+  -> HTTP/1.1 500 Internal Server Error
+     {"error": {"code": "internal_error", "message": "internal server error"}}
+  server stderr: unhandled error: RecursionError('maximum recursion depth exceeded while decoding a JSON array from a unicode string')
+  Identical result with 20000 nesting levels. Spec requirement: "A malformed or non-JSON body is 400, never a 500."
+severity: blocking
+category: spec
+
+DEFECT 2
+what: A very large duration_minutes crashes the request with 500 instead of being rejected with a 4xx.
+where: app.py:382 "ends_at = starts_at + timedelta(minutes=duration)". duration is only checked for being a positive int (app.py:363) and a multiple of slot_minutes (app.py:371); it is never bounded, and the timedelta/datetime arithmetic overflows before the opening-hours check at app.py:384 could reject it. Endpoint POST /appointments.
+repro: POST /appointments {"practitioner_id":"dr-lee","patient_name":"Zed","starts_at":"2030-03-01T09:00:00Z","duration_minutes":30000000000000000}
+  -> HTTP/1.1 500 Internal Server Error
+     {"error": {"code": "internal_error", "message": "internal server error"}}
+  server stderr: unhandled error: OverflowError('Python int too large to convert to C int')
+  Same 500 with "duration_minutes": 30000000000000000000000000000000 (30 * 10**30).
+severity: blocking
+category: validation
+
+DEFECT 3
+what: Any request naming the calendar date 9999-12-31 returns 500 on three different endpoints.
+where: app.py:252 in booked_intervals and app.py:339 in list_practitioner_appointments both compute "day + timedelta(days=1)", which overflows datetime.date.max. Reached by GET /practitioners/{id}/availability, GET /practitioners/{id}/appointments, and POST /appointments (via app.py:411).
+repro: GET /practitioners/dr-lee/availability?date=9999-12-31
+  -> HTTP/1.1 500 Internal Server Error {"error": {"code": "internal_error", "message": "internal server error"}}
+  GET /practitioners/dr-lee/appointments?date=9999-12-31
+  -> HTTP/1.1 500 Internal Server Error {"error": {"code": "internal_error", "message": "internal server error"}}
+  POST /appointments {"practitioner_id":"dr-lee","patient_name":"Zed","starts_at":"9999-12-31T09:00:00Z","duration_minutes":30}
+  -> HTTP/1.1 500 Internal Server Error {"error": {"code": "internal_error", "message": "internal server error"}}
+  server stderr: unhandled error: OverflowError('date value out of range')
+  Control: GET /practitioners/dr-lee/availability?date=9999-12-30 -> HTTP/1.1 200 OK with the normal 16 slots.
+severity: blocking
+category: robustness
+
+DEFECT 4
+what: A JSON string field containing an unpaired UTF-16 surrogate escape produces a 500 instead of a 400.
+where: json.loads accepts "\ud800" and required_string (app.py:301-305) treats it as a valid non-empty string; it then reaches sqlite3, which cannot encode it to UTF-8, at app.py:419 (INSERT for patient_name) or app.py:144 (SELECT for practitioner_id). UnicodeEncodeError escapes to the generic handler at app.py:529. Endpoint POST /appointments.
+repro: POST /appointments {"practitioner_id":"dr-lee","patient_name":"\ud800","starts_at":"2030-03-01T09:00:00Z","duration_minutes":30}
+  -> HTTP/1.1 500 Internal Server Error
+     {"error": {"code": "internal_error", "message": "internal server error"}}
+  server stderr: unhandled error: UnicodeEncodeError('utf-8', '\ud800', 0, 1, 'surrogates not allowed')
+  Same 500 for {"practitioner_id":"\ud800", "patient_name":"Zed", ...}.
+severity: blocking
+category: validation
+
+DEFECT 5
+what: Several error responses are HTML rather than the required JSON envelope, and one of them is a 5xx.
+where: These requests never reach Handler._handle, so app.py's error rendering (app.py:582-588) is bypassed and BaseHTTPRequestHandler.send_error emits its stock HTML page. Handler defines do_GET/POST/PUT/PATCH/DELETE/HEAD only (app.py:503-519), so any other method is "unsupported", and malformed request lines/versions are rejected by the base class before dispatch.
+repro: OPTIONS /practitioners HTTP/1.1
+  -> HTTP/1.1 501 Unsupported method ('OPTIONS')
+     Content-Type: text/html;charset=utf-8
+     <!DOCTYPE HTML>...<p>Error code: 501</p><p>Message: Unsupported method ('OPTIONS').</p>...
+  TRACE /practitioners HTTP/1.1 -> HTTP/1.1 501 Unsupported method ('TRACE'), same HTML body.
+  Raw bytes "GARBAGE\r\n\r\n" -> HTTP/1.1 400 Bad Request, Content-Type text/html;charset=utf-8, HTML body.
+  Raw bytes "GET /practitioners HTTP/9.9\r\nHost: x\r\n\r\n" -> HTTP/1.1 505 Invalid HTTP version (9.9), HTML body (a 5xx).
+  Spec requirement: "Every error response is JSON {"error": {"code": str, "message": str}} with an appropriate 4xx status."
+severity: blocking
+category: error-shape
+
+DEFECT 6
+what: A request body sent with GET (or DELETE) is never read off the socket, so the server treats those bytes as a second, pipelined request and answers two requests for one; the connection is desynchronised and the client's body is executed as a request.
+where: app.py:543 "body = self._read_body() if method in ("POST", "PUT", "PATCH") else b''" - the declared body of any other method is left in the socket buffer, and successful responses do not close the connection (app.py:590-604, close only set for errors).
+repro: one connection, exact bytes sent:
+  GET /practitioners HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Length: 55\r\n\r\nGET /appointments/SMUGGLED HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n
+  -> two responses came back on that one connection:
+     HTTP/1.1 200 OK ... [{"id": "dr-lee", ...}, {"id": "dr-park", ...}]
+     HTTP/1.1 404 Not Found ... {"error": {"code": "appointment_not_found", "message": "no appointment with id 'SMUGGLED'"}}
+  The second response proves the body of request 1 was parsed and executed as request 2.
+severity: blocking
+category: security
+
+DEFECT 7
+what: A request that declares a longer body than it sends never receives any response and permanently pins a server thread; a handful of such connections multiplies the process's thread count without bound.
+where: app.py:580 "return self.rfile.read(length)" blocks until Content-Length bytes arrive; there is no socket/read timeout anywhere (BaseHTTPRequestHandler.timeout is left unset) and ThreadingHTTPServer (app.py:608) spawns one thread per connection.
+repro: sent "POST /appointments HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Length: 200\r\n\r\n{" (1 body byte of the 200 declared)
+  -> no bytes received after 6s, client read timed out; no response was ever produced.
+  Opened 60 such connections: the server process went from 3 threads to 63 threads (measured with Get-Process .Threads.Count), was still at 63 after a further 20 seconds of idling, and only dropped back to 3 once the client closed the sockets. GET /practitioners still answered 200 in the meantime, so this is thread/connection exhaustion rather than an immediate hard stop.
+severity: blocking
+category: robustness
+
+DEFECT 8
+what: A percent-encoded slash (%2F) inside a path segment is decoded before routing, so a URL that addresses a single appointment resource instead executes the cancel operation on it.
+where: app.py:539 "path = unquote(parts.path)" runs before the ROUTES match at app.py:546, so %2F becomes a real path separator.
+repro: booked appointment 54fc5494ea49463a88b20226a93599c8, then
+  POST /appointments/54fc5494ea49463a88b20226a93599c8%2Fcancel (Content-Length 2, body "{}")
+  -> HTTP/1.1 200 OK {"id": "54fc5494ea49463a88b20226a93599c8", ..., "status": "cancelled", ...}
+  GET /appointments/54fc5494ea49463a88b20226a93599c8 -> status is "cancelled".
+  GET /appointments/54fc5494ea49463a88b20226a93599c8%2Fcancel -> HTTP/1.1 405 {"error": {"code": "method_not_allowed", "message": "GET is not allowed on /appointments/54fc5494ea49463a88b20226a93599c8/cancel"}}, showing the decoded slash routed the request.
+  Also: POST /appointments/abc%2Fcancel -> 404 appointment_not_found for id 'abc', i.e. the cancel handler ran.
+severity: minor
+category: robustness
+
+DEFECT 9
+what: HEAD is rejected with 405 on every documented GET endpoint.
+where: app.py:518-519 registers do_HEAD and dispatches with method "HEAD", but ROUTES (app.py:489-496) only registers "GET", so _dispatch falls through to the 405 branch at app.py:555. The HEAD-aware body suppression at app.py:603 ("if self.command != 'HEAD'") is consequently dead code.
+repro: HEAD /practitioners HTTP/1.1
+  -> HTTP/1.1 405 Method Not Allowed
+     Content-Type: application/json; charset=utf-8
+     Allow: GET
+     (no body)
+  HEAD /appointments/54fc5494ea49463a88b20226a93599c8 -> HTTP/1.1 405 Method Not Allowed, Allow: GET.
+  GET on both paths returns 200.
+severity: minor
+category: robustness

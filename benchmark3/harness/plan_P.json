@@ -1,0 +1,22 @@
+{
+  "list":   {"path": "/items"},
+  "detail": {"path": "/items/{id}", "sample_id": "WIDGET-1"},
+  "create": {"path": "/reservations",
+             "body": {"sku": "WIDGET-1", "qty": 1},
+             "int_fields": ["qty"],
+             "id_field": "id"},
+  "actions": [{"path": "/reservations/{id}/release", "terminal": true},
+              {"path": "/reservations/{id}/fulfil", "terminal": true}],
+  "error_shape": ["error", "code"],
+  "invariants": [{"kind": "non_negative", "path": "/items",
+                  "fields": ["on_hand", "reserved", "available"]}],
+  "semantic": [
+    {"why": "a quantity far beyond what is available (11 of 10)",
+     "body": {"sku": "WIDGET-1", "qty": 11}},
+    {"why": "any quantity of an item with zero on hand",
+     "body": {"sku": "DOODAD-3", "qty": 1}},
+    {"why": "an unknown sku", "body": {"sku": "NO-SUCH-SKU", "qty": 1}}
+  ],
+  "capacity": {"create_body": {"sku": "GADGET-2", "qty": 1}, "limit": 3,
+               "check": {"path": "/items/GADGET-2", "field": "available"}}
+}

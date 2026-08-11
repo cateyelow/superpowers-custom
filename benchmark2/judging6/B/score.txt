@@ -1,0 +1,23 @@
+REFERENCE_TOTAL: 11
+
+R1 | cand_1: HIT | cand_2: HIT | Enter in a form field never advances the step and gives no feedback (implicit submission blocked by hidden-step required controls)
+R2 | cand_1: HIT | cand_2: HIT | Card number pattern counts auto-inserted spaces, so 10-11 digit numbers pass despite the "12 to 19 digits" hint
+R3 | cand_1: MISS | cand_2: HIT | Backspace over an auto-inserted space is a no-op (character re-inserted, nothing removed) and caret is thrown to the end
+R4 | cand_1: HIT | cand_2: HIT | Typing a digit mid-card-number jumps the caret to the end of the field
+R5 | cand_1: HIT | cand_2: HIT | Whitespace-only entries satisfy `required`; review step then shows blank values and the order still places
+R6 | cand_1: HIT | cand_2: HIT | Review step prints the CVC in clear text although it was entered in a type="password" field
+R7 | cand_1: HIT | cand_2: HIT | Button focus ring (Next/Back/Place order) is ~1.35:1 on the card, effectively invisible
+R8 | cand_1: HIT | cand_2: HIT | Payment-field placeholder colour #98a2b3 = 2.58:1, below 4.5:1
+R9 | cand_1: HIT | cand_2: HIT | Inputs, country select and secondary Back button have a 1.47:1 border on an identical background (non-text contrast fail)
+R10 | cand_1: MISS | cand_2: HIT | Expiry pattern checks shape only, so a past expiry (e.g. 01/20) is accepted and the order is placed
+R11 | cand_1: MISS | cand_2: HIT | Rejected fields give only the generic native bubble; no required format stated, no aria-invalid / live region / persistent error state
+
+CAND_1_EXTRAS
+- CONFIRMED_REAL | Step-indicator connector line paints over the "Shipping" and "Payment" labels, rendering them struck through | Opened the page in an isolated headless Chromium at 1280x900. `.step-indicator li:not(:last-child)::after` resolves to a 2px bar at y=193.5-195.5 spanning x=383.0-545.7, while the "Shipping" label box is x=389.0-447.9, y=183.0-204.0 (and "Payment" x=585.7-643.5) — the bar crosses the middle of both words. The label is `position: static` at desktop while the ::after is `position: absolute; z-index: 0`, so the positioned pseudo-element paints above the in-flow inline text. Element screenshots of `.step-indicator` and of the first `li` show the grey line running through the middle of "Shipping" and "Payment" exactly like a strikethrough; the last item ("Review", no ::after) is clean.
+
+CAND_2_EXTRAS
+- CONFIRMED_REAL | Step-indicator connector line paints over the "Shipping" and "Payment" labels, rendering them struck through | Same verification as above (identical claim, identical measurements reproduced): computed ::after geometry top:16px/left:34px/width:162.66px/height:2px with z-index:0 over statically-positioned `.step-label`; screenshots at 1280x900 show both labels visibly struck through, "Review" unaffected.
+
+TOTALS
+cand_1: hits=8/11  confirmed_extras=1  false_alarms=0
+cand_2: hits=11/11  confirmed_extras=1  false_alarms=0

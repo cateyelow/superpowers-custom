@@ -1,0 +1,19 @@
+REFERENCE_TOTAL: 6
+
+R1 | cand_1: HIT | cand_2: HIT | Non-UTF-8 snapshot makes verify/diff die with UnicodeDecodeError traceback instead of reporting a corrupt snapshot
+R2 | cand_1: MISS | cand_2: MISS | A record whose "type" is a JSON array/object crashes validate_snapshot with TypeError: unhashable type
+R3 | cand_1: MISS | cand_2: HIT | "excludes" is never validated: verify says "snapshot ok" for a snapshot that diff then crashes on / mis-filters
+R4 | cand_1: MISS | cand_2: MISS | A failed take (exit 3) still overwrites the existing good snapshot with an incomplete one
+R5 | cand_1: HIT | cand_2: HIT | diff reports a file that still exists as deleted ("- path") when its contents cannot be read
+R6 | cand_1: MISS | cand_2: HIT | Symlink targets stored with the host separator instead of "/", so snapshots do not round-trip Windows<->POSIX
+
+CAND_1_EXTRAS
+- CONFIRMED_REAL | take follows Windows directory junctions, so a self-referencing junction is walked 64 levels deep, filling the snapshot with fabricated loop/loop/... paths, always exiting 3, and verify calls the garbage snapshot ok | Reproduced in C:\Users\skim1\AppData\Local\Temp\jS2: mkdir j, wrote j\f.txt, `mklink /J <abs>\j\loop <abs>\j`, then `python snap.py take j -o j.snap` -> stderr "snap: j/loop/loop/.../loop: <cannot resolve the file name>", exit 3; `json.load(j.snap)['entries']` has 65 records starting ['f.txt','loop/f.txt','loop/loop/f.txt','loop/loop/loop/f.txt']; `python snap.py verify j.snap` prints "snapshot ok: 65 entries, format version 1", exit 0. item.is_symlink() is False for a junction (snap.py:154) so it falls through to the is_dir branch at snap.py:162-164 and is pushed onto the walk stack, contrary to the spec's "symlinks ... never followed".
+
+CAND_2_EXTRAS
+- CONFIRMED_REAL | take follows Windows directory junctions, so a self-referencing junction is walked 64 levels deep, filling the snapshot with fabricated loop/loop/... paths, always exiting 3, and verify calls the garbage snapshot ok | Same reproduction as CAND_1's junction extra (identical report text): C:\Users\skim1\AppData\Local\Temp\jS2, `mklink /J`, take -> exit 3 with a 64-deep path error, 65 entries beginning ['f.txt','loop/f.txt','loop/loop/f.txt'], verify -> "snapshot ok: 65 entries", exit 0.
+- CONFIRMED_REAL | A directory that cannot be listed is recorded as an *empty directory* (a positive false claim), verify calls that snapshot intact, and once access is restored diff reports every file inside as newly added | Reproduced in C:\Users\skim1\AppData\Local\Temp\jS3: r5\plain.txt plus r5\vault\{secret1,secret2}.txt, then `icacls <abs>\r5\vault /deny "$env:USERNAME:(RX)"`; `python snap.py take r5 -o r5.snap` -> stderr "snap: r5/vault: <access denied>", exit 3, and entries are exactly [plain.txt file record, {'path': 'vault', 'type': 'dir'}]; `python snap.py verify r5.snap` -> "snapshot ok: 2 entries, format version 1", exit 0; after `icacls <abs>\r5\vault /remove:d "$env:USERNAME"` with nothing on disk changed, `python snap.py diff r5.snap r5` prints "+ vault/secret1.txt" and "+ vault/secret2.txt", exit 1, with empty stderr. Path: _record (snap.py:162-164) appends the dir before listing it, _listdir (snap.py:143-149) fails and returns [], _add_empty_directories (snap.py:197-207) then fabricates the dir record. Distinct from R5, which concerns an unreadable *file* being omitted.
+
+TOTALS
+cand_1: hits=2/6  confirmed_extras=1  false_alarms=0
+cand_2: hits=4/6  confirmed_extras=2  false_alarms=0

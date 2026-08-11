@@ -1,0 +1,28 @@
+REFERENCE_TOTAL: 5
+
+R1 | cand_1: HIT | cand_2: HIT | Empty-state message right-aligned (td:last-child beats .empty) and clipped at 375px so only "No employees " is readable
+R2 | cand_1: HIT | cand_2: HIT | #search / #department 1px borders at 1.53:1 against white panel (< 3:1, WCAG 1.4.11)
+R3 | cand_1: HIT | cand_2: HIT | #previous / #next 1px borders at 1.53:1 against white panel (< 3:1, WCAG 1.4.11)
+R4 | cand_1: HIT | cand_2: HIT | Sortable th[data-column] are operable but expose no interactive role (WCAG 4.1.2)
+R5 | cand_1: HIT | cand_2: MISS | Pagination buttons only 94x38px, below the 44x44 touch-target minimum
+
+Notes on the matches
+- R1: cand_1 splits it into DEFECT 1 (right-alignment / specificity override, measured text 891-1181 in a cell 81-1199) and DEFECT 2 (375px clipping); together they are the same defect, counted once, no extra.
+  cand_2 DEFECT 1 reports the same element (#employee-rows td.empty inside .table-wrap) and the identical measured symptom (text 249-539 vs visible window 13-362, only "No employees " on screen), which is verbatim the second half of R1's description, so it matches on substance. It does attribute the cause to `white-space: nowrap` + overflow rather than the text-align:right override, and never notices the desktop misplacement; I verified the cell is 543.7px wide vs a 289.7px text, so nothing would wrap even without nowrap - the alignment is the real driver (centring moves the text to 140-430, i.e. 77% visible instead of 39%). Credited as a hit, but the diagnosis is weaker than cand_1's.
+- R2/R3: both candidates fold the input/select borders and the pagination-button borders into a single contrast item covering all four controls (#search, #department, #previous, #next) with the correct measured 1.53:1; that satisfies both reference items.
+- R5: cand_2 never measures or mentions pagination button size anywhere.
+
+CAND_1_EXTRAS
+- CONFIRMED_REAL | "Page 0 of 0" shown when no rows match | Reproduced in my own headless Chromium: pg.fill('#search','zzzz') -> #page-status.textContent === "Page 0 of 0"; source confirms `const displayedPage = pageCount === 0 ? 0 : state.page` (page.html:370-371). A page index that cannot exist is user-visible incorrect state.
+- CONFIRMED_REAL | Paging to the last/first page disables the focused button and dumps focus to <body> | Reproduced: focused #next, Enter -> status "Page 2 of 3", activeElement still id="next"; second Enter -> "Page 3 of 3", activeElement === BODY; next Tab landed on #search (top of page). Caused by `nextButton.disabled = ...` inside render() (page.html:372-373) while the button holds focus. Genuine keyboard-a11y defect (WCAG 2.4.3 focus order).
+
+CAND_2_EXTRAS
+- FALSE_ALARM | At 375px Location/Salary are off-screen and "nothing indicates the table can be scrolled sideways" | The overflow is real (clientWidth 349 vs scrollWidth 715) but it is the intended `overflow-x:auto` responsive-table pattern, the content is fully reachable (set scrollLeft -> 381, columns come into view), and the "no scrollbar is laid out" evidence is a headless artifact: in a headed Chromium at the same viewport the wrapper lays out a 15px horizontal scrollbar (offsetHeight-clientHeight === 15). Content also visibly cuts mid-word ("Fronten..."), the standard affordance. Asking for an extra fade/shadow hint is a stylistic preference, not a defect.
+- CONFIRMED_REAL | Paging to the last/first page disables the focused button and dumps focus to <body> | Same reproduction as above (Enter on #next twice -> activeElement BODY, next Tab -> #search).
+- CONFIRMED_REAL | #page-status is an aria-live="polite" region rewritten on every keystroke, including repeated identical text | Reproduced with a MutationObserver while typing "engineer" at 40ms/char: 8 mutations, texts ["Page 1 of 3","Page 1 of 2","Page 1 of 1","Page 1 of 1","Page 1 of 1","Page 1 of 1","Page 1 of 1","Page 1 of 1"] - render() writes pageStatus.textContent unconditionally on every input event (page.html:371, 387-391), so the text node is replaced (and re-announced) even when nothing changed. Undebounced live-region chatter is a real screen-reader usability defect.
+- FALSE_ALARM | Disabled "Previous" label at 2.34:1 is "barely readable" | Colours verified (rgb(152,162,179) on rgb(242,244,247), #previous.disabled === true on load), but WCAG 1.4.3/1.4.11 explicitly exempt inactive/disabled user-interface components, and deliberately lowered contrast is the intended affordance signalling unavailability. Standard disabled styling, not a defect.
+- CONFIRMED_REAL | "Page 0 of 0" shown when no rows match | Same reproduction as in CAND_1_EXTRAS.
+
+TOTALS
+cand_1: hits=5/5  confirmed_extras=2  false_alarms=0
+cand_2: hits=4/5  confirmed_extras=3  false_alarms=2

@@ -1,0 +1,223 @@
+{
+ "good_args": [
+  "-c",
+  "name,age",
+  "data.csv"
+ ],
+ "err_prefix": "csvq: ",
+ "fixtures": {
+  "data.csv": "name,age,city\nAlice,30,Seoul\nBob,25,Busan\nCarol,35,\"Dae, gu\"\n",
+  "ragged.csv": "name,age,city\nAlice,30\nBob,25,Busan,extra\n"
+ },
+ "usage_errors": [
+  [
+   [
+    "--definitely-not-an-option",
+    "data.csv"
+   ],
+   "an unknown long option",
+   1
+  ],
+  [
+   [
+    "-Z",
+    "data.csv"
+   ],
+   "an unknown short option",
+   1
+  ],
+  [
+   [
+    "-c",
+    "nosuchcolumn",
+    "data.csv"
+   ],
+   "an unknown column in --columns",
+   1
+  ],
+  [
+   [
+    "-s",
+    "nosuchcolumn",
+    "data.csv"
+   ],
+   "an unknown column in --sort",
+   1
+  ],
+  [
+   [
+    "-w",
+    "nosuchcolumn=1",
+    "data.csv"
+   ],
+   "an unknown column in --where",
+   1
+  ],
+  [
+   [
+    "-w",
+    "this is not an expression",
+    "data.csv"
+   ],
+   "a malformed --where expression",
+   1
+  ],
+  [
+   [
+    "-w",
+    "age",
+    "data.csv"
+   ],
+   "a --where with no operator",
+   1
+  ],
+  [
+   [
+    "-n",
+    "notanumber",
+    "data.csv"
+   ],
+   "a non-numeric --limit",
+   1
+  ],
+  [
+   [
+    "-n",
+    "-5",
+    "data.csv"
+   ],
+   "a negative --limit",
+   1
+  ],
+  [
+   [
+    "-c"
+   ],
+   "an option missing its value",
+   1
+  ],
+  [
+   [
+    "-f",
+    "yaml",
+    "data.csv"
+   ],
+   "an unsupported --format",
+   1
+  ],
+  [
+   [
+    "no_such_file.csv"
+   ],
+   "a file that does not exist",
+   2
+  ],
+  [
+   [
+    "ragged.csv"
+   ],
+   "a row with more fields than the header",
+   1
+  ]
+ ],
+ "stdin_equiv": {
+  "file_args": [
+   "-c",
+   "name,age",
+   "data.csv"
+  ],
+  "dash_args": [
+   "-c",
+   "name,age",
+   "-"
+  ],
+  "pipe_args": [
+   "-c",
+   "name,age"
+  ],
+  "stdin_bytes": "name,age,city\nAlice,30,Seoul\nBob,25,Busan\nCarol,35,\"Dae, gu\"\n"
+ },
+ "encoding_args": [
+  "-c",
+  "name"
+ ],
+ "encoding_cases": [
+  [
+   "bom.csv",
+   [
+    239,
+    187,
+    191,
+    110,
+    97,
+    109,
+    101,
+    44,
+    97,
+    103,
+    101,
+    10,
+    65,
+    108,
+    105,
+    99,
+    101,
+    44,
+    51,
+    48,
+    10
+   ],
+   "a UTF-8 BOM before the header"
+  ],
+  [
+   "crlf.csv",
+   "name,age\r\nAlice,30\r\n",
+   "CRLF line endings"
+  ],
+  [
+   "utf8.csv",
+   "name,age\n서울핸버거,30\n",
+   "non-ASCII field values"
+  ],
+  [
+   "embedded.csv",
+   "name,note\nAlice,\"line one\nline two\"\n",
+   "a quoted field containing a newline"
+  ],
+  [
+   "quoted_delim.csv",
+   "name,note\nAlice,\"a,b,c\"\n",
+   "a quoted field containing the delimiter"
+  ],
+  [
+   "empty.csv",
+   "",
+   "a completely empty file"
+  ],
+  [
+   "headeronly.csv",
+   "name,age\n",
+   "a header with no data rows"
+  ],
+  [
+   "noeol.csv",
+   "name,age\nAlice,30",
+   "a final row with no trailing newline"
+  ]
+ ],
+ "atomic": {
+  "failing_args": [
+   "-c",
+   "nosuchcolumn",
+   "data.csv",
+   "-o"
+  ],
+  "append_dest": true
+ },
+ "roundtrip": {
+  "args": [
+   "-c",
+   "name,age"
+  ]
+ }
+}

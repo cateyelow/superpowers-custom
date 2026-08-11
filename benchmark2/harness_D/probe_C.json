@@ -1,0 +1,279 @@
+{
+  "target": "file:///artifacts/C/table.html",
+  "viewports": {
+    "375": {
+      "contrast": [
+        {
+          "sel": "#search",
+          "ratio": 1.53,
+          "need": 3,
+          "text": "",
+          "kind": "boundary"
+        },
+        {
+          "sel": "#department",
+          "ratio": 1.53,
+          "need": 3,
+          "text": "All departments\n          DesignEngineer",
+          "kind": "boundary"
+        },
+        {
+          "sel": "#next",
+          "ratio": 1.53,
+          "need": 3,
+          "text": "Next",
+          "kind": "boundary"
+        }
+      ],
+      "targets": [
+        {
+          "sel": "#search",
+          "w": 309,
+          "h": 42,
+          "text": "",
+          "severity": "under-44"
+        },
+        {
+          "sel": "#department",
+          "w": 309,
+          "h": 42,
+          "text": "All departments\n          DesignEngineer",
+          "severity": "under-44"
+        },
+        {
+          "sel": "#next",
+          "w": 94,
+          "h": 38,
+          "text": "Next",
+          "severity": "under-44"
+        }
+      ],
+      "roles": [
+        {
+          "sel": "th",
+          "issue": "focusable with no role",
+          "text": "Name"
+        },
+        {
+          "sel": "th",
+          "issue": "focusable with no role",
+          "text": "Department"
+        },
+        {
+          "sel": "th",
+          "issue": "focusable with no role",
+          "text": "Role"
+        },
+        {
+          "sel": "th",
+          "issue": "focusable with no role",
+          "text": "Location"
+        },
+        {
+          "sel": "th",
+          "issue": "focusable with no role",
+          "text": "Salary"
+        }
+      ],
+      "overflow": {
+        "docWidth": 375,
+        "viewWidth": 375,
+        "overflows": false
+      },
+      "focusable": [
+        "#search",
+        "#department",
+        "th",
+        "th",
+        "th",
+        "th",
+        "th",
+        "#previous",
+        "#next"
+      ]
+    },
+    "768": {
+      "contrast": [
+        {
+          "sel": "#search",
+          "ratio": 1.53,
+          "need": 3,
+          "text": "",
+          "kind": "boundary"
+        },
+        {
+          "sel": "#department",
+          "ratio": 1.53,
+          "need": 3,
+          "text": "All departments\n          DesignEngineer",
+          "kind": "boundary"
+        },
+        {
+          "sel": "#next",
+          "ratio": 1.53,
+          "need": 3,
+          "text": "Next",
+          "kind": "boundary"
+        }
+      ],
+      "targets": [
+        {
+          "sel": "#search",
+          "w": 446.7,
+          "h": 42,
+          "text": "",
+          "severity": "under-44"
+        },
+        {
+          "sel": "#department",
+          "w": 223.3,
+          "h": 42,
+          "text": "All departments\n          DesignEngineer",
+          "severity": "under-44"
+        },
+        {
+          "sel": "#next",
+          "w": 94,
+          "h": 38,
+          "text": "Next",
+          "severity": "under-44"
+        }
+      ],
+      "roles": [
+        {
+          "sel": "th",
+          "issue": "focusable with no role",
+          "text": "Name"
+        },
+        {
+          "sel": "th",
+          "issue": "focusable with no role",
+          "text": "Department"
+        },
+        {
+          "sel": "th",
+          "issue": "focusable with no role",
+          "text": "Role"
+        },
+        {
+          "sel": "th",
+          "issue": "focusable with no role",
+          "text": "Location"
+        },
+        {
+          "sel": "th",
+          "issue": "focusable with no role",
+          "text": "Salary"
+        }
+      ],
+      "overflow": {
+        "docWidth": 768,
+        "viewWidth": 768,
+        "overflows": false
+      },
+      "focusable": [
+        "#search",
+        "#department",
+        "th",
+        "th",
+        "th",
+        "th",
+        "th",
+        "#previous",
+        "#next"
+      ]
+    },
+    "1280": {
+      "contrast": [
+        {
+          "sel": "#search",
+          "ratio": 1.53,
+          "need": 3,
+          "text": "",
+          "kind": "boundary"
+        },
+        {
+          "sel": "#department",
+          "ratio": 1.53,
+          "need": 3,
+          "text": "All departments\n          DesignEngineer",
+          "kind": "boundary"
+        },
+        {
+          "sel": "#next",
+          "ratio": 1.53,
+          "need": 3,
+          "text": "Next",
+          "kind": "boundary"
+        }
+      ],
+      "targets": [
+        {
+          "sel": "#search",
+          "w": 708,
+          "h": 42,
+          "text": "",
+          "severity": "under-44"
+        },
+        {
+          "sel": "#department",
+          "w": 354,
+          "h": 42,
+          "text": "All departments\n          DesignEngineer",
+          "severity": "under-44"
+        },
+        {
+          "sel": "#next",
+          "w": 94,
+          "h": 38,
+          "text": "Next",
+          "severity": "under-44"
+        }
+      ],
+      "roles": [
+        {
+          "sel": "th",
+          "issue": "focusable with no role",
+          "text": "Name"
+        },
+        {
+          "sel": "th",
+          "issue": "focusable with no role",
+          "text": "Department"
+        },
+        {
+          "sel": "th",
+          "issue": "focusable with no role",
+          "text": "Role"
+        },
+        {
+          "sel": "th",
+          "issue": "focusable with no role",
+          "text": "Location"
+        },
+        {
+          "sel": "th",
+          "issue": "focusable with no role",
+          "text": "Salary"
+        }
+      ],
+      "overflow": {
+        "docWidth": 1280,
+        "viewWidth": 1280,
+        "overflows": false
+      },
+      "focusable": [
+        "#search",
+        "#department",
+        "th",
+        "th",
+        "th",
+        "th",
+        "th",
+        "#previous",
+        "#next"
+      ]
+    }
+  },
+  "focus_loss": []
+}

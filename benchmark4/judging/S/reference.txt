@@ -1,0 +1,41 @@
+DEFECT 1
+what: A snapshot file that is not valid UTF-8 makes `verify` and `diff` die with a Python traceback instead of reporting a corrupt snapshot; the user gets a stack dump and exit 1 rather than the documented "failed check" message.
+where: snap.py:302-310 read_snapshot -- the file is decoded by `handle.read()` at line 305, but only `ValueError` from `json.loads` is caught (line 308); UnicodeDecodeError escapes, and main() (snap.py:476-480) only catches KeyboardInterrupt.
+repro: `python -c "open('d1.json','wb').write(b'{\"version\": 1, \"root\": \"\xff\", \"entries\": []}')"` then `python snap.py verify d1.json` prints `Traceback (most recent call last): ... File "...snap.py", line 305, in read_snapshot / raw = handle.read() / UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 24: invalid start byte` on stderr, exit code 1. Identical traceback from `python snap.py diff d1.json t1`, exit code 1.
+severity: blocking
+category: robustness
+
+DEFECT 2
+what: A snapshot whose record has a JSON array or object as its `type` makes both `verify` and `diff` crash with `TypeError: unhashable type`, instead of reporting "unknown type".
+where: snap.py:288 in validate_snapshot -- `if kind not in REQUIRED_FIELDS:` hashes `kind` against a dict, so any non-hashable JSON value raises TypeError before the "unknown type %r" message on line 289 can be produced.
+repro: `python -c "import json;json.dump({'version':1,'root':'x','entries':[{'path':'a','type':[]}]},open('d2.json','w'))"` then `python snap.py verify d2.json` prints `Traceback ... File "...snap.py", line 288, in validate_snapshot / if kind not in REQUIRED_FIELDS: / TypeError: unhashable type: 'list'`, exit code 1. Same with `"type": {}` (`TypeError: unhashable type: 'dict'`) and via `python snap.py diff d2.json t1`, exit code 1.
+severity: blocking
+category: robustness
+
+DEFECT 3
+what: The `excludes` field of a snapshot is never validated, so `verify` declares a snapshot "ok" (exit 0) that `diff` then crashes on with a Python traceback.
+where: snap.py:248-299 validate_snapshot never inspects "excludes"; snap.py:396 `Scanner(args.dir, document.get("excludes"))` feeds it straight into snap.py:108 `self.excludes = list(excludes or [])`, and later into `fnmatch.fnmatchcase` at snap.py:120-122.
+repro: `python -c "import json;json.dump({'version':1,'root':'x','excludes':5,'entries':[]},open('d3.json','w'))"`; `python snap.py verify d3.json` prints `snapshot ok: 0 entries, format version 1`, exit code 0; `python snap.py diff d3.json t1` then prints `Traceback ... File "...snap.py", line 108, in __init__ / self.excludes = list(excludes or []) / TypeError: 'int' object is not iterable`, exit code 1. With `"excludes": [1, 2]` the crash is `File ".../fnmatch.py", line 83, in translate / TypeError: object of type 'int' has no len()`, exit code 1.
+severity: blocking
+category: robustness
+
+DEFECT 4
+what: A `take` run that fails (exit code 3 because a file could not be read) still overwrites the existing snapshot, silently replacing a complete snapshot with one that is missing the unreadable entries. The spec requires that a failed run must not leave a truncated snapshot in place of a good one, so the user's previous good snapshot is destroyed by a run that reported failure.
+where: snap.py:318-337 command_take -- `write_atomically` is called unconditionally at line 333 and `scanner.errors` is only consulted afterwards at line 337 to pick the exit code.
+repro: setup `mkdir t5; echo one > t5/a.txt; echo two > t5/b.txt; echo three > t5/c.txt`; `python snap.py take t5 -o good5.json` exit code 0, snapshot contains ['a.txt', 'b.txt', 'c.txt']. Then make b.txt unreadable (`icacls t5\b.txt /inheritance:r /grant "%USERDOMAIN%\%USERNAME%:(F)"` then `icacls t5\b.txt /deny "%USERDOMAIN%\%USERNAME%:(RX)"`) and re-run `python snap.py take t5 -o good5.json`: stderr `snap: t5/b.txt: Permission denied`, exit code 3, and good5.json now contains only ['a.txt', 'c.txt'] -- the good snapshot is gone.
+severity: blocking
+category: correctness
+
+DEFECT 5
+what: `diff` reports a file that still exists as deleted. A file whose contents cannot be read is dropped from the scan, so it is printed on stdout as `- path` ("a file in the snapshot that is now missing") and counted under `removed` in `--summary`, which is simply wrong: the file is present and unchanged.
+where: snap.py:183-195 Scanner._digest returns None on OSError, snap.py:173-174 then drops the record entirely, so compare() (snap.py:361-365) sees the path only in `old` and emits the "-" marker.
+repro: with t6 containing a.txt, b.txt, c.txt and a valid snapshot pristine6.json taken while all three were readable, deny read on b.txt (`icacls t6\b.txt /inheritance:r /grant "%USERDOMAIN%\%USERNAME%:(F)"`, `icacls t6\b.txt /deny "%USERDOMAIN%\%USERNAME%:(RX)"`), then `python snap.py diff pristine6.json t6` prints `snap: t6/b.txt: Permission denied` on stderr and `- b.txt` on stdout, exit code 3, while `ls t6` still shows a.txt b.txt c.txt. `python snap.py diff --summary pristine6.json t6` prints `added 0 / removed 1 / modified 0 / touched 0`, exit code 3.
+severity: blocking
+category: correctness
+
+DEFECT 6
+what: Symlink targets are stored with the host path separator instead of `/`, so a snapshot does not round-trip between Windows and POSIX as the spec requires; every symlink with a multi-segment target compares unequal (reported as `M path`) when the snapshot is taken on one platform and diffed on the other.
+where: snap.py:157-161 Scanner._record -- the symlink branch stores `"target": os.readlink(item.path)` without passing it through `to_slash()` (snap.py:75-85), unlike the relative path and the `root` field (snap.py:327).
+repro: `mkdir t9 t9/sub; echo A > t9/sub/x.txt`; `python -c "import os; os.symlink(os.path.join('sub','x.txt'), 't9/rel.lnk')"`; `python snap.py take t9 -o s9.json` exit code 0; `python -c "import json;print([e for e in json.load(open('s9.json'))['entries'] if e['type']=='symlink'])"` prints `[{'path': 'rel.lnk', 'target': 'sub\\x.txt', 'type': 'symlink'}]` -- the stored target is `sub\x.txt`, not `sub/x.txt`, while the file record for the same tree is stored as `sub/x.txt`.
+severity: minor
+category: spec

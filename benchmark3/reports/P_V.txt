@@ -1,0 +1,49 @@
+DEFECT 1
+what: A client that posts deeply nested JSON gets 500 "internal_error" instead of a 400, breaking the stated rule that a malformed body is never a 500.
+where: E:/GitHub/superpowers-custom/benchmark3/artifacts/P/app.py:228 (json.loads in parse_json_object catches only json.JSONDecodeError); the RecursionError falls through to the catch-all at app.py:507-509. Endpoint POST /reservations.
+repro: POST /reservations with body = "[" * 1500 + "]" * 1500 (Content-Length set, Content-Type application/json) -> HTTP 500 {"error":{"code":"internal_error","message":"An unexpected error occurred."}}. Same with body = '{"a":' * 1500 + "1" + "}" * 1500 -> HTTP 500. Server stderr logged: unhandled error: RecursionError('maximum recursion depth exceeded while decoding a JSON array from a unicode string'). A 900-deep body returns 400 correctly, so the cutoff is Python's recursion limit.
+severity: blocking
+category: spec
+
+DEFECT 2
+what: A client that sends a JSON string containing an unpaired UTF-16 surrogate escape gets 500 "internal_error" instead of a 4xx.
+where: E:/GitHub/superpowers-custom/benchmark3/artifacts/P/app.py:240-250 (parse_reservation_request only checks isinstance(sku, str), so a lone surrogate passes validation) and then app.py:281-283, where sqlite3 binds the value and raises UnicodeEncodeError inside transaction(); it reaches the catch-all at app.py:507-509. Endpoint POST /reservations.
+repro: curl -X POST -H 'Content-Type: application/json' --data-binary '{"sku":"\ud800","qty":1}' http://127.0.0.1:8911/reservations -> HTTP 500 {"error":{"code":"internal_error","message":"An unexpected error occurred."}}. Also '{"sku":"WIDGET-1\udfff","qty":1}' -> HTTP 500. Server stderr logged: unhandled error: UnicodeEncodeError('utf-8', '\ud800', 0, 1, 'surrogates not allowed'). Contrast: '{"sku":"NOPE","qty":1}' -> HTTP 404, so the same code path returns a proper error for an ordinary unknown sku.
+repro-note: the transaction does roll back cleanly; 150 concurrent 500-producing requests interleaved with valid reservations left item counts exactly correct, so this is a wrong status code and not data loss.
+severity: blocking
+category: validation
+
+DEFECT 3
+what: A request whose body is shorter than its Content-Length never gets any response at all and never times out; the connection and its worker thread stay pinned for as long as the client keeps the socket open.
+where: E:/GitHub/superpowers-custom/benchmark3/artifacts/P/app.py:447 (body = self.rfile.read(length)) with no timeout set on InventoryHandler (class defined at app.py:420) and no socket timeout on the server, so the read blocks forever.
+repro: Opened a socket and sent exactly: POST /reservations HTTP/1.1\r\nHost: x\r\nContent-Length: 100\r\n\r\n{"sku":"WI  (only 10 of the declared 100 body bytes). Waited 15 s: no bytes received at all, connection still open. Repeated with 60 such connections (Content-Length: 500, 4 body bytes each): the service process went from 1 thread to 61 threads, and was still at 61 threads after a further 25 s of complete idleness, i.e. nothing reaps them. Threads only dropped back to 1 when the client side closed the sockets. Other clients were still served (GET /items -> 200) during this, so it is thread/connection exhaustion rather than an immediate outage.
+severity: blocking
+category: robustness
+
+DEFECT 4
+what: Request framing is not validated, so an ambiguously framed request is accepted and the leftover bytes are executed as a second request; a client (or an intermediary that reads the framing differently) can smuggle an extra request past the front of the connection.
+where: E:/GitHub/superpowers-custom/benchmark3/artifacts/P/app.py:432-435 in InventoryHandler._read_body: self.headers.get("Content-Length") silently takes the first of several headers, and int(raw_length) accepts values RFC 7230 forbids.
+repro: (a) One socket, one write: POST /reservations HTTP/1.1\r\nHost: x\r\nContent-Length: 26\r\nContent-Length: 60\r\n\r\n{"sku":"WIDGET-1","qty":1}GET /items/GADGET-2 HTTP/1.1\r\nHost: x\r\n\r\n  -> the server returned TWO responses: HTTP/1.1 201 Created with {"id":"c4edff3a36204e85a86fb5a11022a939","sku":"WIDGET-1","qty":1,"status":"held",...} followed by HTTP/1.1 200 OK with {"sku":"GADGET-2","name":"Gadget","on_hand":3,"reserved":0,"available":3}. RFC 7230 3.3.3 requires a 400 for conflicting Content-Length values. (b) POST /reservations HTTP/1.1\r\nHost: x\r\nContent-Length: 2_6\r\n\r\n{"sku":"WIDGET-1","qty":1} -> HTTP/1.1 201 Created; Python's int() accepts the underscore, so a non-digit Content-Length is honoured instead of rejected.
+severity: blocking
+category: security
+
+DEFECT 5
+what: On every error where the server decides to hang up, it closes the socket without telling the client, so an HTTP/1.1 client that reuses what looks like a persistent connection loses its next request.
+where: E:/GitHub/superpowers-custom/benchmark3/artifacts/P/app.py:453-466 (_send_json never emits a Connection header) and app.py:471-486 / app.py:430,438,442,445,450 which set self.close_connection = True. Affects 413 body_too_large, the chunked-body 400, the bad Content-Length 400s and every http.server-generated error.
+repro: Sent POST /reservations HTTP/1.1 with Content-Length: 2000000 and 4 body bytes. Response headers were exactly: HTTP/1.1 413 Request Entity Too Large | Server: InventoryReservation/1.0 Python/3.11.9 | Date: ... | Content-Type: application/json; charset=utf-8 | Content-Length: 104 -- no Connection: close -- and the server then closed the socket (recv returned b''). Same for the chunked rejection (HTTP/1.1 400, no Connection header, socket closed). A pipelined follow-up request sent on that same connection (GET /items/WIDGET-1) was silently dropped and never answered.
+severity: minor
+category: error-shape
+
+DEFECT 6
+what: A malformed request line gets a reply with no HTTP status line and no headers, just a bare JSON body, so the client cannot see the 4xx status at all and generic HTTP clients treat the response as a protocol error.
+where: E:/GitHub/superpowers-custom/benchmark3/artifacts/P/app.py:471-486, the send_error override routes through _send_json -> send_response, but at that point self.request_version is still the HTTP/0.9 default, so http.server suppresses the status line and all headers and only the body is written.
+repro: Opened a socket and sent exactly: GARBAGE\r\n\r\n  -> received b'{\n  "error": {\n    "code": "bad_request",\n    "message": "Bad request syntax (\'GARBAGE\')"\n  }\n}\n' with nothing before it; the response does not start with "HTTP/". Same for POST /items\r\n\r\n -> b'{... "message": "Bad HTTP/0.9 request type (\'POST\')" ...}' with no status line. The spec requires every error response to carry an appropriate 4xx/5xx status, and here no status is transmitted.
+severity: minor
+category: error-shape
+
+DEFECT 7
+what: HEAD is rejected with 501 on resources that answer GET, so caches, health checks and any client that probes with HEAD cannot use the service.
+where: E:/GitHub/superpowers-custom/benchmark3/artifacts/P/app.py:511-515 wires do_GET/do_POST/do_PUT/do_PATCH/do_DELETE but never do_HEAD, so BaseHTTPRequestHandler answers 501. app.py:462 already contains an "if self.command != 'HEAD'" guard in _send_json, so HEAD support was intended but is unreachable dead code.
+repro: HEAD /items -> HTTP 501 (Content-Type application/json; charset=utf-8, body code "not_implemented"). HEAD /items/WIDGET-1 -> HTTP 501. The same paths answer GET with 200. OPTIONS /items likewise -> HTTP 501 {"error":{"code":"not_implemented","message":"Unsupported method ('OPTIONS')"}}.
+severity: minor
+category: spec

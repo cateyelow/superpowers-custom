@@ -1,0 +1,31 @@
+REFERENCE_TOTAL: 18
+
+R1 | cand_1: MISS | cand_2: MISS | "Remove" is dead for the whole 2s upload (li destroyed between mousedown/mouseup, no click fires)
+R2 | cand_1: HIT | cand_2: MISS | Keyboard focus thrown to <body> the instant an upload starts and never restored (cand_1 D4 measures focus=BODY 80ms after Upload and still BODY when the upload ends; cand_2 never tests focus at upload start)
+R3 | cand_1: HIT | cand_2: HIT | File list inside aria-live="polite" rebuilt ~60x/s during upload floods screen readers (cand_1 D5 / cand_2 D4, both counted 123 mutations)
+R4 | cand_1: MISS | cand_2: HIT | File dropped outside the drop zone navigates the browser away and destroys the selection (cand_2 D1)
+R5 | cand_1: HIT | cand_2: MISS | "Clear all" during upload leaves Upload stuck on "Uploading…"/disabled until the phantom timer expires (cand_1 D7)
+R6 | cand_1: HIT | cand_2: HIT | Removing a file dumps focus to <body> instead of a neighbouring control (cand_1 D3 / cand_2 D2)
+R7 | cand_1: HIT | cand_2: MISS | "Clear all" discards focus because the button disables itself as its own side effect (cand_1 D4 tests #clear-all explicitly, same element and same cause)
+R8 | cand_1: HIT | cand_2: HIT | Phantom tab stop on the 1x1 clipped #file-input with no visible focus (cand_1 D1 / cand_2 D3)
+R9 | cand_1: HIT | cand_2: HIT | Focusable file input nested inside role="button" → button inside button in the a11y tree (cand_1 D1 names the nested `button "Choose Files"`; cand_2 D3 names the role=button ancestry plus the unlabelled input)
+R10 | cand_1: MISS | cand_2: MISS | Emptying the list is announced to nobody — #empty-state is a sibling of, not inside, the live region
+R11 | cand_1: HIT | cand_2: HIT | ".drop-zone small" helper text fails text contrast (~3.4-3.6:1) (cand_1 D8 / cand_2 D8)
+R12 | cand_1: HIT | cand_2: HIT | "No files selected." empty state fails text contrast 3.76:1 (cand_1 D9 / cand_2 D9)
+R13 | cand_1: HIT | cand_2: HIT | .file-meta size/status/percentage text fails contrast 3.98:1 (cand_1 D10 / cand_2 D10)
+R14 | cand_1: MISS | cand_2: HIT | Button focus ring outline 3px rgb(64 95 216 / 28%) is ~1.5:1, essentially invisible (cand_2 D5; cand_1 covers only the drop zone's indicator, never the button outline)
+R15 | cand_1: MISS | cand_2: HIT | Drop zone's dashed #9faccc boundary fails non-text contrast (2.17/2.27:1) (cand_2 D7; cand_1 reports only the focused-vs-unfocused delta, not the boundary contrast)
+R16 | cand_1: HIT | cand_2: HIT | Disabled Upload button label (incl. "Uploading…") is 1.98:1 white-on-#aeb8d5 (cand_1 D11 / cand_2 D12)
+R17 | cand_1: HIT | cand_2: HIT | Remove buttons are 61.1x22.0 px, under the 24x24 minimum (cand_1 D6 / cand_2 D11)
+R18 | cand_1: MISS | cand_2: MISS | Same file can be added repeatedly, producing indistinguishable rows with no de-duplication
+
+CAND_1_EXTRAS
+- CONFIRMED_REAL | Drop zone violates WCAG 2.5.3 Label in Name: aria-label "Choose files or drop files here" does not contain the visible label "Drop files here or click to browse" | Read page.html:300 (aria-label) vs the <strong> at :302; my own headless Chromium accessibility snapshot returns button "Choose files or drop files here" while inner_text('#drop-zone') is "↑ / Drop files here or click to browse / You can select multiple files" — a speech-input user saying the printed words cannot activate it (Level A failure)
+- CONFIRMED_REAL | Drop zone's focus indicator is suppressed (outline:none), identical to hover, and the focused/unfocused change-of-contrast is only 1.96:1 | Verified in my own browser: page.html:72-77 puts :hover and :focus-visible in one block; after Tab with the 160ms transition settled, #drop-zone computed outlineStyle "none", outlineWidth "0px", boxShadow "none", border rgb(159,172,204)→rgb(78,110,232) and background rgb(248,250,255)→rgb(241,244,255); hovering with focus blurred produced byte-identical computed values, so focus and hover are indistinguishable. Focused/unfocused border contrast measured 1.96:1, below the 3:1 change-of-contrast threshold. Screenshots of both states confirm only a subtle border tint. Distinct from R14 (button outline) and R15 (unfocused boundary contrast)
+
+CAND_2_EXTRAS
+- CONFIRMED_REAL | Drop zone's focus indicator is suppressed (outline:none) and is the same appearance as hover, with a 1.96:1 change of contrast | Same verification as above, applied identically: outline none/0px and no box-shadow on the focused #drop-zone, hover and :focus-visible share one declaration block at page.html:72-77 and produce identical computed border/background, focused-vs-unfocused border contrast 1.96:1 (<3:1)
+
+TOTALS
+cand_1: hits=12/18  confirmed_extras=2  false_alarms=0
+cand_2: hits=12/18  confirmed_extras=1  false_alarms=0

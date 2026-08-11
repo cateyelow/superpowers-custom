@@ -1,0 +1,946 @@
+{
+  "target": "file:///artifacts/B/checkout.html",
+  "states": {
+    "load": {
+      "375": {
+        "contrast": [
+          {
+            "sel": "#full-name",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#address",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#city",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#postal-code",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#country",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "Select a country\n              Australia\n       "
+          }
+        ],
+        "targets": [],
+        "roles": [],
+        "overflow": {
+          "docWidth": 375,
+          "viewWidth": 375,
+          "overflows": false
+        },
+        "controls": [
+          "#full-name",
+          "#address",
+          "#city",
+          "#postal-code",
+          "#country",
+          "button.button-primary"
+        ],
+        "clipped": []
+      },
+      "768": {
+        "contrast": [
+          {
+            "sel": "#full-name",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#address",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#city",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#postal-code",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#country",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "Select a country\n              Australia\n       "
+          }
+        ],
+        "targets": [],
+        "roles": [],
+        "overflow": {
+          "docWidth": 768,
+          "viewWidth": 768,
+          "overflows": false
+        },
+        "controls": [
+          "#full-name",
+          "#address",
+          "#city",
+          "#postal-code",
+          "#country",
+          "button.button-primary"
+        ],
+        "clipped": []
+      },
+      "1280": {
+        "contrast": [
+          {
+            "sel": "#full-name",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#address",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#city",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#postal-code",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#country",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "Select a country\n              Australia\n       "
+          }
+        ],
+        "targets": [],
+        "roles": [],
+        "overflow": {
+          "docWidth": 1280,
+          "viewWidth": 1280,
+          "overflows": false
+        },
+        "controls": [
+          "#full-name",
+          "#address",
+          "#city",
+          "#postal-code",
+          "#country",
+          "button.button-primary"
+        ],
+        "clipped": []
+      },
+      "pseudo": [
+        {
+          "selector": "input::placeholder",
+          "prop": "color",
+          "declared": "rgb(152, 162, 179)",
+          "resolved": "rgb(152, 162, 179)",
+          "ratio": 2.58,
+          "need": 4.5,
+          "sample": "#full-name",
+          "count": 4,
+          "note": "placeholder text contrast"
+        },
+        {
+          "selector": "input:focus",
+          "prop": "box-shadow",
+          "declared": "0 0 0 4px var(--focus)",
+          "resolved": "0 0 0 4px rgba(49, 87, 213, 0.2)",
+          "composited": "rgb(214,221,247)",
+          "ratio": 1.35,
+          "need": 3,
+          "sample": "#full-name",
+          "count": 4,
+          "note": "non-text contrast of the :focus indicator"
+        },
+        {
+          "selector": "select:focus",
+          "prop": "box-shadow",
+          "declared": "0 0 0 4px var(--focus)",
+          "resolved": "0 0 0 4px rgba(49, 87, 213, 0.2)",
+          "composited": "rgb(214,221,247)",
+          "ratio": 1.35,
+          "need": 3,
+          "sample": "#country",
+          "count": 1,
+          "note": "non-text contrast of the :focus indicator"
+        },
+        {
+          "selector": "button:focus-visible",
+          "prop": "outline",
+          "declared": "3px solid var(--focus)",
+          "resolved": "3px solid rgba(49, 87, 213, 0.2)",
+          "composited": "rgb(214,221,247)",
+          "ratio": 1.35,
+          "need": 3,
+          "sample": "button.button-primary",
+          "count": 1,
+          "note": "non-text contrast of the :focus-visible indicator"
+        }
+      ]
+    },
+    "filled": {
+      "375": {
+        "contrast": [
+          {
+            "sel": "#full-name",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#address",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#city",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#postal-code",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#country",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "Select a country\n              Australia\n       "
+          }
+        ],
+        "targets": [],
+        "roles": [],
+        "overflow": {
+          "docWidth": 375,
+          "viewWidth": 375,
+          "overflows": false
+        },
+        "controls": [
+          "#full-name",
+          "#address",
+          "#city",
+          "#postal-code",
+          "#country",
+          "button.button-primary"
+        ],
+        "clipped": []
+      },
+      "768": {
+        "contrast": [
+          {
+            "sel": "#full-name",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#address",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#city",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#postal-code",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#country",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "Select a country\n              Australia\n       "
+          }
+        ],
+        "targets": [],
+        "roles": [],
+        "overflow": {
+          "docWidth": 768,
+          "viewWidth": 768,
+          "overflows": false
+        },
+        "controls": [
+          "#full-name",
+          "#address",
+          "#city",
+          "#postal-code",
+          "#country",
+          "button.button-primary"
+        ],
+        "clipped": []
+      },
+      "1280": {
+        "contrast": [
+          {
+            "sel": "#full-name",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#address",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#city",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#postal-code",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#country",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "Select a country\n              Australia\n       "
+          }
+        ],
+        "targets": [],
+        "roles": [],
+        "overflow": {
+          "docWidth": 1280,
+          "viewWidth": 1280,
+          "overflows": false
+        },
+        "controls": [
+          "#full-name",
+          "#address",
+          "#city",
+          "#postal-code",
+          "#country",
+          "button.button-primary"
+        ],
+        "clipped": []
+      },
+      "pseudo": [
+        {
+          "selector": "input::placeholder",
+          "prop": "color",
+          "declared": "rgb(152, 162, 179)",
+          "resolved": "rgb(152, 162, 179)",
+          "ratio": 2.58,
+          "need": 4.5,
+          "sample": "#full-name",
+          "count": 4,
+          "note": "placeholder text contrast"
+        },
+        {
+          "selector": "input:focus",
+          "prop": "box-shadow",
+          "declared": "0 0 0 4px var(--focus)",
+          "resolved": "0 0 0 4px rgba(49, 87, 213, 0.2)",
+          "composited": "rgb(214,221,247)",
+          "ratio": 1.35,
+          "need": 3,
+          "sample": "#full-name",
+          "count": 4,
+          "note": "non-text contrast of the :focus indicator"
+        },
+        {
+          "selector": "select:focus",
+          "prop": "box-shadow",
+          "declared": "0 0 0 4px var(--focus)",
+          "resolved": "0 0 0 4px rgba(49, 87, 213, 0.2)",
+          "composited": "rgb(214,221,247)",
+          "ratio": 1.35,
+          "need": 3,
+          "sample": "#country",
+          "count": 1,
+          "note": "non-text contrast of the :focus indicator"
+        },
+        {
+          "selector": "button:focus-visible",
+          "prop": "outline",
+          "declared": "3px solid var(--focus)",
+          "resolved": "3px solid rgba(49, 87, 213, 0.2)",
+          "composited": "rgb(214,221,247)",
+          "ratio": 1.35,
+          "need": 3,
+          "sample": "button.button-primary",
+          "count": 1,
+          "note": "non-text contrast of the :focus-visible indicator"
+        }
+      ]
+    },
+    "step-2": {
+      "375": {
+        "contrast": [
+          {
+            "sel": "#cardholder-name",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#card-number",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#expiry",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#cvc",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "button.button-secondary",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "Back"
+          }
+        ],
+        "targets": [],
+        "roles": [],
+        "overflow": {
+          "docWidth": 375,
+          "viewWidth": 375,
+          "overflows": false
+        },
+        "controls": [
+          "#cardholder-name",
+          "#card-number",
+          "#expiry",
+          "#cvc",
+          "button.button-secondary",
+          "button.button-primary"
+        ],
+        "clipped": []
+      },
+      "768": {
+        "contrast": [
+          {
+            "sel": "#cardholder-name",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#card-number",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#expiry",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#cvc",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "button.button-secondary",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "Back"
+          }
+        ],
+        "targets": [],
+        "roles": [],
+        "overflow": {
+          "docWidth": 768,
+          "viewWidth": 768,
+          "overflows": false
+        },
+        "controls": [
+          "#cardholder-name",
+          "#card-number",
+          "#expiry",
+          "#cvc",
+          "button.button-secondary",
+          "button.button-primary"
+        ],
+        "clipped": []
+      },
+      "1280": {
+        "contrast": [
+          {
+            "sel": "#cardholder-name",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#card-number",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#expiry",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "#cvc",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": ""
+          },
+          {
+            "sel": "button.button-secondary",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "Back"
+          }
+        ],
+        "targets": [],
+        "roles": [],
+        "overflow": {
+          "docWidth": 1280,
+          "viewWidth": 1280,
+          "overflows": false
+        },
+        "controls": [
+          "#cardholder-name",
+          "#card-number",
+          "#expiry",
+          "#cvc",
+          "button.button-secondary",
+          "button.button-primary"
+        ],
+        "clipped": []
+      },
+      "pseudo": [
+        {
+          "selector": "input::placeholder",
+          "prop": "color",
+          "declared": "rgb(152, 162, 179)",
+          "resolved": "rgb(152, 162, 179)",
+          "ratio": 2.58,
+          "need": 4.5,
+          "sample": "#cardholder-name",
+          "count": 4,
+          "note": "placeholder text contrast"
+        },
+        {
+          "selector": "input:focus",
+          "prop": "box-shadow",
+          "declared": "0 0 0 4px var(--focus)",
+          "resolved": "0 0 0 4px rgba(49, 87, 213, 0.2)",
+          "composited": "rgb(214,221,247)",
+          "ratio": 1.35,
+          "need": 3,
+          "sample": "#cardholder-name",
+          "count": 4,
+          "note": "non-text contrast of the :focus indicator"
+        },
+        {
+          "selector": "button:focus-visible",
+          "prop": "outline",
+          "declared": "3px solid var(--focus)",
+          "resolved": "3px solid rgba(49, 87, 213, 0.2)",
+          "composited": "rgb(214,221,247)",
+          "ratio": 1.35,
+          "need": 3,
+          "sample": "button.button-secondary",
+          "count": 2,
+          "note": "non-text contrast of the :focus-visible indicator"
+        }
+      ]
+    },
+    "step-3": {
+      "375": {
+        "contrast": [
+          {
+            "sel": "button.button-secondary",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "Back"
+          }
+        ],
+        "targets": [],
+        "roles": [],
+        "overflow": {
+          "docWidth": 375,
+          "viewWidth": 375,
+          "overflows": false
+        },
+        "controls": [
+          "button.button-secondary",
+          "button.button-primary"
+        ],
+        "clipped": []
+      },
+      "768": {
+        "contrast": [
+          {
+            "sel": "button.button-secondary",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "Back"
+          }
+        ],
+        "targets": [],
+        "roles": [],
+        "overflow": {
+          "docWidth": 768,
+          "viewWidth": 768,
+          "overflows": false
+        },
+        "controls": [
+          "button.button-secondary",
+          "button.button-primary"
+        ],
+        "clipped": []
+      },
+      "1280": {
+        "contrast": [
+          {
+            "sel": "button.button-secondary",
+            "ratio": 1.47,
+            "need": 3,
+            "kind": "boundary",
+            "disabled": false,
+            "text": "Back"
+          }
+        ],
+        "targets": [],
+        "roles": [],
+        "overflow": {
+          "docWidth": 1280,
+          "viewWidth": 1280,
+          "overflows": false
+        },
+        "controls": [
+          "button.button-secondary",
+          "button.button-primary"
+        ],
+        "clipped": []
+      },
+      "pseudo": [
+        {
+          "selector": "button:focus-visible",
+          "prop": "outline",
+          "declared": "3px solid var(--focus)",
+          "resolved": "3px solid rgba(49, 87, 213, 0.2)",
+          "composited": "rgb(214,221,247)",
+          "ratio": 1.35,
+          "need": 3,
+          "sample": "button.button-secondary",
+          "count": 2,
+          "note": "non-text contrast of the :focus-visible indicator"
+        }
+      ]
+    }
+  },
+  "notes": [
+    "seeded 9 field(s)",
+    "advanced to step 2",
+    "advanced to step 3"
+  ],
+  "findings": [
+    {
+      "type": "contrast",
+      "state": "load",
+      "viewport": "375",
+      "sel": "#full-name",
+      "ratio": 1.47,
+      "need": 3,
+      "kind": "boundary",
+      "disabled": false,
+      "text": ""
+    },
+    {
+      "type": "contrast",
+      "state": "load",
+      "viewport": "375",
+      "sel": "#address",
+      "ratio": 1.47,
+      "need": 3,
+      "kind": "boundary",
+      "disabled": false,
+      "text": ""
+    },
+    {
+      "type": "contrast",
+      "state": "load",
+      "viewport": "375",
+      "sel": "#city",
+      "ratio": 1.47,
+      "need": 3,
+      "kind": "boundary",
+      "disabled": false,
+      "text": ""
+    },
+    {
+      "type": "contrast",
+      "state": "load",
+      "viewport": "375",
+      "sel": "#postal-code",
+      "ratio": 1.47,
+      "need": 3,
+      "kind": "boundary",
+      "disabled": false,
+      "text": ""
+    },
+    {
+      "type": "contrast",
+      "state": "load",
+      "viewport": "375",
+      "sel": "#country",
+      "ratio": 1.47,
+      "need": 3,
+      "kind": "boundary",
+      "disabled": false,
+      "text": "Select a country\n              Australia\n       "
+    },
+    {
+      "type": "contrast-state",
+      "state": "load",
+      "selector": "input::placeholder",
+      "prop": "color",
+      "declared": "rgb(152, 162, 179)",
+      "resolved": "rgb(152, 162, 179)",
+      "ratio": 2.58,
+      "need": 4.5,
+      "sample": "#full-name",
+      "count": 4,
+      "note": "placeholder text contrast"
+    },
+    {
+      "type": "contrast-state",
+      "state": "load",
+      "selector": "input:focus",
+      "prop": "box-shadow",
+      "declared": "0 0 0 4px var(--focus)",
+      "resolved": "0 0 0 4px rgba(49, 87, 213, 0.2)",
+      "composited": "rgb(214,221,247)",
+      "ratio": 1.35,
+      "need": 3,
+      "sample": "#full-name",
+      "count": 4,
+      "note": "non-text contrast of the :focus indicator"
+    },
+    {
+      "type": "contrast-state",
+      "state": "load",
+      "selector": "select:focus",
+      "prop": "box-shadow",
+      "declared": "0 0 0 4px var(--focus)",
+      "resolved": "0 0 0 4px rgba(49, 87, 213, 0.2)",
+      "composited": "rgb(214,221,247)",
+      "ratio": 1.35,
+      "need": 3,
+      "sample": "#country",
+      "count": 1,
+      "note": "non-text contrast of the :focus indicator"
+    },
+    {
+      "type": "contrast-state",
+      "state": "load",
+      "selector": "button:focus-visible",
+      "prop": "outline",
+      "declared": "3px solid var(--focus)",
+      "resolved": "3px solid rgba(49, 87, 213, 0.2)",
+      "composited": "rgb(214,221,247)",
+      "ratio": 1.35,
+      "need": 3,
+      "sample": "button.button-primary",
+      "count": 1,
+      "note": "non-text contrast of the :focus-visible indicator"
+    },
+    {
+      "type": "contrast",
+      "state": "step-2",
+      "viewport": "375",
+      "sel": "#cardholder-name",
+      "ratio": 1.47,
+      "need": 3,
+      "kind": "boundary",
+      "disabled": false,
+      "text": ""
+    },
+    {
+      "type": "contrast",
+      "state": "step-2",
+      "viewport": "375",
+      "sel": "#card-number",
+      "ratio": 1.47,
+      "need": 3,
+      "kind": "boundary",
+      "disabled": false,
+      "text": ""
+    },
+    {
+      "type": "contrast",
+      "state": "step-2",
+      "viewport": "375",
+      "sel": "#expiry",
+      "ratio": 1.47,
+      "need": 3,
+      "kind": "boundary",
+      "disabled": false,
+      "text": ""
+    },
+    {
+      "type": "contrast",
+      "state": "step-2",
+      "viewport": "375",
+      "sel": "#cvc",
+      "ratio": 1.47,
+      "need": 3,
+      "kind": "boundary",
+      "disabled": false,
+      "text": ""
+    },
+    {
+      "type": "contrast",
+      "state": "step-2",
+      "viewport": "375",
+      "sel": "button.button-secondary",
+      "ratio": 1.47,
+      "need": 3,
+      "kind": "boundary",
+      "disabled": false,
+      "text": "Back"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+REFERENCE_TOTAL: 4
+
+R1 | cand_1: HIT | cand_2: HIT | Malformed JSON body -> 500 internal_error instead of 400 (json.loads guarded only by JSONDecodeError; RecursionError from deep nesting, ValueError from >4300-digit int literal) on POST /reservations
+R2 | cand_1: HIT | cand_2: HIT | JSON "sku" with an unpaired UTF-16 surrogate escape passes validation, then UnicodeEncodeError in the sqlite bind -> 500 on POST /reservations
+R3 | cand_1: HIT | cand_2: HIT | send_error for a request line rejected before the HTTP version is parsed writes a bare JSON body with no status line and no headers (request_version still HTTP/0.9)
+R4 | cand_1: HIT | cand_2: HIT | No read timeout anywhere: a stalled/short body pins a worker thread indefinitely; threads track half-open connections 1:1 and are never reclaimed
+
+Notes on matching:
+- CAND_1 DEFECT 1 (RecursionError) and CAND_1 DEFECT 8 (>4300-digit int ValueError) are the two triggers
+  REFERENCE DEFECT 1 lists as (a) and (b): same root cause (app.py:227-230), same endpoint, same fix.
+  Both are folded into R1, so DEFECT 8 is not counted as an extra finding.
+- CAND_2 DEFECT 1 covers only trigger (a); still a substance match on R1.
+- Candidates' DEFECT 3 (short body, no response, no timeout, thread growth) matches R4 on cause and
+  location (app.py:447 rfile.read with no handler timeout).
+- Candidates' DEFECT 6 matches R3 exactly (same override, same HTTP/0.9 explanation).
+
+CAND_1_EXTRAS
+- CONFIRMED_REAL | Content-Length framing is not validated: conflicting duplicate Content-Length headers are accepted (first one wins) so trailing bytes are executed as a second request, and non-digit values like "2_6"/"+26" are honoured | Single socket, single write: "POST /reservations HTTP/1.1 / Host: x / Content-Length: 26 / Content-Length: 60" + 26-byte JSON body + "GET /items/GADGET-2 HTTP/1.1" returned TWO responses (201 Created for the reservation, then 200 OK for GADGET-2). "Content-Length: 2_6" and "Content-Length: +26" each returned 201 Created instead of the 400 RFC 7230 3.3.3 requires.
+- CONFIRMED_REAL | Errors on which the server closes the connection carry no "Connection: close" header, so an HTTP/1.1 client that reuses the socket loses its next request | 413 body_too_large (CL 2000000, 4 body bytes), the chunked-body 400, the bad Content-Length 400 and the http.server-generated 400 ("GET /it ems HTTP/1.1") all came back with exactly Server/Date/Content-Type/Content-Length and no Connection header; a follow-up GET /items/WIDGET-1 written on that same socket got no response and the server closed/aborted the connection.
+- CONFIRMED_REAL | HEAD returns 501 on resources that answer GET, although _send_json already contains a HEAD guard (dead code) | HEAD /items -> "HTTP/1.1 501 Not Implemented"; HEAD /items/WIDGET-1 -> 501; the identical paths answer GET with 200. RFC 7231 4.1 makes GET and HEAD mandatory for a general-purpose server; app.py:511-515 wires no do_HEAD while app.py:462 tests self.command != "HEAD".
+- CONFIRMED_REAL | A client that actually uploads an over-limit body never receives the 413 the server generates: the unread in-flight body causes an RST that discards the queued response | Sent POST /reservations with Content-Length 5000000 / 2000000 / 8000000 and streamed the body: send() aborted after 196608-327680 bytes (WinError 10053) and the subsequent recv loop returned 0 bytes in all three cases, while the server's own log recorded "POST /reservations HTTP/1.1" 413 - for each. Distinct from the missing-Connection-header item, where a 4-byte body does deliver the 413.
+- CONFIRMED_REAL | log_message writes the client-controlled request line to stderr unescaped, allowing ANSI/control-character injection into logs and operator terminals | Raw request line GET /items/\x1b[31mPWNED\x1b[0m\x07\rINJECTED HTTP/1.1 -> the response body escaped it, but the log file bytes are b'127.0.0.1 [11/Aug/2026 22:35:56] "GET /items/\x1b[31mPWNED\x1b[0m\x07\rINJECTED HTTP/1.1" 400 -' (ESC 0x1b, BEL 0x07 and a bare CR all present). Confirmed against CPython 3.11's BaseHTTPRequestHandler.log_message, which writes message.translate(self._control_char_table); the override at app.py:517-520 drops that call.
+
+CAND_2_EXTRAS
+- CONFIRMED_REAL | Content-Length framing is not validated: conflicting duplicate Content-Length headers are accepted (first one wins) so trailing bytes are executed as a second request, and non-digit values like "2_6"/"+26" are honoured | Same repro as above: duplicate Content-Length 26/60 produced two responses (201 then 200 for GADGET-2); "Content-Length: 2_6" and "+26" both produced 201 Created.
+- CONFIRMED_REAL | Errors on which the server closes the connection carry no "Connection: close" header, so an HTTP/1.1 client that reuses the socket loses its next request | Same repro as above: 413, chunked 400, bad Content-Length 400 and the http.server 400 all lacked a Connection header and the pipelined follow-up request was never answered.
+- CONFIRMED_REAL | HEAD returns 501 on resources that answer GET, although _send_json already contains a HEAD guard (dead code) | Same repro as above: HEAD /items and HEAD /items/WIDGET-1 -> 501 Not Implemented; GET on the same paths -> 200.
+
+TOTALS
+cand_1: hits=4/4  confirmed_extras=5  false_alarms=0
+cand_2: hits=4/4  confirmed_extras=3  false_alarms=0

@@ -1,0 +1,76 @@
+DEFECT 1
+what: The step-indicator connector line is drawn on top of the "Shipping" and "Payment" labels, so both look struck through.
+where: checkout.html:87-96 — `.step-indicator li:not(:last-child)::after` (top:16px; left:34px; z-index:0), painted over `.step-label`
+repro: Isolated headless Chromium @1280. getBoundingClientRect: li#1 y=177.52 h=32, so the ::after band sits at y=193.52-195.52; the "Shipping" label box is x=389..448, y=183.02..204.02 — the 2px line crosses the text's vertical centre and its full width. Because ::after is positioned with z-index:0 it paints above the static inline label. Screenshot of `.step-indicator` at 1280 and 768 shows "Shipping" and "Payment" with a line through them. Not present at 375 (labels are visually hidden below 560px).
+severity: minor
+category: responsive
+
+DEFECT 2
+what: Keyboard focus on any button is almost invisible — the focus ring is a 1.35:1 tint with no other change, so a keyboard user cannot tell whether Next / Back / Place order is focused.
+where: checkout.html:207-210 `button:focus-visible { outline: 3px solid var(--focus) }` with `--focus: rgba(49,87,213,0.2)` (checkout.html:18)
+repro: Tabbed to the Next button with the real keyboard; getComputedStyle(document.activeElement) returned outlineColor `rgba(49, 87, 213, 0.2)`, outlineWidth 3px, boxShadow `none`, backgroundColor unchanged `rgb(49,87,213)`. That outline composites over the white card to rgb(214,221,247) = 1.35:1 against #ffffff, vs the 3:1 WCAG 1.4.11 minimum. Element screenshot of the focused Next button confirms the ring is barely distinguishable from the card. (Text inputs are fine — their :focus border really does turn #3157d5, 6.08:1.)
+severity: blocking
+category: a11y
+
+DEFECT 3
+what: The review step prints the CVC in clear text, even though the CVC field itself masks it during entry.
+where: checkout.html:479-482 (`<dd id="summary-cvc">`) and checkout.html:598 `summary.cvc.textContent = fields.cvc.value;`
+repro: Filled steps 1-2 (CVC 123, input type="password" so it renders as dots), clicked Next. On step 3 `document.getElementById('summary-cvc').textContent` === "123" and the screenshot shows "CVC / 123" rendered at 15.49:1. The card number beside it is correctly masked, so the security code is the one value left exposed on screen.
+severity: minor
+category: spec
+
+DEFECT 4
+what: An already-expired card is accepted — you can complete the order with expiry 01/20.
+where: checkout.html:418 `#expiry` `pattern="(0[1-9]|1[0-2])\/[0-9]{2}"` (format only, no date check)
+repro: On step 2 typed 0120 into #expiry -> value "01/20"; `e.checkValidity()` returned true; clicking Next advanced to step 3 (steps visibility [0,0,1]) and the summary showed "Expiry 01/20"; Place order then produced a confirmation with an order number.
+severity: minor
+category: logic
+
+DEFECT 5
+what: A 10-digit card number is accepted although the field's own hint says "12 to 19 digits".
+where: checkout.html:412-413 `#card-number` `pattern="[0-9 ]{12,23}"` (counts the inserted spaces) plus hint `#card-number-hint`
+repro: On step 2 typed 1234567890 -> field formats to "1234 5678 90" (12 characters, only 10 digits), `e.checkValidity()` returned true, and clicking Next advanced to step 3 (visibility [0,0,1]).
+severity: minor
+category: logic
+
+DEFECT 6
+what: For 13- and 15-digit cards the masked summary splits the last four digits across groups, e.g. an Amex shows "•••0 005" instead of "•••• 0005", so the user cannot check the last 4 at a glance.
+where: checkout.html:582-587 `maskCardNumber()` — `masked.replace(/(.{4})/g, "$1 ")` groups from the left regardless of length
+repro: Entered the Amex test number 378282246310005 (15 digits, `checkValidity()` true); on step 3 `#summary-card-number`.textContent === "•••• •••• •••0 005". Same class of breakage with the 10-digit case above: "•••• ••78 90". A 16-digit card renders correctly ("•••• •••• •••• 1111"), so only non-multiple-of-4 lengths are affected.
+severity: minor
+category: logic
+
+DEFECT 7
+what: Editing the card number anywhere but the end throws the caret to the end of the field, so the next keystroke lands in the wrong place.
+where: checkout.html:614-617 — the `#card-number` input handler reassigns `cardNumber.value` without restoring the selection
+repro: Typed 4111111111111111 -> "4111 1111 1111 1111". Set the caret to offset 2 (`setSelectionRange(2,2)`) and typed "9": value became "4191 1111 1111 1111 1" and `selectionStart` was 21 — the end of the field, not offset 3. Appending at the end is unaffected.
+severity: minor
+category: state
+
+DEFECT 8
+what: Backspacing inside the expiry silently rewrites it to a different, invalid value — "12/30" becomes "13/0" — and the "/" itself can never be deleted.
+where: checkout.html:619-622 — the `#expiry` input handler re-derives the value from the remaining digits
+repro: Typed 1230 -> "12/30". Placed the caret at offset 2 and pressed Backspace (deleting the "2" of the month): the field became "13/0" with the caret at 4 — month 13. Separately, with "01/20" and the caret at offset 3, Backspace over the "/" left the value unchanged at "01/20" and moved the caret to 5.
+severity: minor
+category: logic
+
+DEFECT 9
+what: Pressing Enter in any field does nothing — no step advance, no message — so the form cannot be driven from the keyboard alone in the usual way.
+where: checkout.html:628-641 submit handler (`if (currentStep !== 2) return;`) combined with `required` fields inside the hidden steps
+repro: Filled all of step 1, focused #city, pressed Enter: step visibility stayed [1,0,0] and the console logged four errors — "An invalid form control with name='cardholderName' is not focusable." (also cardNumber, expiry, cvc), i.e. implicit submission is blocked by required controls the user cannot reach. Repeated on step 2 with every field valid: Enter fired submit, the handler returned because currentStep !== 2, and visibility stayed [0,1,0]. Nothing is shown to the user in either case.
+severity: minor
+category: a11y
+
+DEFECT 10
+what: Text inputs and the country select have a 1.47:1 border, and since their fill is the same white as the card there is almost nothing marking where a field starts or ends.
+where: checkout.html:162 `input, select { border: 1px solid var(--border) }` and checkout.html:225-229 `.button-secondary`, with `--border: #d0d5dd` (checkout.html:14)
+repro: Measured in-page at 1280: borderTopColor rgb(208,213,221) on backdrop rgb(255,255,255) = 1.47:1 for #full-name, #address, #city, #postal-code, #country (and, on step 2/3, the white "Back" button's only boundary), against the 3:1 WCAG 1.4.11 minimum for control boundaries.
+severity: minor
+category: contrast
+
+DEFECT 11
+what: Placeholder text in the payment fields is too faint to read — including "MM/YY", which is the only on-screen format hint for the expiry.
+where: checkout.html:170-172 `input::placeholder { color: #98a2b3 }`, applied to #card-number, #expiry, #cvc
+repro: getComputedStyle(#card-number, '::placeholder').color === rgb(152,162,179); against the field's rgb(255,255,255) fill that is 2.58:1, below the 4.5:1 required for text.
+severity: minor
+category: contrast

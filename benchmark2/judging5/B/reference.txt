@@ -1,0 +1,76 @@
+DEFECT 1
+what: Pressing Enter in any form field never advances the step and produces no visible feedback at all — the flow silently ignores the keyboard's normal "submit" action.
+where: checkout.html:628-641 (submit handler returns early when currentStep !== 2); Next buttons are type="button" (checkout.html:396, 429), so the only submit button is the hidden step-3 "Place order" (checkout.html:489)
+repro: Chromium 1280x900. Step 1, all five fields filled correctly, focus in #full-name, press Enter -> step 1 still visible, step 2 still hidden, nothing announced or shown; console logs 4 errors: "An invalid form control with name='cardholderName' is not focusable." (also cardNumber, expiry, cvc) because implicit submission validates the hidden step-2 controls. Same on step 2 with every field valid: Enter -> still step 2, no submit, no message, empty console.
+severity: minor
+category: a11y
+
+DEFECT 2
+what: The card number field accepts 10- or 11-digit numbers even though its own hint says "12 to 19 digits", and the flow advances to the review step with the short number.
+where: checkout.html:412 — pattern="[0-9 ]{12,23}" counts the auto-inserted spaces as characters; hint at checkout.html:413
+repro: Step 2, typed "1234567890" -> field shows "1234 5678 90" (12 characters, 10 digits) and element.checkValidity() === true; clicking Next advanced to step 3 and the summary rendered "•••• ••78 90". Boundary measured: 9 digits invalid, 10/11/12 digits all valid.
+severity: minor
+category: logic
+
+DEFECT 3
+what: Backspace over one of the auto-inserted spaces in the card number does nothing — the character is not removed and the caret is thrown to the end of the field.
+where: checkout.html:614-617 — the input handler unconditionally rewrites cardNumber.value on every input event and never restores the selection
+repro: Step 2, typed "4111111111111111" -> "4111 1111 1111 1111". setSelectionRange(5,5) (caret just after the first space), pressed Backspace: value afterwards is still "4111 1111 1111 1111" and selectionStart === 19 (end of field).
+severity: minor
+category: logic
+
+DEFECT 4
+what: Typing a digit into the middle of an already-entered card number jumps the caret to the end of the field, so continued typing lands in the wrong place.
+where: checkout.html:614-617 (same value-rewrite handler, no caret restoration)
+repro: Step 2, value "4111 1111 1111 1111", setSelectionRange(2,2), typed "9": value became "4191 1111 1111 1111 1" and selectionStart === 21 (end) instead of staying next to the inserted digit.
+severity: minor
+category: logic
+
+DEFECT 5
+what: Whitespace-only entries satisfy the "required" check, so a user can advance to the review step and see blank values for fields they were forced to fill in.
+where: checkout.html:362-382 (required, no trimming before validation) vs checkout.html:590-595 (summary trims the value); e.g. #city / #summary-city
+repro: Step 1, filled #city with "   " (three spaces), everything else valid, clicked Next -> advanced to step 2 (no error). Continued to step 3: textContent of #summary-city is "" — the Review screen shows the "CITY" label with an empty value, and "Place order" then succeeds.
+severity: minor
+category: logic
+
+DEFECT 6
+what: The review step prints the CVC in clear text, although it was entered in a masked (type="password") field.
+where: checkout.html:598 (summary.cvc.textContent = fields.cvc.value) rendered into #summary-cvc; input is type="password" at checkout.html:423
+repro: Entered CVC "123" on step 2 (rendered as dots while typing, input type verified as "password"), clicked Next: step 3 shows "CVC / 123" as plain visible text (confirmed in the DOM and in a 375px screenshot).
+severity: minor
+category: logic
+
+DEFECT 7
+what: The keyboard focus ring on the buttons (Next / Back / Place order) is almost invisible — a keyboard user cannot see which control is focused.
+where: checkout.html:207-210 (button:focus-visible { outline: 3px solid var(--focus) }) with --focus: rgba(49, 87, 213, 0.2) at checkout.html:18
+repro: Tabbed to the Next button (matches :focus-visible; computed outline "rgba(49, 87, 213, 0.2) solid 3px", outline-offset 2px). The ring composited over the white card is rgb(214, 221, 247) = 1.35:1 against the #ffffff card it sits on (WCAG 1.4.11 requires 3:1). Confirmed on clipped screenshots of the focused vs unfocused Next and Back buttons: the ring is a pale halo barely distinguishable from the card.
+severity: minor
+category: contrast
+
+DEFECT 8
+what: Placeholder text in the payment fields is too low-contrast to read (card number, expiry, CVC).
+where: checkout.html:170-172 (input::placeholder { color: #98a2b3 }) applied to #card-number, #expiry, #cvc
+repro: getComputedStyle('#card-number', '::placeholder').color = rgb(152, 162, 179) at 16px on a #ffffff field = 2.58:1, below the 4.5:1 required for normal-size text.
+severity: minor
+category: contrast
+
+DEFECT 9
+what: The boundaries of the interactive controls fail non-text contrast — the text inputs, the country select and the secondary "Back" button all have a 1.47:1 border on a background identical to the card, so their edges are barely perceptible.
+where: checkout.html:157-168 (input, select { border: 1px solid var(--border); background: #fff }), checkout.html:225-229 (.button-secondary), --border: #d0d5dd at checkout.html:14
+repro: Computed border colour rgb(208, 213, 221) against the #ffffff surface = 1.47:1 (WCAG 1.4.11 requires 3:1). Field background measured identical to the card background (contrast ratio 1.00), so the 1px border is the only affordance. Same 1.47:1 measured for .button-secondary, whose own background is #ffffff.
+severity: minor
+category: contrast
+
+DEFECT 10
+what: An expiry date in the past is accepted and the order is placed with it.
+where: checkout.html:418 — pattern="(0[1-9]|1[0-2])\/[0-9]{2}" checks only the shape, never the date
+repro: Step 2, typed "0120" -> field "01/20"; checkValidity() === true; Next advanced to step 3 and the summary showed "EXPIRY / 01/20"; "Place order" produced an order number.
+severity: minor
+category: logic
+
+DEFECT 11
+what: A rejected payment field only produces the browser's generic "Please match the requested format." — nothing on the page or in the message states the required format (the CVC's 3-4 digit rule is never stated anywhere), and no persistent or programmatic error state is exposed.
+where: checkout.html:569-580 (validateCurrentStep -> control.reportValidity()); #expiry and #cvc have no title, no hint and no aria-describedby (checkout.html:418, 423)
+repro: Step 2 with card "4111", expiry "13/99", CVC "1": validationMessage for all three is "Please match the requested format."; title attribute is "" on each; aria-describedby is null on #expiry and #cvc. After a failed Next, no control gets aria-invalid (measured on all 9 inputs/selects) and the page contains zero [aria-live] / [role=alert] / [role=status] / error elements, so the only error signal is the transient native bubble.
+severity: minor
+category: a11y

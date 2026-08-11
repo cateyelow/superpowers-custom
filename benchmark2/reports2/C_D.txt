@@ -1,0 +1,55 @@
+DEFECT 1
+what: At 375px the "No employees match the current filters." message is pushed almost entirely off-screen — the user sees "No employees " and an otherwise blank table, with no visible explanation that the search matched nothing.
+where: table.html:92 (`table { white-space: nowrap }`) + table.html:140-144 (`td.empty`, colSpan=5) inside table.html:85-87 (`.table-wrap { overflow-x: auto }`)
+repro: Isolated headless Chromium, viewport 375x800, file:// page. Typed "zzzz" into #search. Measured with a Range over td.empty: text box left=249px right=539px width=290px, while the visible .table-wrap window is left=13px right=362px and scrollLeft=0 — 177px of the message is clipped to the right. Screenshot confirms only "No employees " is rendered on screen.
+severity: blocking
+category: responsive
+
+DEFECT 2
+what: At 375px the Location and Salary columns (and half of Role) are entirely off-screen, and nothing indicates the table can be scrolled sideways — the salary figures, the point of the table, are invisible on a phone.
+where: div.table-wrap / table (table.html:85-93) — `overflow-x:auto` + `white-space:nowrap`
+repro: Viewport 375x800. Measured .table-wrap scrollWidth=715 vs clientWidth=349; th boxes: Name left=13, Department left=154, Role left=295 (right=505, cut mid-word), Location left=505, Salary left=625..728 — all past the container's right edge of 362. offsetHeight-clientHeight=0, i.e. no scrollbar is laid out, and there is no fade/shadow/hint; screenshot at 375px shows the row ending in a cut-off "Fronten…".
+severity: minor
+category: responsive
+
+DEFECT 3
+what: Paging to the first or last page throws keyboard focus away — the button disables itself under the focused cursor, focus falls to <body>, and the next Tab restarts at the top of the page instead of continuing from the pagination.
+where: #next / #previous handlers (table.html:409-422) with the disabled assignment in render() (table.html:372-373)
+repro: Focused #next and pressed Enter twice. After the 1st: status "Page 2 of 3", document.activeElement = BUTTON#next. After the 2nd: status "Page 3 of 3", #next.disabled === true and document.activeElement = BODY; the following Tab landed on INPUT#search (the first control on the page). Same on the way back: from page 2, focus #previous + Enter -> "Page 1 of 3", activeElement = BODY.
+severity: minor
+category: a11y
+
+DEFECT 4
+what: The pagination status is a polite live region that is rewritten on every keystroke, so a screen-reader user typing a query is interrupted once per character, including repeated identical "Page 1 of 1" announcements.
+where: span#page-status[aria-live="polite"] (table.html:234) written unconditionally in render() (table.html:371), called from the search input handler (table.html:387-391)
+repro: Attached a MutationObserver to #page-status, then typed "engineer" (8 characters, 40ms apart) into #search: 8 mutations recorded, texts = ["Page 1 of 3","Page 1 of 2","Page 1 of 1","Page 1 of 1","Page 1 of 1","Page 1 of 1","Page 1 of 1","Page 1 of 1"] — 5 of the 8 announcements convey nothing new.
+severity: minor
+category: a11y
+
+DEFECT 5
+what: The sortable column headers are operable (focusable, activate on click/Enter/Space) but expose no interactive role, so assistive-tech and speech-input users are never told the headers can be activated.
+where: th[data-column][tabindex="0"] — table.html:221-225, handlers at table.html:399-407
+repro: Tab order measured in-browser: search -> department -> TH[name] -> TH[department] -> TH[role] -> TH[location] -> TH[salary] -> #next. Each th is a tab stop and pressing Enter on TH[name] changed aria-sort to "ascending" (Space toggled it to "descending"), yet the element stays role=columnheader with no button/link child and no aria-label describing the action.
+severity: minor
+category: a11y
+
+DEFECT 6
+what: The borders of the search field, department dropdown and both pagination buttons are too faint to make out against the white panel — 1.53:1, below the 3:1 WCAG 1.4.11 minimum for control boundaries, and the border is the only thing marking where the controls are.
+where: table.html:70 (`input, select { border: 1px solid #c9d2df }`) and table.html:158 (`.pagination button { border: 1px solid #c9d2df }`)
+repro: getComputedStyle in my own session (unfocused): #search and #department borderTopColor = rgb(201,210,223); #next borderTopColor = rgb(201,210,223). Contrast against the panel background rgb(255,255,255) computed in page = 1.53:1 (needs 3:1).
+severity: minor
+category: contrast
+
+DEFECT 7
+what: The disabled pagination label is barely readable (2.34:1) and "Previous" is disabled in the page's resting state, so on first load one of the two pagination buttons reads as a washed-out smudge.
+where: table.html:171-175 (`.pagination button:disabled { color: #98a2b3; background: #f2f4f7 }`), applied to #previous at load and #next on the last page
+repro: On load at 1280x900, #previous.disabled === true; measured its computed color rgb(152,162,179) against its computed background rgb(242,244,247) = 2.34:1. Confirmed visually in the 375px and 1280px screenshots — "Previous" is markedly harder to read than "Next".
+severity: minor
+category: contrast
+
+DEFECT 8
+what: When no rows match the filters the indicator reads "Page 0 of 0", a page number that does not exist.
+where: table.html:370-371 (`const displayedPage = pageCount === 0 ? 0 : state.page;`), rendered into #page-status
+repro: Typed "zzzz" into #search; #page-status.textContent === "Page 0 of 0" with both buttons disabled and the empty-state row shown. Same at 375px (see screenshot).
+severity: minor
+category: logic

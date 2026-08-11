@@ -1,0 +1,165 @@
+{
+ "good_args": [
+  "take",
+  "tree",
+  "-o",
+  "snap.json"
+ ],
+ "err_prefix": "snap: ",
+ "fixture_dirs": [
+  "tree/sub",
+  "tree/emptydir"
+ ],
+ "fixtures": {
+  "tree/a.txt": "hello\n",
+  "tree/sub/b.txt": "world\n",
+  "tree/sub/c.bin": [
+   0,
+   1,
+   2,
+   255
+  ],
+  "truncated.json": "{\"version\": 1, \"files\": [",
+  "empty.json": "",
+  "notjson.json": "this is not json at all",
+  "wrongshape.json": "{\"hello\": \"world\"}",
+  "nullver.json": "{\"version\": null, \"files\": []}",
+  "bigver.json": "{\"version\": 999999, \"files\": []}"
+ },
+ "usage_errors": [
+  [
+   [
+    "nosuchcommand"
+   ],
+   "an unknown subcommand",
+   2
+  ],
+  [
+   [
+    "take"
+   ],
+   "take with no directory",
+   2
+  ],
+  [
+   [
+    "take",
+    "tree"
+   ],
+   "take with no -o",
+   2
+  ],
+  [
+   [
+    "take",
+    "no_such_dir",
+    "-o",
+    "x.json"
+   ],
+   "take on a directory that does not exist",
+   3
+  ],
+  [
+   [
+    "diff"
+   ],
+   "diff with no arguments",
+   2
+  ],
+  [
+   [
+    "diff",
+    "no_such_snapshot.json",
+    "tree"
+   ],
+   "diff against a snapshot that does not exist",
+   3
+  ],
+  [
+   [
+    "verify"
+   ],
+   "verify with no argument",
+   2
+  ],
+  [
+   [
+    "verify",
+    "no_such_snapshot.json"
+   ],
+   "verify on a file that does not exist",
+   3
+  ],
+  [
+   [
+    "take",
+    "tree",
+    "-o",
+    "out.json",
+    "--bogus-flag"
+   ],
+   "an unknown option",
+   2
+  ],
+  [
+   [
+    "verify",
+    "truncated.json"
+   ],
+   "a snapshot truncated mid-JSON (verify must reject it cleanly)",
+   1
+  ],
+  [
+   [
+    "verify",
+    "empty.json"
+   ],
+   "a completely empty snapshot file (verify must reject it cleanly)",
+   1
+  ],
+  [
+   [
+    "verify",
+    "notjson.json"
+   ],
+   "a snapshot that is not JSON (verify must reject it cleanly)",
+   1
+  ],
+  [
+   [
+    "verify",
+    "wrongshape.json"
+   ],
+   "valid JSON that is not a snapshot (verify must reject it cleanly)",
+   1
+  ],
+  [
+   [
+    "verify",
+    "nullver.json"
+   ],
+   "a snapshot with a null version (verify must reject it cleanly)",
+   1
+  ],
+  [
+   [
+    "verify",
+    "bigver.json"
+   ],
+   "a snapshot from a future version (verify must reject it cleanly)",
+   1
+  ]
+ ],
+ "encoding_args": [
+  "take"
+ ],
+ "atomic": {
+  "failing_args": [
+   "take",
+   "no_such_dir",
+   "-o"
+  ],
+  "append_dest": true
+ },
+ "encoding_cases": []
+}

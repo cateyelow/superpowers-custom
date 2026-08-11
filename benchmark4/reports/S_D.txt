@@ -1,0 +1,108 @@
+DEFECT 1
+what: A corrupt (non-UTF-8) snapshot makes the tool crash with a raw Python traceback instead of reporting what is wrong; `verify`, whose whole job is to detect a damaged snapshot, never gets to run its checks.
+where: snap.py:305 (`read_snapshot`, `raw = handle.read()`); the UnicodeDecodeError is not a ValueError so the `json.loads` guard at snap.py:307-309 misses it, and both callers (`command_verify` snap.py:416-417, `command_diff` snap.py:380-381) catch only OSError.
+repro: $ python -c "open('corrupt.snap','wb').write(b'\xff\xfe{')"
+       $ python E:/GitHub/superpowers-custom/benchmark4/artifacts/S/snap.py verify corrupt.snap
+       Traceback (most recent call last):
+         File "...\snap.py", line 484, in <module>
+           sys.exit(main())
+         File "...\snap.py", line 477, in main
+           return args.func(args)
+         File "...\snap.py", line 416, in command_verify
+           document, problems = read_snapshot(args.snapshot)
+         File "...\snap.py", line 305, in read_snapshot
+           raw = handle.read()
+       UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte
+       exit code 1
+       (`snap.py diff corrupt.snap d` crashes identically. A deeply nested JSON file, `open('deep.json','w').write('['*3000+']'*3000)`, crashes the same call with RecursionError.)
+severity: blocking
+category: robustness
+
+DEFECT 2
+what: `take` walks into Windows directory junctions, so a directory containing a junction to one of its own ancestors is recorded 64 times over: the snapshot is filled with fabricated paths like `loop/loop/loop/f.txt`, and the command can never succeed (always exit 3). `verify` then declares that garbage snapshot intact.
+where: snap.py:151-164 (`Scanner._record`): `item.is_symlink()` is False for a junction on Python 3.8+, so the junction falls through to `item.is_dir(follow_symlinks=False)` at snap.py:162 and is pushed onto the walk stack at snap.py:164. Real symlinks are handled correctly; junctions are not.
+repro: $ mkdir j && printf x > j/f.txt
+       $ cmd /c "mklink /J <abs>\j\loop <abs>\j"
+       Junction created for ...\j\loop <<===>> ...\j
+       $ python E:/GitHub/superpowers-custom/benchmark4/artifacts/S/snap.py take j -o j.snap
+       snap: j/loop/loop/loop/... (64 levels) ...: the system cannot resolve the file name
+       exit code 3
+       $ python -c "import json;d=json.load(open('j.snap'));print(len(d['entries']),[e['path'] for e in d['entries']][:3])"
+       65 ['f.txt', 'loop/f.txt', 'loop/loop/f.txt']
+       $ python E:/GitHub/superpowers-custom/benchmark4/artifacts/S/snap.py verify j.snap
+       snapshot ok: 65 entries, format version 1
+       exit code 0
+severity: blocking
+category: correctness
+
+DEFECT 3
+what: A file that exists but cannot be read is reported on stdout as deleted (`- path`). The report actively states something false about the tree rather than saying the file could not be checked. Symmetrically, `take` silently omits such a file from the snapshot, so a later diff against a readable tree reports it as newly added (`+ path`).
+where: snap.py:183-194 (`Scanner._digest` returns None on OSError) -> snap.py:172-174 (`_record` returns None, so the path is dropped from `entries`) -> snap.py:361 (`compare` sees it only in `old` and emits the "removed" marker).
+repro: $ mkdir u && printf aaa > u/keep.txt && printf bbb > u/locked.txt
+       $ python E:/GitHub/superpowers-custom/benchmark4/artifacts/S/snap.py take u -o u.snap        # exit 0
+       $ icacls <abs>\u\locked.txt /deny "%USERNAME%:(R)"
+       $ python E:/GitHub/superpowers-custom/benchmark4/artifacts/S/snap.py diff u.snap u
+       snap: u/locked.txt: Permission denied          (stderr)
+       - locked.txt                                   (stdout, but the file is still there)
+       exit code 3
+severity: minor
+category: correctness
+
+DEFECT 4
+what: `verify` never checks the snapshot's `excludes` field, so it certifies "snapshot ok" for a snapshot whose exclude list is corrupt; `diff` then feeds that field straight to the scanner and reports a completely unchanged tree as if every single file had been deleted, silently and with no warning at all. A string value is split into one glob per character, and the leading `*` matches everything.
+where: `validate_snapshot` (snap.py:248-299) inspects `version`, `root` and `entries` but never `excludes`; `command_diff` snap.py:396 passes `document.get("excludes")` unchecked into `Scanner`; `Scanner.__init__` snap.py:108 does `list(excludes or [])`, which turns the string `"*.log"` into `['*', '.', 'l', 'o', 'g']`; `is_excluded` snap.py:115-124 then drops every path against the `*` pattern.
+repro: $ mkdir -p v4/sub && printf a > v4/a.txt && printf b > v4/sub/b.txt
+       $ python E:/GitHub/superpowers-custom/benchmark4/artifacts/S/snap.py take v4 -o v4.snap
+       exit code 0
+       $ python -c "import json;d=json.load(open('v4.snap'));d['excludes']='*.log';json.dump(d,open('v4bad.snap','w'))"
+       $ python E:/GitHub/superpowers-custom/benchmark4/artifacts/S/snap.py verify v4bad.snap
+       snapshot ok: 2 entries, format version 1
+       exit code 0
+       $ python E:/GitHub/superpowers-custom/benchmark4/artifacts/S/snap.py diff v4bad.snap v4     # nothing in v4 was touched
+       - a.txt
+       - sub/b.txt
+       exit code 1
+       (stderr was empty. With `d['excludes']=[1]` verify still says "snapshot ok" and diff dies with a raw traceback: TypeError: object of type 'int' has no len(), from fnmatch.translate via is_excluded at snap.py:120.)
+severity: blocking
+category: robustness
+
+DEFECT 5
+what: A directory whose contents cannot be listed is recorded as an *empty directory*. The snapshot does not merely lose the files inside it, it makes the positive false claim that the directory is empty, and `verify` calls that snapshot intact. When access is later restored, `diff` reports every file that was inside as newly added.
+where: `Scanner._record` snap.py:162-164 appends the directory to `directories` before it has ever been listed; `Scanner._listdir` snap.py:143-149 then fails, warns and returns `[]`, so nothing under it reaches `entries`; `Scanner._add_empty_directories` snap.py:197-207 sees an unoccupied directory and writes `{"path": ..., "type": "dir"}` for it. (Distinct from DEFECT 3, which is about a readable-but-unopenable *file* being dropped: this path fabricates a record rather than omitting one.)
+repro: > New-Item -ItemType Directory r5\vault; "s1" > r5\vault\secret1.txt; "s2" > r5\vault\secret2.txt; "p" > r5\plain.txt
+       > icacls <abs>\r5\vault /deny "$env:USERNAME:(RX)"
+       > python E:/GitHub/superpowers-custom/benchmark4/artifacts/S/snap.py take r5 -o r5.snap
+       snap: .../r5/vault: 액세스가 거부되었습니다        (stderr; Windows "Access is denied")
+       exit code 3
+       > python -c "import json;[print(e) for e in json.load(open('r5.snap'))['entries']]"
+       {'mtime': 1786461975, 'path': 'plain.txt', 'sha256': '148de9c5...', 'size': 1, 'type': 'file'}
+       {'path': 'vault', 'type': 'dir'}          <- recorded as an EMPTY directory; it holds two files
+       > python E:/GitHub/superpowers-custom/benchmark4/artifacts/S/snap.py verify r5.snap
+       snapshot ok: 2 entries, format version 1
+       exit code 0
+       > icacls <abs>\r5\vault /remove:d "$env:USERNAME"        # access restored, nothing on disk changed
+       > python E:/GitHub/superpowers-custom/benchmark4/artifacts/S/snap.py diff r5.snap r5
+       + vault/secret1.txt
+       + vault/secret2.txt
+       exit code 1
+severity: minor
+category: correctness
+
+DEFECT 6
+what: Symlink targets are stored with the host's own path separator instead of `/`, so a snapshot does not round-trip between Windows and POSIX as the spec requires: the identical, untouched symlink recorded on one platform is reported as modified (`M`) on the other. Every other path in the snapshot is normalised to `/`; only the target is not.
+where: `Scanner._record` snap.py:154-161 stores `os.readlink(item.path)` verbatim (the comment at snap.py:155-156 makes this deliberate) while every `path` value goes through `to_slash` (snap.py:75-85, used at snap.py:113 and snap.py:327); `compare` snap.py:373-375 then compares the two targets as raw strings.
+repro: $ mkdir -p v6/sub && printf q > v6/sub/target.txt
+       $ python -c "import os;os.symlink('sub'+chr(92)+'target.txt','v6/winlink')"     # a normal Windows relative link
+       $ python E:/GitHub/superpowers-custom/benchmark4/artifacts/S/snap.py take v6 -o v6.snap
+       exit code 0
+       $ grep '"target"' v6.snap
+             "target": "sub\\target.txt",        <- a backslash, while "path" fields all use "/"
+       $ python -c "import json;d=json.load(open('v6.snap'));[e.__setitem__('target',e['target'].replace(chr(92),'/')) for e in d['entries'] if e['type']=='symlink'];json.dump(d,open('v6posix.snap','w'))"
+       # v6posix.snap now holds "target": "sub/target.txt", exactly what this same tool records for this same link on POSIX
+       $ python E:/GitHub/superpowers-custom/benchmark4/artifacts/S/snap.py diff v6posix.snap v6   # nothing in v6 was touched
+       M winlink
+       exit code 1
+       $ python E:/GitHub/superpowers-custom/benchmark4/artifacts/S/snap.py diff v6.snap v6        # control, same tree
+       exit code 0
+severity: minor
+category: spec

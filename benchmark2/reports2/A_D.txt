@@ -1,0 +1,83 @@
+DEFECT 1
+what: Dropping a file anywhere on the page except the drop zone (a near miss on the card, the heading, the file list) is not intercepted, so the browser leaves the page and opens the dropped file, destroying the entire selected-file list.
+where: upload.html:437-465 (drag handlers are bound only to #drop-zone; no document/window dragover or drop listener exists)
+repro: Isolated headless Chromium, file:// URL. Dispatched a real DragEvent pair carrying a File onto h1 and onto .upload-card: dragoverPrevented=false, dropPrevented=false, itemsAfter unchanged (0 added). With neither dragover nor drop cancelled outside the zone, the default navigate-to-file action runs and the page state is gone.
+severity: blocking
+category: state
+
+DEFECT 2
+what: Clicking or pressing Enter on a file's Remove button throws keyboard focus back to <body>, so a keyboard or screen reader user loses their place and must tab in from the top of the page again after every removal.
+where: upload.html:467-476 (remove handler calls render()), which does fileList.replaceChildren(fragment) at upload.html:408 and destroys the focused button
+repro: Dropped 2 files, ran .remove-button[0].focus() (activeElement aria-label "Remove quarterly-report-final-v3.pdf"), pressed Enter. Item was removed and document.activeElement === document.body (tag BODY, isBody true). No focus is moved to the next item, the list, or the heading.
+severity: blocking
+category: a11y
+
+DEFECT 3
+what: Tabbing off the drop zone lands on the visually hidden 1x1 file input, so the focus ring vanishes from the screen entirely and a screen reader announces an unlabelled control; the stop is invisible and unusable.
+where: #file-input (upload.html:304; hidden by upload.html:106-116 with position:absolute, 1x1 px, clip:rect(0,0,0,0))
+repro: Load state, pressed Tab repeatedly from the top and logged document.activeElement: 1) DIV#drop-zone (554x180), 2) INPUT#file-input, box 1x1 px, matches :focus-visible, aria-label null, labels.length 0, and it sits inside the role="button" drop zone (closest('[role=button]') is truthy). Nothing on screen changes when it holds focus.
+severity: blocking
+category: a11y
+
+DEFECT 4
+what: During the 2 second upload the whole file list is torn down and rebuilt on every animation frame inside an aria-live="polite" region, so a screen reader user is flooded with roughly 120 full re-announcements of every file and cannot hear anything else.
+where: #file-list has aria-live="polite" (upload.html:313); render() replaces all of its children (upload.html:408) and is called from the rAF loop at upload.html:517
+repro: Attached a MutationObserver to #file-list before clicking Upload with 2 files queued. After the run completed: 123 mutation records, all 123 childList operations on #file-list, over a 2.09 s upload.
+severity: blocking
+category: a11y
+
+DEFECT 5
+what: The keyboard focus ring on the Upload, Clear all and Remove buttons is a 28% opacity blue that renders as an almost invisible pale tint, so a keyboard user cannot see which control is focused.
+where: .upload-button:focus-visible, .clear-button:focus-visible, .remove-button:focus-visible { outline: 3px solid rgb(64 95 216 / 28%) } at upload.html:256-261
+repro: Focused .remove-button in the browser (matches(':focus-visible') true), read the CSSOM: outlineColor rgba(64,95,216,0.28), which composites over the item background rgb(251,252,254) to rgb(199,208,243), a contrast ratio of 1.49:1 against that background. WCAG 1.4.11 / 2.4.11 require 3:1.
+severity: blocking
+category: contrast
+
+DEFECT 6
+what: The drop zone, the page's primary control, suppresses its focus outline; the only keyboard focus cue is a faint dashed border colour shift that is identical to the hover style, so focus on it is barely perceptible.
+where: .drop-zone:hover, .drop-zone:focus-visible { outline: none } at upload.html:72-77
+repro: Pressed Tab once from page load so #drop-zone was document.activeElement, waited for the 160 ms transition to settle, then read getComputedStyle: outlineStyle "none", outlineWidth "0px", boxShadow "none". The only change is borderTopColor rgb(159,172,204) to rgb(78,110,232), a change of contrast between focused and unfocused states of only 1.96:1 (WCAG 2.4.11 requires 3:1), and it is the same appearance the mouse hover state produces.
+severity: blocking
+category: a11y
+
+DEFECT 7
+what: The drop zone's dashed border, the only thing marking the boundary and hit area of the page's main control, is too faint against the card behind it.
+where: #drop-zone border 2px dashed #9faccc (upload.html:63)
+repro: Measured in the browser: borderTopColor rgb(159,172,204) against the white card background rgb(255,255,255) gives 2.27:1 (and 2.17:1 against the zone's own rgb(248,250,255) fill). WCAG 1.4.11 requires 3:1 for the visual boundary of a user interface component.
+severity: minor
+category: contrast
+
+DEFECT 8
+what: The hint text "You can select multiple files" inside the drop zone is too light to read comfortably.
+where: .drop-zone small { color: #7a8499 } (upload.html:102-104), rendered at upload.html:303
+repro: Measured getComputedStyle in the browser at 375 px: color rgb(122,132,153) on the zone's effective background rgb(248,250,255), font-size 13.33 px normal weight, contrast 3.6:1. WCAG 1.4.3 requires 4.5:1.
+severity: minor
+category: contrast
+
+DEFECT 9
+what: The empty-state message "No files selected.", which is the page's resting content, is too light to read comfortably.
+where: #empty-state .empty-state { color: #7a8499 } (upload.html:167-174), element at upload.html:312
+repro: Measured on load in the browser: color rgb(122,132,153) on effective background rgb(255,255,255), font-size 16 px normal weight, contrast 3.76:1. WCAG 1.4.3 requires 4.5:1.
+severity: minor
+category: contrast
+
+DEFECT 10
+what: Each file's size and status line (for example "2.8 KB" and "Ready") is too light to read comfortably.
+where: .file-meta { color: #747e92; font-size: 0.85rem } (upload.html:199-205), applied to the size and .file-status spans built at upload.html:368-379
+repro: Dropped 2 files, then measured in the browser: color rgb(116,126,146) on the file item background rgb(251,252,254), font-size 13.6 px normal weight, contrast 3.98:1. WCAG 1.4.3 requires 4.5:1. (The green "Done" state at rgb(22,128,90) measures 4.79:1 and does pass.)
+severity: minor
+category: contrast
+
+DEFECT 11
+what: The Remove control is only 22 px tall, below the minimum target size, so it is easy to miss on touch and for anyone with imprecise pointing.
+where: button.remove-button, sized by .remove-button { padding: 2px 0 2px 8px; font-size: 0.875rem } (upload.html:212-216)
+repro: Dropped 2 files and read getBoundingClientRect for every .remove-button at 375, 768 and 1280 px: 61.1 x 22 px at all three widths. WCAG 2.5.8 requires 24 x 24 CSS px. (The Clear all button measures 61.5 x 33 px, which passes 2.5.8, so it is not reported.)
+severity: minor
+category: touch-target
+
+DEFECT 12
+what: The primary Upload button's label is nearly invisible whenever it is disabled, which is both the page's resting state on load and the state in which it displays the "Uploading..." progress message, so the user cannot read what the main button says or that an upload is running.
+where: .upload-button:disabled { background: #aeb8d5 } with white label (upload.html:263-267); label swapped to "Uploading..." while disabled at upload.html:412
+repro: On load, measured #upload-button: color rgb(255,255,255) on rgb(174,184,213), contrast 1.98:1 at 16 px. Clicked Upload with files queued and re-measured 0.2 s in: textContent "Uploading...", disabled true, same colours and same 1.98:1 ratio, so the in-progress status message is as unreadable as the resting label.
+severity: minor
+category: contrast

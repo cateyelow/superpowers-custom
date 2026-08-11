@@ -1,0 +1,48 @@
+DEFECT 1
+what: The "No employees match the current filters." empty-state message is jammed against the right edge of the table instead of centred in the empty area, so it reads as stray misplaced text.
+where: table.html:140-144 (.empty { text-align: center }) is overridden by table.html:135-138 (td:last-child, th:last-child { text-align: right }); element #employee-rows td.empty
+repro: Chromium 138 headless at 1280x800, typed "zzzz" into #search. getComputedStyle(td.empty).textAlign === "right" (the .empty rule loses on specificity: 0,1,1 vs 0,1,0). Measured the text's own Range rect vs the cell rect: text left 891.3 / right 1181.0 inside a cell spanning 81.0-1199.0, i.e. 810.3px of empty space on the left and 18.0px on the right. Screenshot confirms the sentence sitting in the far-right corner.
+severity: minor
+category: state
+
+DEFECT 2
+what: At mobile width the empty-state message is cut off — the user sees only "No employees " and must scroll the table sideways to find out that nothing matched.
+where: #employee-rows td.empty inside .table-wrap (table.html:85-87, .table-wrap { overflow-x: auto }); caused by the right alignment at table.html:135-138
+repro: Chromium 138 headless at 375x800, typed "zzzz" into #search. .table-wrap clientWidth 349 / scrollWidth 544; the message rect is left 249.0 -> right 538.7 while the wrapper's visible right edge is 362.0, so 176.7px of the 289.7px message is clipped (only ~39% readable). Scrolling .table-wrap fully right makes it visible again. Screenshot at 375px shows the truncated "No employees ".
+severity: minor
+category: responsive
+
+DEFECT 3
+what: When no rows match, the pagination indicator reads "Page 0 of 0" — a page number that does not exist.
+where: table.html:370-371 (displayedPage = pageCount === 0 ? 0 : state.page; pageStatus.textContent = `Page ${displayedPage} of ${pageCount}`); element #page-status
+repro: Chromium 138 headless at 1280x800. Typed "zzzz" into #search -> #page-status innerText "Page 0 of 0". Also reproduced by combining filters that cannot both match: #department = "Design" + #search = "maya" -> "Page 0 of 0". Same string visible in the 375px screenshot.
+severity: minor
+category: state
+
+DEFECT 4
+what: Paging with the keyboard throws focus away — activating Next on the second-to-last page (or Previous on page 2) disables that button, focus drops to <body>, and the next Tab restarts at the search box at the top of the page.
+where: table.html:372-373 (previousButton.disabled / nextButton.disabled set inside render() while that button holds focus); #next and #previous
+repro: Chromium 138 headless at 375x800. Focused #next and pressed Enter: page 2, document.activeElement still BUTTON:next. Pressed Enter again: "Page 3 of 3", #next becomes disabled and document.activeElement === document.body. One Tab then landed on INPUT:search, not on the pagination controls. Mirror case: on page 2, focused #previous and pressed Enter -> "Page 1 of 3", #previous disabled, activeElement === document.body.
+severity: minor
+category: a11y
+
+DEFECT 5
+what: The outlines of the search box, the department dropdown and both pagination buttons are too faint to reliably identify the controls — the border is the only thing separating these white controls from the white panel.
+where: table.html:66-76 (input, select { border: 1px solid #c9d2df }) and table.html:155-164 (.pagination button { border: 1px solid #c9d2df }); #search, #department, #previous, #next
+repro: Chromium 138 headless at 1280x800, computed styles read from the live page. borderTopColor rgb(201,210,223) against the effective background rgb(255,255,255) = 1.53:1 contrast for all four controls (WCAG 1.4.11 non-text contrast requires 3:1); border width 1px.
+severity: minor
+category: contrast
+
+DEFECT 6
+what: The Previous/Next pagination buttons are only 38px tall, below the 44px minimum touch target, making them fiddly to tap on a phone.
+where: table.html:155-164 (.pagination button { min-width: 94px; min-height: 38px; padding: 7px 14px }); #previous, #next
+repro: Chromium 138 headless, getBoundingClientRect() on both buttons = 94.0 x 38.0 CSS px at 1280x900, 768x800 and 375x800 (identical at every viewport — no mobile size-up). 38px < the 44x44 target of WCAG 2.5.5 and the Apple HIG 44pt guideline; they do clear the 24x24 WCAG 2.2 AA floor.
+severity: minor
+category: touch-target
+
+DEFECT 7
+what: The sortable column headers are announced to assistive tech as ordinary column headers with no indication that they can be activated, so a screen-reader user tabbing onto "Name" is not told it is a control.
+where: table.html:221-225 (th[scope="col"][data-column] tabindex="0" with no role and no accessible hint); th[data-column]
+repro: Chromium 138 headless at 1280x900. page.accessibility.snapshot() renders these nodes as `columnheader "NAME"`, `columnheader "DEPARTMENT"` etc. — no button/interactive role. Read from the DOM: getAttribute("role") === null on all five headers while tabIndex === 0 and Enter/Space do sort (verified: focused th[data-column="name"], pressed Enter -> rows re-ordered to Alexander Hall/Amelia Davis/Ava Martinez, indicator "▲"; pressed Space -> reversed). Sort *state* is conveyed correctly (aria-sort flips none -> ascending -> descending on the active column only), so only the interactivity is unannounced.
+severity: minor
+category: a11y

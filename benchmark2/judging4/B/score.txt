@@ -1,0 +1,34 @@
+REFERENCE_TOTAL: 11
+
+R1 | cand_1: HIT | cand_2: HIT | Enter in a form field never advances the step and gives no feedback (implicit submission blocked / handler returns early)
+R2 | cand_1: HIT | cand_2: HIT | Card number accepts 10-11 digits despite "12 to 19 digits" hint (pattern counts auto-inserted spaces)
+R3 | cand_1: MISS | cand_2: MISS | Backspace over an auto-inserted space in the card number removes nothing and throws the caret to the end
+R4 | cand_1: HIT | cand_2: HIT | Typing a digit mid-field in the card number jumps the caret to the end
+R5 | cand_1: MISS | cand_2: HIT | Whitespace-only entries pass "required"; review step shows blank values for required fields
+R6 | cand_1: HIT | cand_2: HIT | Review step prints the CVC in clear text although it was entered in a masked password field
+R7 | cand_1: HIT | cand_2: HIT | Button focus ring (--focus rgba(49,87,213,0.2)) is ~1.35:1, effectively invisible
+R8 | cand_1: HIT | cand_2: HIT | Placeholder text #98a2b3 on white = 2.58:1, below 4.5:1
+R9 | cand_1: HIT | cand_2: MISS | Control boundaries (inputs, select, secondary Back button) 1.47:1 border on identical white fill, below 3:1
+R10 | cand_1: HIT | cand_2: MISS | An expiry date in the past (01/20) is accepted and the order is placed
+R11 | cand_1: MISS | cand_2: MISS | Rejected payment fields only give the generic native "Please match the requested format."; no format stated, no aria-invalid / live region / persistent error
+
+Notes on near-misses (R3):
+- cand_1 DEFECT 7 and cand_2 DEFECT 5 both describe only the caret-jump symptom, which is R4. Neither
+  reports the distinctive R3 symptom (backspacing over a space deletes nothing at all). Verified in the
+  page: caret at offset 5 + Backspace leaves "4111 1111 1111 1111" unchanged with selectionStart 19,
+  whereas cand_2's own deletion repro (caret 6) DID remove a digit. Restoring the caret — the fix both
+  reports point at — would not fix the no-op deletion, so this is not a match for either.
+- cand_1 DEFECT 8 is a backspace bug in the EXPIRY field, a different element and a different handler,
+  so it does not match R3 either; it is scored as an extra below.
+
+CAND_1_EXTRAS
+- CONFIRMED_REAL | Step-indicator connector line (li::after, z-index:0) paints over the "Shipping" and "Payment" labels so both look struck through | Measured at 1280x900: the ::after band is x=383.0-545.7, y=193.5-195.5 while the "Shipping" label box is x=389.0-447.9, y=183.0-204.0 (line crosses the text's vertical centre across its full width); same for "Payment". Element screenshot of .step-indicator shows both words visibly struck through. Absent at 375 where .step-label is clipped to 1x1 (measured).
+- CONFIRMED_REAL | maskCardNumber() groups from the left, so non-multiple-of-4 card lengths split the last four digits, e.g. Amex renders "•••• •••• •••0 005" | Typed 378282246310005 (checkValidity() true), advanced to step 3: #summary-card-number.textContent === "•••• •••• •••0 005"; confirmed in a screenshot of .summary. A 16-digit card renders correctly, so only lengths not divisible by 4 are affected.
+- CONFIRMED_REAL | Backspacing inside the expiry silently rewrites it to a different value ("12/30" -> "13/0") and the "/" can never be deleted | Typed 1230 -> "12/30"; setSelectionRange(2,2) + Backspace gave value "13/0" (month 13, checkValidity() === false) with caret at 4. Separately "01/20" with caret at 3 + Backspace left the value unchanged at "01/20" with caret moved to 5. Both reproduced in an isolated Chromium.
+
+CAND_2_EXTRAS
+- CONFIRMED_REAL | Step-indicator connector line (li::after, z-index:0) paints over the "Shipping" and "Payment" labels so both look struck through | Same verification as above: measured overlap of 58.9px x 2.0px on "Shipping" and 57.8px x 2.0px on "Payment" at 1280; screenshot of .step-indicator shows the line running through the middle of both words; not present at 375 (labels clipped to 1x1).
+
+TOTALS
+cand_1: hits=8/11  confirmed_extras=3  false_alarms=0
+cand_2: hits=7/11  confirmed_extras=1  false_alarms=0
