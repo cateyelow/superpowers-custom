@@ -1,0 +1,76 @@
+DEFECT 1
+what: While an upload is running, clicking "Remove" on a file does nothing — the file stays in the list, no matter how many times you click.
+where: upload.html:351-413 (render) called from upload.html:517 inside the requestAnimationFrame loop (upload.html:508-527); target control is li.file-item .remove-button
+repro: Isolated Chromium (Python Playwright, headless, file:// URL). Added 3 files, clicked Upload, then pressed and released the real mouse on the 2nd "Remove" (mouse.move -> mouse.down -> hold -> mouse.up). Result table (hold time -> was the file removed?): idle page 0/16/32/60/120/250ms -> removed every time; during upload 16/32/60/120/250ms -> NEVER removed (only an unrealistic 0ms press/release worked). A capture-phase listener on #file-list recorded zero click events during upload. Cause is measurable: render() runs on every animation frame during upload and calls fileList.replaceChildren (upload.html:408) — 123 childList mutations measured across one 2s upload — so the <li> that received mousedown is destroyed before mouseup and the browser never synthesises a click.
+severity: blocking
+category: state
+
+DEFECT 2
+what: Starting an upload throws keyboard focus out of the widget, and while the upload runs the Remove buttons cannot be reached or held with the keyboard at all — Tab drops the user onto <body>.
+where: upload.html:508-527 (per-frame render) destroying the buttons rendered at upload.html:382-388; list rebuilt at upload.html:408
+repro: Focused the first Remove button (document.activeElement = BUTTON "Remove alpha.txt"), then started the upload without moving focus (uploadButton.click()). 80ms later document.activeElement was BODY, and it stayed BODY for the rest of the upload. Separately, tabbing during an upload from the drop zone gives the sequence: file-input -> clear-all -> BODY -> BODY — the three Remove buttons and the Upload button are never reached.
+severity: blocking
+category: a11y
+
+DEFECT 3
+what: Removing a file with the keyboard dumps focus to the top of the document — the user loses their place in the list and must Tab back in from the beginning.
+where: upload.html:467-476 (remove handler) + upload.html:408 (whole list replaced); .file-list .remove-button
+repro: With 3 files listed and no upload running, focused the 2nd Remove button (activeElement = BUTTON "Remove beta-report.pdf") and pressed Enter. The file was removed correctly, but document.activeElement afterwards was BODY (measured), with no focus moved to a neighbouring item or to the list.
+severity: minor
+category: a11y
+
+DEFECT 4
+what: During an upload the file list (an aria-live="polite" region) is torn down and rebuilt ~60 times a second, so a screen-reader user gets the entire file list re-announced continuously for the whole 2 seconds instead of a progress update.
+where: upload.html:313 (<ul id="file-list" aria-live="polite">) rewritten by upload.html:408 from the rAF loop at upload.html:508-527
+repro: Attached a MutationObserver to #file-list, added 3 files and clicked Upload. One ordinary add of 3 files produced 1 childList mutation; a single 2-second upload produced 123 childList mutations of the live region (every item removed and re-inserted each frame).
+severity: minor
+category: a11y
+
+DEFECT 5
+what: Tabbing forward from the drop zone lands on an invisible control — focus disappears from the page entirely for one Tab stop, with no focus ring anywhere.
+where: upload.html:304 (<input id="file-input">), hidden by upload.html:106-116 (position:absolute; width:1px; height:1px; clip:rect(0,0,0,0))
+repro: Tab order measured from the top of the document with 3 files listed: #drop-zone -> #file-input -> #clear-all -> 3x .remove-button -> #upload-button. When #file-input holds focus its box is 1x1px at (639.5, 330.7) with clip:rect(0px,0px,0px,0px). Screenshotted the page blurred and then with #file-input focused: the two PNGs are byte-identical (0 changed pixels out of 900x700, maxDelta 0), i.e. nothing on screen indicates where focus is.
+severity: minor
+category: a11y
+
+DEFECT 6
+what: The file size and status text under each file name ("2.0 KB", "Ready", "47%") is too low-contrast to read reliably — this is the size information the widget exists to show.
+where: upload.html:199-205 (.file-meta { color:#747e92; font-size:0.85rem }); rendered .file-meta span / .file-status
+repro: Measured computed styles in the browser: color rgb(116,126,146) on the item background rgb(251,252,254), font-size 13.6px, weight 400 -> contrast ratio 3.98:1. WCAG AA for text this size requires 4.5:1.
+severity: minor
+category: contrast
+
+DEFECT 7
+what: The "No files selected." empty-state message is too low-contrast against the white card.
+where: upload.html:167-174 (.empty-state { color:#7a8499 }); #empty-state
+repro: Measured in the browser: color rgb(122,132,153) on background rgb(255,255,255), font-size 16px, weight 400 -> contrast ratio 3.76:1, below the 4.5:1 AA minimum.
+severity: minor
+category: contrast
+
+DEFECT 8
+what: The drop-zone hint "You can select multiple files" is too low-contrast to read comfortably.
+where: upload.html:102-104 (.drop-zone small { color:#7a8499 }); #drop-zone small
+repro: Measured in the browser: color rgb(122,132,153) on the drop-zone background rgb(248,250,255), font-size 13.33px, weight 400 -> contrast ratio 3.60:1, below the 4.5:1 AA minimum.
+severity: minor
+category: contrast
+
+DEFECT 9
+what: The dashed outline that marks the drop target — the only thing showing where files may be dropped — is very faint against the card.
+where: upload.html:63 (.drop-zone { border: 2px dashed #9faccc }); #drop-zone
+repro: Measured computed colours in the browser: border rgb(159,172,204) against the drop-zone fill rgb(248,250,255) -> 2.17:1, and against the surrounding card rgb(255,255,255) -> 2.27:1. WCAG AA non-text contrast (1.4.11) requires 3:1 for the visual boundary of a control.
+severity: minor
+category: contrast
+
+DEFECT 10
+what: The "Remove" control is a 22px-tall text link-style button — too small to hit reliably on a phone.
+where: upload.html:212-216 (.remove-button { padding:2px 0 2px 8px; font-size:0.875rem }); .file-item .remove-button
+repro: getBoundingClientRect measured at viewport 375x800 (and identically at 768 and 1280): every Remove button is 61.1 x 22 px. Height is below the 24x24 CSS px minimum target size and well below the 44x44 recommended touch target; the Upload button in the same card is 313 x 48 for comparison.
+severity: minor
+category: touch-target
+
+DEFECT 11
+what: "Clear all" stays active during an upload, and using it leaves the Upload button stuck reading "Uploading..." and disabled over an empty list — a file added in that window cannot be uploaded until the phantom upload finishes.
+where: upload.html:478-481 (clear handler does not check isUploading) + upload.html:411-412 (button state); #clear-all / #upload-button
+repro: Added 3 files, clicked Upload, waited 400ms (button = "Uploading...", disabled), clicked "Clear all". List became empty but the Upload button still read "Uploading..." and stayed disabled. Added another file during that window: list showed gamma.png with status "Ready" while the Upload button still read "Uploading..." and remained disabled. Only after the original 2s timer elapsed did it return to "Upload" / enabled.
+severity: minor
+category: state

@@ -1,0 +1,13 @@
+DEFECT 1
+what: The "No employees match the current filters." empty-state message is jammed against the right edge of the table instead of centred, so the zero-results feedback appears detached from the table it belongs to.
+where: table.html:140-144 (`.empty { text-align: center }`) is overridden by table.html:135-138 (`td:last-child, th:last-child { text-align: right }`); element is `#employee-rows td.empty`
+repro: Chromium via Python Playwright, viewport 1280x900, file:// load, typed "zzzz" into #search. The rendered row is a single `<td class="empty" colspan="5">`, and getComputedStyle(td).textAlign returns "right", not "center" — `td:last-child` (specificity 0-1-1) beats `.empty` (0-1-0). Measured with a Range over the cell's text: cell box spans x=81..1199 (1118px wide) but the text box sits at x=891.3..1181, i.e. flush to the right edge with 810px of blank cell to its left. Same at 768 (cell 21..747, text 439.3..729).
+severity: minor
+category: logic
+
+DEFECT 2
+what: On narrow viewports the same empty-state message is pushed outside the table's visible area, so a user who filters down to zero results sees a mostly blank panel and can only read the message by scrolling the table sideways.
+where: `#employee-rows td.empty` inside `.table-wrap` (table.html:217) at viewport widths <= 620px
+repro: Chromium via Python Playwright, fresh file:// load at viewport 375x800, typed "zzzz" into #search, `.table-wrap` scrollLeft untouched (measured 0). Measured: table width 543.7px inside a 349px-wide `.table-wrap`; the message's text box spans x=249..538.7 (289.7px) while the wrap's visible right edge is x=362 — only 113px of the string is on screen (39%). Screenshot at 375 shows "No employees" and then a hard cut at the panel edge. At viewport 320 only 58px of the 289.7px string is visible (20%). The rest becomes readable only after scrolling `.table-wrap` horizontally.
+severity: minor
+category: responsive

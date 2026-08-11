@@ -1,0 +1,33 @@
+REFERENCE_TOTAL: 11
+
+R1 | cand_1: HIT | cand_2: HIT | Enter in a form field never advances the step and gives no feedback at all
+R2 | cand_1: HIT | cand_2: HIT | Card number accepts 10-11 digits despite the "12 to 19 digits" hint (pattern counts auto-inserted spaces)
+R3 | cand_1: MISS | cand_2: MISS | Backspace over an auto-inserted space in the card number removes nothing and throws the caret to the end
+R4 | cand_1: HIT | cand_2: HIT | Typing a digit mid-card-number jumps the caret to the end, so further typing lands in the wrong place
+R5 | cand_1: HIT | cand_2: HIT | Whitespace-only values satisfy "required", producing blank fields on the review step
+R6 | cand_1: HIT | cand_2: HIT | Review step prints the CVC in clear text although it was entered in a masked field
+R7 | cand_1: HIT | cand_2: HIT | Button focus ring (Next/Back/Place order) is 1.35:1 — effectively invisible to keyboard users
+R8 | cand_1: HIT | cand_2: HIT | Payment placeholder text #98a2b3 = 2.58:1, below the 4.5:1 minimum
+R9 | cand_1: MISS | cand_2: MISS | Control boundaries fail non-text contrast: inputs/select/.button-secondary border 1.47:1 on an identical background
+R10 | cand_1: MISS | cand_2: MISS | A past expiry date (e.g. 01/20) is accepted and the order is placed with it
+R11 | cand_1: MISS | cand_2: MISS | Rejected payment fields give only the generic "Please match the requested format."; no format stated, no aria-invalid / live region
+
+Notes on the R3/R4 split: both candidates report the missing caret restoration in
+checkout.html:614-617 and both demonstrate it with an insertion at caret 2 (R4) and
+with a backspace over a DIGIT. Neither backspaces over an auto-inserted SPACE, which
+is R3's distinct symptom. Verified on the page: caret 5 + Backspace (over the space)
+leaves the value unchanged at "4111 1111 1111 1111" with selectionStart 19 — the
+character is genuinely not removed, so restoring the caret alone would not fix it.
+Caret 6 + Backspace (over a digit) does remove it -> "4111 1111 1111 111",
+selectionStart 18, matching what both candidates reported. R3 therefore scores MISS
+for both; R4 scores HIT for both.
+
+CAND_1_EXTRAS
+- CONFIRMED_REAL | Step-indicator connector line paints over the step labels, striking through "Shipping" and "Payment" | Measured at 1280x900: label 1 box x 389-447.94 / y 183.02-204.02, its ::after box x 383-545.66 / y 193.52-195.52 (bg rgb(208,213,221)) — a 58.9px x 2px overlap through the vertical middle of the text; label 2 overlaps 57.84px x 2px. .step-label is position:static/z-index:auto while the ::after is absolutely positioned with z-index:0, so per CSS paint order the pseudo-element paints after inline text. Screenshot of .step-indicator at 1280 and at 768 shows a line drawn straight through both words; not visible at 375 where .step-label is clipped by the <=560px media query. Candidate's numbers reproduce exactly.
+
+CAND_2_EXTRAS
+- CONFIRMED_REAL | Step-indicator connector line paints over the step labels, striking through "Shipping" and "Payment" | Same verification as above (identical finding): measured label/::after boxes at 1280x900 give the 58.9px and 57.8px overlaps the candidate cites, .step-label is unpositioned so the z-index:0 ::after paints above the text, and screenshots at 1280 and 768 show the strikethrough while 375 hides the labels.
+
+TOTALS
+cand_1: hits=7/11  confirmed_extras=1  false_alarms=0
+cand_2: hits=7/11  confirmed_extras=1  false_alarms=0

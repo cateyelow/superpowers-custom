@@ -1,5 +1,48 @@
 # UI-gate A/B — results
 
+> **Arm N added 2026-08-11.** The original question was *superpowers present vs
+> absent*, not *fork vs upstream*. Arm N (no skill text at all) was run on the
+> same artifacts, same round-2 ground truth, same isolated conditions, and
+> scored blind against V by one judge. See "Three-way result" below — it is the
+> headline. The fork-vs-upstream sections that follow remain valid and unchanged.
+
+## Three-way result (the actual question)
+
+| Artifact | GT | N hits | V hits | C hits | N real | V real | C real |
+|---|---|---|---|---|---|---|---|
+| A upload   | 18 | 11 | 11 | 9 | 11 | 13 | 10 |
+| B checkout | 11 | 7  | 7  | 8 | 8  | 8  | 8  |
+| C table    | 5  | **1** | **5** | 2 | 1 | 6 | 4 |
+| **Mean recall** | | **48.2%** | **74.9%** | **54.2%** | | | |
+
+N = no superpowers skill. V = stock upstream v6.2.0. C = custom fork.
+N and V were scored by the same judge (judging3); C's figures come from
+judging2. Judge reproducibility is good: V's A and B scores are identical
+across the two independent scorings (11/18+2 extras, 7/11+1 extra).
+
+**Ranking: upstream > custom > nothing.**
+
+Having superpowers beats not having it — but the benefit is not uniform. On A
+and B the arms tie on hits (11-11, 7-7); the entire gap comes from artifact C,
+where the skill-less arm reported just 2 defects and caught 1 of 5, while
+upstream caught 5 of 5.
+
+Reading: **the skill raises the floor on thoroughness, not the ceiling on
+ability.** Where defects are plentiful and obvious (A: 18 in the reference; B:
+11) an unaided reviewer finds them anyway. Where the page looks fine and the
+defects are subtle (C: 5, mostly 1.53:1 border contrast and a missing
+interactive role) the unaided arm glanced and moved on. The skill's value is
+that it stops you from declaring a clean-looking page clean.
+
+That also explains why the custom fork loses to upstream while still beating
+nothing: its checklist does force engagement, but it directs that engagement at
+named categories, and on C it spent the attention on a WCAG-exempt disabled
+control while missing the two live violations upstream caught.
+
+---
+
+# Fork vs upstream (the earlier question)
+
 Protocol: PROTOCOL.md (pre-registered, frozen before any result was seen).
 Blind key + candidate assignment: KEY.md (judges never read it).
 V = vanilla upstream v6.2.0 `44c9b2d`. C = custom fork `c95fbad`.

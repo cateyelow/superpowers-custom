@@ -1,0 +1,30 @@
+REFERENCE_TOTAL: 5
+
+R1 | cand_1: HIT | cand_2: HIT | Empty-state "No employees match the current filters." is right-aligned instead of centred (td:last-child beats .empty) and at 375px is pushed outside the .table-wrap visible area so only "No employees" is readable
+R2 | cand_1: MISS | cand_2: HIT | Search input and department select are white-on-white with only a 1px #c9d2df border at 1.53:1 contrast, below the 3:1 required for control boundaries
+R3 | cand_1: MISS | cand_2: HIT | Previous/Next pagination buttons have a 1px #c9d2df border at 1.53:1 contrast against the white panel, below the 3:1 minimum
+R4 | cand_1: MISS | cand_2: HIT | Sortable column headers are tabbable and Enter/Space-operable but expose no interactive role to assistive tech (announced only as "columnheader")
+R5 | cand_1: MISS | cand_2: HIT | Previous/Next buttons are only 94x38 px, below the 44x44 CSS px touch-target minimum, at every viewport
+
+Matching notes:
+- cand_1 DEFECT 1 (right alignment, correct cause and specificity analysis) and cand_1 DEFECT 2
+  (same message clipped out of the scroll viewport at 375px) are two facets of REFERENCE DEFECT 1,
+  which explicitly covers both the mis-alignment and the 375px clipping. Counted as one hit, not
+  as an extra finding.
+- cand_2 DEFECT 1 and cand_2 DEFECT 2 map to REFERENCE DEFECT 1 for the same reason.
+- cand_2 DEFECT 5 names #search, #department, #previous and #next together and therefore covers
+  both R2 and R3.
+- cand_2 DEFECT 6 -> R5, cand_2 DEFECT 7 -> R4.
+- cand_1 reported nothing outside the empty-state defect: no contrast, touch-target or a11y-role
+  findings at all.
+
+CAND_1_EXTRAS
+(none — both reported items are facets of REFERENCE DEFECT 1)
+
+CAND_2_EXTRAS
+- FALSE_ALARM | Pagination indicator reads "Page 0 of 0" when no rows match | Reproduces (own Chromium via Python Playwright, file:// load at 1280x800: fill #search with "zzzz" -> #page-status innerText "Page 0 of 0"; also with #department=Design + #search=maya). But this is not a defect: it is the deliberate, self-consistent degenerate rendering of an empty result set (page.html:370 `pageCount === 0 ? 0 : state.page`), shown alongside an explicit "No employees match the current filters." message with both #previous and #next disabled (verified disabled=true). Nothing is misleading, blocked or standard-violating; whether to render "Page 0 of 0", "Page 1 of 1", or hide the nav entirely is a copy/convention preference.
+- CONFIRMED_REAL | Activating Previous/Next until it disables itself drops keyboard focus to <body>, so the keyboard user loses their place in the page | Verified in my own Chromium: focused #next (activeElement BUTTON:next), Enter -> "Page 2 of 3", focus retained; Enter again -> "Page 3 of 3", #next.disabled=true and document.activeElement === BODY; a single Tab then landed on INPUT:search at the top of the page. Mirror case reproduced: on page 2, focus #previous, Enter -> "Page 1 of 3", #previous.disabled=true, activeElement === BODY. Cause is page.html:372-373 setting .disabled on the focused button inside render(). This is a genuine, user-visible keyboard-accessibility defect (focus loss / broken focus order, WCAG 2.4.3) that REFERENCE does not list.
+
+TOTALS
+cand_1: hits=1/5  confirmed_extras=0  false_alarms=0
+cand_2: hits=5/5  confirmed_extras=1  false_alarms=1

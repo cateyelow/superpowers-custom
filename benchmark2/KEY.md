@@ -15,3 +15,13 @@ ARTIFACT HASHES (identical copy handed to every cell of that artifact)
 A  upload.html    sha256:9d967c29dd05
 B  checkout.html  sha256:52810a855214
 C  table.html     sha256:4610583c756a
+
+--- ARM N ADDED 2026-08-11 (the user's original question: skill present vs absent) ---
+
+N = no superpowers skill at all (task + spec + host standing rule only)
+Scored against the SAME round-2 ground truth as V and C.
+
+N-vs-V ASSIGNMENT (fixed before any N report was read; alternated):
+A_upload    cand_1 = N   cand_2 = V
+B_checkout  cand_1 = V   cand_2 = N
+C_table     cand_1 = N   cand_2 = V

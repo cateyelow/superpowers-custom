@@ -1,0 +1,31 @@
+REFERENCE_TOTAL: 18
+
+R1 | cand_1: HIT | cand_2: MISS | "Remove" is dead for the whole 2s upload — per-frame replaceChildren destroys the <li> between mousedown and mouseup so no click fires
+R2 | cand_1: HIT | cand_2: MISS | Starting an upload throws keyboard focus out of the widget (focused list node destroyed by the per-frame rebuild) and never restores it
+R3 | cand_1: HIT | cand_2: HIT | The whole file list is inside aria-live="polite" and rebuilt ~60x/s during upload, flooding screen readers (no aria-busy anywhere)
+R4 | cand_1: MISS | cand_2: MISS | No drop/dragover guard on document/window — a file dropped outside the drop zone navigates the browser away and destroys the selection
+R5 | cand_1: HIT | cand_2: HIT | "Clear all" during an upload empties the list but leaves Upload stuck at "Uploading…"/disabled; files added in that window can't be uploaded
+R6 | cand_1: HIT | cand_2: HIT | Removing a file discards keyboard focus to <body> instead of a neighbouring control
+R7 | cand_1: MISS | cand_2: HIT | Activating "Clear all" discards focus to <body> because the button disables itself as its own side effect
+R8 | cand_1: HIT | cand_2: HIT | Phantom tab stop between drop zone and "Clear all": the 1x1 clipped #file-input takes focus with nothing visible
+R9 | cand_1: MISS | cand_2: HIT | Focusable <input type="file"> nested inside div[role=button] — a button inside a button in the accessibility tree
+R10 | cand_1: MISS | cand_2: MISS | Emptying the list is silent to screen readers — #empty-state is a sibling of, not inside, the live region
+R11 | cand_1: HIT | cand_2: HIT | Drop-zone helper text "You can select multiple files" fails text contrast (#7a8499 on #f8faff, ~3.6:1)
+R12 | cand_1: HIT | cand_2: HIT | Empty-state "No files selected." fails text contrast (#7a8499 on #ffffff, 3.76:1)
+R13 | cand_1: HIT | cand_2: HIT | .file-meta size/status/percentage text fails text contrast (#747e92 on #fbfcfe, 3.98:1)
+R14 | cand_1: MISS | cand_2: MISS | Button focus rings (upload/clear/remove) are 3px rgb(64 95 216/28%) — ~1.5:1, far under the 3:1 of WCAG 1.4.11
+R15 | cand_1: HIT | cand_2: MISS | Drop zone's dashed boundary (2px #9faccc) fails non-text contrast: 2.17:1 on its fill, 2.27:1 on the card
+R16 | cand_1: MISS | cand_2: HIT | Upload button's disabled label is unreadable (#ffffff on #aeb8d5 = 1.98:1) — the page's load state and the "Uploading…" message
+R17 | cand_1: HIT | cand_2: HIT | Remove buttons are 61.1 x 22.0 px at every viewport — under WCAG 2.2 SC 2.5.8's 24x24 minimum
+R18 | cand_1: MISS | cand_2: MISS | The same file can be added repeatedly, producing indistinguishable rows with no de-duplication or warning
+
+CAND_1_EXTRAS
+(none — all 11 reported items map to reference defects: D1=R1, D2=R2, D3=R6, D4=R3, D5=R8, D6=R13, D7=R12, D8=R11, D9=R15, D10=R17, D11=R5)
+
+CAND_2_EXTRAS
+- CONFIRMED_REAL | Drop zone violates WCAG 2.5.3 Label in Name: aria-label "Choose files or drop files here" does not contain the visible label "Drop files here or click to browse" | Opened the page in an isolated headless Chromium. #drop-zone outerHTML has role="button" aria-label="Choose files or drop files here"; innerText is "↑ / Drop files here or click to browse / You can select multiple files". page.accessibility.snapshot() names the node "Choose files or drop files here". The visible string is not a substring of the accessible name, so the Level A criterion fails and a speech-input user reading the on-screen words gets no match.
+- CONFIRMED_REAL | Drop zone suppresses the focus outline and signals focus only by a border tint that is a 1.96:1 change from the unfocused colour, and that tint is the identical declaration used for :hover | Dumped the stylesheet: ".drop-zone:hover, .drop-zone:focus-visible { border-color: rgb(78,110,232); background: rgb(241,244,255); outline: none; }" — one shared block, so focus and hover render identically. Computed styles with the 160ms transition settled: unfocused border-top-color rgb(159,172,204), outline "none 0px", box-shadow none; after Tab (matches(':focus-visible')===true) border-top-color rgb(78,110,232), still outline none / no box-shadow. Measured the change-of-contrast between the two border colours = 1.96:1; WCAG 1.4.11 (and 2.2 SC 2.4.13) require 3:1 for a focus indicator expressed as a colour change on an already-present element. Element screenshots of the two states confirm the only difference is the dashed border hue plus a 1.05:1 background shift.
+
+TOTALS
+cand_1: hits=11/18  confirmed_extras=0  false_alarms=0
+cand_2: hits=11/18  confirmed_extras=2  false_alarms=0

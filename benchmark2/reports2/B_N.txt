@@ -1,0 +1,55 @@
+DEFECT 1
+what: Keyboard focus ring on every button is almost invisible, so a keyboard user cannot see which button is focused (on steps 2 and 3 that means Back vs Next/Place order are indistinguishable).
+where: checkout.html:207-210 `button:focus-visible { outline: 3px solid var(--focus) }` with `--focus: rgba(49, 87, 213, 0.2)` (checkout.html:18)
+repro: Loaded the page at 1280x900, pressed Tab 6 times to reach `section[data-step="0"] .button-primary` (verified `:focus-visible` = true), screenshotted a 14px margin around the button, and diffed it pixel-for-pixel against the same crop with nothing focused. Exactly 3 pixel columns change, from rgb(255,255,255) to rgb(214,221,247) — contrast 1.35:1 against the adjacent white card, versus the 3:1 required for a focus indicator. Same measurement on the step-2 `.button-secondary` (Back): ring rgb(214,221,247), 1.35:1.
+severity: blocking
+category: contrast
+
+DEFECT 2
+what: The step-indicator connector line is painted on top of the step labels, striking through the words "Shipping" and "Payment".
+where: checkout.html:87-96 `.step-indicator li:not(:last-child)::after` (absolutely positioned, z-index 0, over the static inline `.step-label`)
+repro: At 1280x900 measured the boxes: label 1 spans x 389-448, y 183-204; its `::after` line spans x 383-546, y 193.5-195.5 — a 58.9px x 2px overlap straight through the middle of the text. Label 2 overlaps by 57.8px x 2px. Screenshot of `.step-indicator` confirms a visible line drawn through both words. Also reproduced at 768 (hidden only at 375, where `.step-label` is clipped by the <=560px media query).
+severity: minor
+category: a11y
+
+DEFECT 3
+what: Placeholder text in the payment fields is too faint to read reliably (card number "1234 5678 9012 3456", "MM/YY", "123").
+where: checkout.html:170-172 `input::placeholder { color: #98a2b3 }`, rendered on #card-number, #expiry, #cvc
+repro: Read the computed `::placeholder` colour in the browser: rgb(152,162,179) on rgb(255,255,255) at 16px — contrast 2.58:1, below the 4.5:1 minimum for normal-size text. All other text on the page measured 4.76:1 or better.
+severity: minor
+category: contrast
+
+DEFECT 4
+what: Whitespace-only entries satisfy the "required" check, so the user can advance to the review step and place an order whose Full name / Address line / City / Postal code / Cardholder name are shown completely blank.
+where: checkout.html:569-580 `validateCurrentStep()` (uses `checkValidity()` only) combined with checkout.html:590-595 `updateSummary()` (uses `.value.trim()`)
+repro: Filled #full-name, #address, #city, #postal-code with spaces only, selected Canada, clicked Next — advanced to step 2 with no error. Filled #cardholder-name with spaces, a valid card/expiry/CVC, clicked Next. The review step rendered `summary-full-name`, `summary-address`, `summary-city`, `summary-postal-code`, `summary-cardholder-name` with textContent "" and a measured height of 0px each — five labelled rows with nothing under them — and "Place order" was still enabled.
+severity: minor
+category: logic
+
+DEFECT 5
+what: Correcting a digit in the middle of the card number silently produces a different number, because the field's reformatter throws the caret to the end after every keystroke.
+where: checkout.html:614-617 (`cardNumber.addEventListener("input", ...)` rewrites `.value` without restoring the selection)
+repro: On step 2, typed 4111111111111111 -> "4111 1111 1111 1111". Set the caret to position 2 and pressed Backspace: the field became "4111 1111 1111 111" (the digit visibly missing is the last one, not the one the caret was on) and `selectionStart` jumped from 2 to 18. Typing the replacement "2" then appended at the end, giving "4111 1111 1111 1112" — a card number the user never intended to enter.
+severity: minor
+category: state
+
+DEFECT 6
+what: The card number field accepts 10- and 11-digit numbers even though the hint directly under it says "12 to 19 digits".
+where: checkout.html:412 `pattern="[0-9 ]{12,23}"` on #card-number vs checkout.html:413 hint "12 to 19 digits" (the pattern counts the auto-inserted spaces as characters)
+repro: On step 2, typed ten 4s -> field "4444 4444 44"; `checkValidity()` returned true and Next advanced to the review step, which showed "•••• ••44 44". Same with eleven digits ("4444 4444 444", advanced, "•••• •••4 444"). Nine digits ("4444 4444 4") was correctly rejected and stayed on step 2.
+severity: minor
+category: logic
+
+DEFECT 7
+what: Pressing Enter in any step-1 or step-2 field does nothing at all — no advance to the next step and no error — so the form cannot be driven with the usual keyboard submit.
+where: checkout.html:628-633 (submit handler calls `preventDefault()` then returns when `currentStep !== 2`); the Next controls are `type="button"` at checkout.html:396 and :429
+repro: Filled every step-1 field with valid values, focused #postal-code and pressed Enter: the visible step index stayed 0 and the confirmation stayed hidden. Repeated on step 2 with valid cardholder name, card number, expiry and CVC, pressed Enter in #cvc: visible step index stayed 1. Nothing was announced or displayed. (Enter on the focused "Place order" button on step 3 does work.)
+severity: minor
+category: a11y
+
+DEFECT 8
+what: The CVC is printed in clear text on the review step even though it is masked while being typed.
+where: checkout.html:598 `summary.cvc.textContent = fields.cvc.value;` rendering into `dd#summary-cvc` (checkout.html:481)
+repro: Entered CVC 123 into #cvc (type="password", renders as bullets on screen — confirmed in a step-2 screenshot), clicked Next, and read the review step: `#summary-cvc` textContent is "123", shown in full under the "CVC" label at 1280 and at 375. The card number beside it is correctly masked to "•••• •••• •••• 1111".
+severity: minor
+category: logic
